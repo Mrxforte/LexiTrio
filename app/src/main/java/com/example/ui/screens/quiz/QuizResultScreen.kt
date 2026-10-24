@@ -1,5 +1,6 @@
 package com.example.ui.screens.quiz
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,8 +57,14 @@ fun QuizResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Viktorina natijasi") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                title = {
+                    Text(
+                        text = "Viktorina natijasi",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -73,7 +80,7 @@ fun QuizResultScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(96.dp)
                     .background(
                         if (percentage >= 70) Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
                         CircleShape
@@ -84,7 +91,7 @@ fun QuizResultScreen(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
                     tint = if (percentage >= 70) Color(0xFF059669) else Color(0xFFD97706),
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(54.dp)
                 )
             }
 
@@ -94,7 +101,8 @@ fun QuizResultScreen(
                 text = if (percentage >= 80) "Ajoyib natija! 🎉" else if (percentage >= 50) "Yaxshi harakat! 👍" else "Ko‘proq mashq qiling! 📚",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -113,8 +121,10 @@ fun QuizResultScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Card(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Column(
@@ -127,6 +137,7 @@ fun QuizResultScreen(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "To‘g‘ri javob",
                             style = MaterialTheme.typography.labelSmall,
@@ -136,8 +147,10 @@ fun QuizResultScreen(
                 }
 
                 Card(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Column(
@@ -150,6 +163,7 @@ fun QuizResultScreen(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Sarflangan vaqt",
                             style = MaterialTheme.typography.labelSmall,
@@ -159,8 +173,10 @@ fun QuizResultScreen(
                 }
 
                 Card(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Column(
@@ -173,6 +189,7 @@ fun QuizResultScreen(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFD97706)
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "XP mukofoti",
                             style = MaterialTheme.typography.labelSmall,
@@ -187,7 +204,11 @@ fun QuizResultScreen(
             Button(
                 onClick = onNavigateHome,
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -201,6 +222,10 @@ fun QuizResultScreen(
             OutlinedButton(
                 onClick = onRetryQuiz,
                 shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)

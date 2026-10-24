@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -82,8 +83,6 @@ fun DataImportScreen(
     val totalWordsCount by dictionaryRepository.getEntryCountFlow().collectAsState(initial = 0)
     val importProgress by importManager.progress.collectAsState(initial = com.example.data.importer.ImportProgress())
 
-    var showSampleTemplate by remember { mutableStateOf(false) }
-
     // SAF Document Picker
     val docPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -102,15 +101,20 @@ fun DataImportScreen(
                     Text(
                         text = "100 000+ Lug‘at Ingestion Quvuri",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -128,9 +132,10 @@ fun DataImportScreen(
             // Actual Verified Corpus Counter Card
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
@@ -145,7 +150,8 @@ fun DataImportScreen(
                             Text(
                                 text = "Hozirgi tasdiqlangan baza:",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
@@ -157,6 +163,8 @@ fun DataImportScreen(
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary
                         )
+
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
                             text = "Baza ichida barcha so‘zlar to‘liq indekslangan, IPA transkripsiya, uch tildagi ta’riflar va misollar bilan ta’minlangan.",
@@ -170,16 +178,18 @@ fun DataImportScreen(
             // Ingestion Pipeline Box
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
                             text = "Katta hajmli fayllarni yuklash (Import)",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
@@ -205,7 +215,11 @@ fun DataImportScreen(
                             },
                             enabled = !importProgress.isRunning,
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
@@ -223,28 +237,37 @@ fun DataImportScreen(
                         if (importProgress.isRunning || importProgress.stageMessage.isNotBlank()) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Surface(
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
                                 shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(14.dp)) {
                                     if (importProgress.isRunning) {
-                                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                        LinearProgressIndicator(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            trackColor = MaterialTheme.colorScheme.outline
+                                        )
                                         Spacer(modifier = Modifier.height(10.dp))
                                     }
                                     Text(
                                         text = importProgress.stageMessage,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     if (importProgress.insertedCount > 0) {
+                                        Spacer(modifier = Modifier.height(4.dp))
                                         Text(
                                             text = "Jami qo‘shilgan: ${importProgress.insertedCount}",
                                             style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                     if (importProgress.error != null) {
+                                        Spacer(modifier = Modifier.height(4.dp))
                                         Text(
                                             text = "Xatolik: ${importProgress.error}",
                                             style = MaterialTheme.typography.bodySmall,
@@ -261,9 +284,10 @@ fun DataImportScreen(
             // Sample Template & Format Documentation
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
@@ -275,7 +299,8 @@ fun DataImportScreen(
                             Text(
                                 text = "Namunaviy JSONL formati",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             IconButton(
                                 onClick = {
@@ -297,13 +322,14 @@ fun DataImportScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Surface(
-                            color = Color(0xFF0F172A),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
                             shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
                                 text = importManager.getSampleJsonlTemplate(),
-                                color = Color(0xFFE2E8F0),
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 11.sp,
                                 modifier = Modifier.padding(12.dp)

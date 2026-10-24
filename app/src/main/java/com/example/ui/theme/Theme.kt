@@ -10,52 +10,63 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = NavyPrimaryDark,
-    onPrimary = NavyOnPrimaryDark,
-    primaryContainer = NavyPrimaryContainerDark,
-    onPrimaryContainer = NavyOnPrimaryContainerDark,
-    secondary = GoldSecondaryDark,
-    onSecondary = GoldOnSecondaryDark,
-    secondaryContainer = GoldSecondaryContainerDark,
-    onSecondaryContainer = GoldOnSecondaryContainerDark,
-    background = SlateBackgroundDark,
-    surface = SlateSurfaceDark,
-    surfaceVariant = SlateSurfaceVariantDark,
-    onSurface = SlateOnSurfaceDark,
-    onBackground = SlateOnSurfaceDark,
-    outline = SlateOutlineDark
+private val LightColorScheme = lightColorScheme(
+    primary = LexiPrimary,
+    onPrimary = LexiOnPrimary,
+    primaryContainer = LexiPrimaryContainer,
+    onPrimaryContainer = LexiOnPrimaryContainer,
+    secondary = LexiPrimary,
+    onSecondary = LexiOnPrimary,
+    secondaryContainer = LexiPrimaryContainer,
+    onSecondaryContainer = LexiOnPrimaryContainer,
+    tertiary = LexiSuccess,
+    onTertiary = Color.White,
+    tertiaryContainer = LexiSuccessContainer,
+    onTertiaryContainer = LexiOnSuccessContainer,
+    background = LexiBackground,
+    surface = LexiSurface,
+    surfaceVariant = LexiSurfaceVariant,
+    onBackground = LexiOnBackground,
+    onSurface = LexiOnSurface,
+    onSurfaceVariant = LexiSecondaryText,
+    outline = LexiOutline,
+    outlineVariant = LexiOutlineLight,
+    error = LexiError,
+    errorContainer = LexiErrorContainer,
+    onError = Color.White,
+    onErrorContainer = LexiOnErrorContainer
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = NavyPrimary,
-    onPrimary = NavyOnPrimary,
-    primaryContainer = NavyPrimaryContainer,
-    onPrimaryContainer = NavyOnPrimaryContainer,
-    secondary = GoldSecondary,
-    onSecondary = GoldOnSecondary,
-    secondaryContainer = GoldSecondaryContainer,
-    onSecondaryContainer = GoldOnSecondaryContainer,
-    tertiary = EmeraldTertiary,
-    onTertiary = EmeraldOnTertiary,
-    tertiaryContainer = EmeraldTertiaryContainer,
-    onTertiaryContainer = EmeraldOnTertiaryContainer,
-    background = SlateBackgroundLight,
-    surface = SlateSurfaceLight,
-    surfaceVariant = SlateSurfaceVariantLight,
-    onSurface = SlateOnSurfaceLight,
-    onBackground = SlateOnSurfaceLight,
-    outline = SlateOutlineLight
+private val DarkColorScheme = darkColorScheme(
+    primary = LexiPrimaryDark,
+    onPrimary = LexiOnPrimaryDark,
+    primaryContainer = LexiPrimaryContainerDark,
+    onPrimaryContainer = LexiOnPrimaryContainerDark,
+    secondary = LexiPrimaryDark,
+    onSecondary = LexiOnPrimaryDark,
+    secondaryContainer = LexiPrimaryContainerDark,
+    onSecondaryContainer = LexiOnPrimaryContainerDark,
+    tertiary = LexiSuccess,
+    onTertiary = Color.White,
+    background = LexiBackgroundDark,
+    surface = LexiSurfaceDark,
+    surfaceVariant = LexiSurfaceVariantDark,
+    onBackground = LexiOnBackgroundDark,
+    onSurface = LexiOnSurfaceDark,
+    onSurfaceVariant = LexiSecondaryTextDark,
+    outline = LexiOutlineDark,
+    error = LexiError
 )
 
 @Composable
 fun LexiTrioTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false, // Light Theme is the default appearance per requirement
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -74,7 +85,10 @@ fun LexiTrioTheme(
             val window = (view.context as? Activity)?.window
             if (window != null) {
                 window.statusBarColor = colorScheme.background.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+                window.navigationBarColor = colorScheme.surface.toArgb()
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !darkTheme
+                insetsController.isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }

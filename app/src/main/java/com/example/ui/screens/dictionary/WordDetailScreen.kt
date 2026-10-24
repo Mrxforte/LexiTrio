@@ -1,6 +1,7 @@
 package com.example.ui.screens.dictionary
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,12 +116,19 @@ fun WordDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(detail?.entry?.headword ?: "So‘z tafsiloti") },
+                title = {
+                    Text(
+                        text = detail?.entry?.headword ?: "So‘z tafsiloti",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -143,7 +151,7 @@ fun WordDetailScreen(
                             Icon(
                                 imageVector = if (isFavorite) Icons.Default.Star else Icons.Outlined.StarBorder,
                                 contentDescription = "Favorite",
-                                tint = if (isFavorite) Color(0xFFEAB308) else MaterialTheme.colorScheme.onSurface
+                                tint = if (isFavorite) Color(0xFFEAB308) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -154,13 +162,13 @@ fun WordDetailScreen(
                             Icon(
                                 imageVector = Icons.Default.Bookmark,
                                 contentDescription = "Save to Vocabulary",
-                                tint = if (currentSavedWord != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                tint = if (currentSavedWord != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
@@ -170,11 +178,15 @@ fun WordDetailScreen(
     ) { innerPadding ->
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else if (detail == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("So‘z topilmadi", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = "So‘z topilmadi",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
             val d = detail!!
@@ -185,15 +197,16 @@ fun WordDetailScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = 40.dp),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // 1. Header Section: Headword, Language, Audio Controls, CEFR
                 item {
                     Card(
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
@@ -202,7 +215,10 @@ fun WordDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                ) {
                                     Text(
                                         text = entry.headword,
                                         style = MaterialTheme.typography.headlineLarge,
@@ -227,7 +243,7 @@ fun WordDetailScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 PartOfSpeechChip(partOfSpeech = entry.partOfSpeech)
@@ -243,7 +259,7 @@ fun WordDetailScreen(
                             }
 
                             if (entry.alternativeSpellings.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = "Yozilishi: ${entry.alternativeSpellings}",
                                     style = MaterialTheme.typography.bodySmall,
@@ -251,7 +267,7 @@ fun WordDetailScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             // Audio Playback Controls: Normal & Slow Speed
                             Row(
@@ -262,8 +278,10 @@ fun WordDetailScreen(
                                     onClick = { ttsManager.speak(entry.headword, entry.language, 1.0f) },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     ),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                                     modifier = Modifier
                                         .weight(1f)
                                         .testTag("pronounce_normal_button")
@@ -280,6 +298,10 @@ fun WordDetailScreen(
                                 OutlinedButton(
                                     onClick = { ttsManager.speak(entry.headword, entry.language, 0.65f) },
                                     shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    ),
                                     modifier = Modifier
                                         .weight(1f)
                                         .testTag("pronounce_slow_button")
@@ -322,6 +344,8 @@ fun WordDetailScreen(
                         Card(
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -329,13 +353,15 @@ fun WordDetailScreen(
                                     Text(
                                         text = "🇺🇿 ${entry.primaryMeaningUz}",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                                 if (entry.primaryMeaningRu.isNotBlank()) {
                                     Text(
                                         text = "🇷🇺 ${entry.primaryMeaningRu}",
-                                        style = MaterialTheme.typography.bodyLarge
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                                 if (entry.primaryMeaningEn.isNotBlank()) {
@@ -350,12 +376,14 @@ fun WordDetailScreen(
                     }
                 }
 
-                // 3. Word Forms & Inflections (e.g. Plural, Past Simple, Russian Gender, Uzbek Suffixes)
+                // 3. Word Forms & Inflections
                 if (d.forms.isNotEmpty()) {
                     item {
                         Card(
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -381,7 +409,8 @@ fun WordDetailScreen(
                                         Text(
                                             text = form.formValue,
                                             style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }
@@ -396,6 +425,8 @@ fun WordDetailScreen(
                         Card(
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -411,7 +442,8 @@ fun WordDetailScreen(
                                         Text(
                                             text = "• ${colloc.expression}",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             text = "🇺🇿 ${colloc.translationUz}  |  🇷🇺 ${colloc.translationRu}",
@@ -463,12 +495,20 @@ fun WordDetailScreen(
         val entry = detail!!.entry
         AlertDialog(
             onDismissRequest = { showSaveModal = false },
-            title = { Text("Lug‘at boyligiga qo‘shish") },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    text = "Lug‘at boyligiga qo‘shish",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         text = "«${entry.headword}» so‘zi SM-2 takrorlash rejasiga kiritiladi.",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     OutlinedTextField(
                         value = userNotes,
@@ -489,14 +529,15 @@ fun WordDetailScreen(
                             showSaveModal = false
                             snackbarHostState.showSnackbar("So‘z o‘rganish ro‘yxatiga qo‘shildi")
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Saqlash")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSaveModal = false }) {
-                    Text("Bekor qilish")
+                    Text("Bekor qilish", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -506,10 +547,20 @@ fun WordDetailScreen(
     if (showReportModal) {
         AlertDialog(
             onDismissRequest = { showReportModal = false },
-            title = { Text("Xato haqida xabar berish") },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    text = "Xato haqida xabar berish",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Lug‘at sifatini yaxshilashda yordamingiz uchun minnatdormiz.")
+                    Text(
+                        text = "Lug‘at sifatini yaxshilashda yordamingiz uchun minnatdormiz.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     OutlinedTextField(
                         value = reportReason,
                         onValueChange = { reportReason = it },
@@ -526,14 +577,15 @@ fun WordDetailScreen(
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar("Xabaringiz qabul qilindi. Rahmat!")
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Yuborish")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showReportModal = false }) {
-                    Text("Yopish")
+                    Text("Yopish", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -551,7 +603,8 @@ fun SenseCard(
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -564,7 +617,7 @@ fun SenseCard(
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = CircleShape,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(26.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
@@ -579,11 +632,13 @@ fun SenseCard(
                     if (sense.register != "general") {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(6.dp)
+                            shape = RoundedCornerShape(6.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                         ) {
                             Text(
                                 text = sense.register,
                                 style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
@@ -591,14 +646,15 @@ fun SenseCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // English definition
             if (sense.definitionEn.isNotBlank()) {
                 Text(
                     text = sense.definitionEn,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -607,7 +663,7 @@ fun SenseCard(
             // Direct Translations
             translations.forEach { t ->
                 Row(
-                    modifier = Modifier.padding(vertical = 2.dp),
+                    modifier = Modifier.padding(vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     LanguageBadge(lang = t.targetLanguage, text = t.targetLanguage.uppercase())
@@ -615,7 +671,8 @@ fun SenseCard(
                     Text(
                         text = t.translationText,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     if (t.contextNote.isNotBlank()) {
                         Text(
@@ -629,8 +686,8 @@ fun SenseCard(
 
             // Usage Examples with Audio
             if (examples.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
@@ -640,15 +697,18 @@ fun SenseCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
+                Spacer(modifier = Modifier.height(6.dp))
+
                 examples.forEach { eg ->
                     Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
                     ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
+                        Column(modifier = Modifier.padding(12.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -658,6 +718,7 @@ fun SenseCard(
                                     text = "“${eg.sentenceEn}”",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
@@ -668,11 +729,12 @@ fun SenseCard(
                                         imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                         contentDescription = "Pronounce example sentence",
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
                             if (eg.sentenceUz.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "🇺🇿 ${eg.sentenceUz}",
                                     style = MaterialTheme.typography.bodySmall,
@@ -680,6 +742,7 @@ fun SenseCard(
                                 )
                             }
                             if (eg.sentenceRu.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "🇷🇺 ${eg.sentenceRu}",
                                     style = MaterialTheme.typography.bodySmall,

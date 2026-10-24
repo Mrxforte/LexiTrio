@@ -2,6 +2,7 @@ package com.example.ui.screens.vocabulary
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -129,15 +130,20 @@ fun FlashcardStudyScreen(
                     Text(
                         text = "SM-2 Flashcard mashqi",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -153,37 +159,47 @@ fun FlashcardStudyScreen(
             if (isCompleted || studyDeck.isEmpty() || currentCard == null) {
                 // Session Completed Screen
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(24.dp)
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        modifier = Modifier.fillMaxWidth(0.9f)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(72.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Mashq a’lo darajada yakunlandi!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "+$sessionXp XP to‘plandi! Barcha so‘zlar xotirangizda mustahkamlandi.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = onNavigateBack,
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.fillMaxWidth(0.7f)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(28.dp)
                         ) {
-                            Text("Bosh sahifaga qaytish")
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(68.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Mashq a’lo darajada yakunlandi!",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "+$sessionXp XP to‘plandi! Barcha so‘zlar xotirangizda mustahkamlandi.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Button(
+                                onClick = onNavigateBack,
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Bosh sahifaga qaytish", fontWeight = FontWeight.SemiBold)
+                            }
                         }
                     }
                 }
@@ -200,35 +216,42 @@ fun FlashcardStudyScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(
-                        text = "+$sessionXp XP",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "+$sessionXp XP",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 LinearProgressIndicator(
                     progress = { (currentIndex + 1).toFloat() / studyDeck.size },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp)
+                        .height(6.dp)
                         .clip(CircleShape),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
                 // Interactive 3D Flip Card
                 Card(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isFlipped) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
@@ -258,7 +281,8 @@ fun FlashcardStudyScreen(
                                     text = currentCard.headword,
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
 
                                 if (currentCard.phoneticIpa.isNotBlank()) {
@@ -321,8 +345,9 @@ fun FlashcardStudyScreen(
                                 if (currentCard.exampleSentence.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(14.dp))
                                     Surface(
-                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                        color = MaterialTheme.colorScheme.surface,
                                         shape = RoundedCornerShape(12.dp),
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
@@ -330,7 +355,8 @@ fun FlashcardStudyScreen(
                                             style = MaterialTheme.typography.bodySmall,
                                             fontStyle = FontStyle.Italic,
                                             textAlign = TextAlign.Center,
-                                            modifier = Modifier.padding(10.dp)
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(12.dp)
                                         )
                                     }
                                 }
@@ -341,12 +367,12 @@ fun FlashcardStudyScreen(
                                     onClick = { ttsManager.speak(currentCard.headword, currentCard.language) },
                                     modifier = Modifier
                                         .size(44.dp)
-                                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                         contentDescription = "Pronounce",
-                                        tint = MaterialTheme.colorScheme.primary
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
@@ -356,12 +382,15 @@ fun FlashcardStudyScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // SM-2 Self-Assessment Buttons (Active only when flipped, or tap to flip)
+                // SM-2 Self-Assessment Buttons
                 if (!isFlipped) {
                     Button(
                         onClick = { isFlipped = true },
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -404,7 +433,7 @@ fun FlashcardStudyScreen(
                         QualityButton(
                             label = "Yaxshi",
                             subtext = "+${currentCard.intervalDays + 2}k",
-                            color = Color(0xFF3B82F6),
+                            color = Color(0xFF1976D2),
                             onClick = { handleQualityRating(ReviewQuality.GOOD) },
                             modifier = Modifier.weight(1f)
                         )
@@ -440,7 +469,7 @@ fun QualityButton(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = label, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
-            Text(text = subtext, fontSize = 10.sp, color = Color.White.copy(alpha = 0.85f))
+            Text(text = subtext, fontSize = 10.sp, color = Color.White.copy(alpha = 0.9f))
         }
     }
 }

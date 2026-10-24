@@ -1,5 +1,6 @@
 package com.example.ui.screens.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,11 +21,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
@@ -56,7 +55,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -127,7 +125,7 @@ fun HomeScreen(
                         Text(
                             text = "LexiTrio",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -139,7 +137,7 @@ fun HomeScreen(
                                 text = "PRO",
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
@@ -181,8 +179,8 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 1. Search Bar & Ingestion Counter Banner
             item {
@@ -196,9 +194,9 @@ fun HomeScreen(
                             }
                         },
                         placeholder = when (preferences.appLanguage) {
-                            Language.ENGLISH -> "Search 100,000+ words, meanings, or translations..."
-                            Language.RUSSIAN -> "Поиск среди 100 000+ слов, значений и переводов..."
-                            else -> "100 000+ so‘z, ma’no va tarjimalarni qidiring..."
+                            Language.ENGLISH -> "Search 100,000+ words or translations..."
+                            Language.RUSSIAN -> "Поиск среди 100 000+ слов или переводов..."
+                            else -> "100 000+ so‘z yoki tarjimalarni qidiring..."
                         }
                     )
 
@@ -217,26 +215,27 @@ fun HomeScreen(
                     // Data Ingestion & Real Corpus Status Badge
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onNavigateToDataImport() }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.Download,
+                                    imageVector = Icons.Default.CloudDownload,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "$totalWordsCount ta tasdiqlangan lug‘at birligi mavjud",
+                                    text = "$totalWordsCount ta tasdiqlangan lug‘at birligi",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -297,8 +296,8 @@ fun HomeScreen(
                             title = "Lug‘at",
                             subtitle = "Keng qidiruv",
                             icon = Icons.Default.Book,
-                            containerColor = Color(0xFFEFF6FF),
-                            iconColor = Color(0xFF1D4ED8),
+                            iconContainerColor = Color(0xFFE3F2FD),
+                            iconColor = MaterialTheme.colorScheme.primary,
                             onClick = { onNavigateToSearch("", sourceLanguage?.code ?: "") },
                             modifier = Modifier.weight(1f)
                         )
@@ -306,8 +305,8 @@ fun HomeScreen(
                             title = "Flashcard",
                             subtitle = "SM-2 takrorlash",
                             icon = Icons.Default.Style,
-                            containerColor = Color(0xFFFEF3C7),
-                            iconColor = Color(0xFFB45309),
+                            iconContainerColor = Color(0xFFFEF3C7),
+                            iconColor = Color(0xFFD97706),
                             onClick = { onNavigateToFlashcards("due") },
                             modifier = Modifier.weight(1f)
                         )
@@ -320,8 +319,8 @@ fun HomeScreen(
                             title = "Suhbatlar",
                             subtitle = "15+ real dialog",
                             icon = Icons.Default.Chat,
-                            containerColor = Color(0xFFF0FDF4),
-                            iconColor = Color(0xFF15803D),
+                            iconContainerColor = Color(0xFFD1FAE5),
+                            iconColor = Color(0xFF059669),
                             onClick = onNavigateToConversations,
                             modifier = Modifier.weight(1f)
                         )
@@ -329,7 +328,7 @@ fun HomeScreen(
                             title = "Grammatika",
                             subtitle = "Uch til qoidalari",
                             icon = Icons.Default.Psychology,
-                            containerColor = Color(0xFFFAF5FF),
+                            iconContainerColor = Color(0xFFF3E8FF),
                             iconColor = Color(0xFF7E22CE),
                             onClick = onNavigateToGrammar,
                             modifier = Modifier.weight(1f)
@@ -343,8 +342,8 @@ fun HomeScreen(
                             title = "Test & Quiz",
                             subtitle = "7 ta rejim",
                             icon = Icons.Default.Quiz,
-                            containerColor = Color(0xFFFFF1F2),
-                            iconColor = Color(0xFFBE123C),
+                            iconContainerColor = Color(0xFFFEE2E2),
+                            iconColor = Color(0xFFDC2626),
                             onClick = onNavigateToQuiz,
                             modifier = Modifier.weight(1f)
                         )
@@ -352,8 +351,8 @@ fun HomeScreen(
                             title = "Mavzular",
                             subtitle = "30+ to‘plam",
                             icon = Icons.Default.School,
-                            containerColor = Color(0xFFECFEFF),
-                            iconColor = Color(0xFF0E7490),
+                            iconContainerColor = Color(0xFFCFFAFE),
+                            iconColor = Color(0xFF0891B2),
                             onClick = onNavigateToTopics,
                             modifier = Modifier.weight(1f)
                         )
@@ -381,7 +380,8 @@ fun HomeScreen(
                                 Text(
                                     text = "Oxirgi qidiruvlar",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             TextButton(
@@ -400,7 +400,8 @@ fun HomeScreen(
                             items(recentSearches.take(10)) { item ->
                                 Surface(
                                     shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                     modifier = Modifier.clickable {
                                         onNavigateToSearch(item.query, item.language)
                                     }
@@ -408,6 +409,7 @@ fun HomeScreen(
                                     Text(
                                         text = item.query,
                                         style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                     )
                                 }
@@ -429,7 +431,8 @@ fun HomeScreen(
                             Text(
                                 text = "Mavzuli lug‘at to‘plamlari",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             TextButton(onClick = onNavigateToTopics) {
                                 Text("Barchasi (${topics.size}) →", style = MaterialTheme.typography.labelSmall)
@@ -457,28 +460,29 @@ fun QuickActionCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    containerColor: Color,
+    iconContainerColor: Color,
     iconColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier.height(78.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(38.dp)
-                    .background(Color.White, CircleShape),
+                    .size(40.dp)
+                    .background(iconContainerColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -488,19 +492,18 @@ fun QuickActionCard(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    fontSize = 11.sp,
-                    color = Color(0xFF475569)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

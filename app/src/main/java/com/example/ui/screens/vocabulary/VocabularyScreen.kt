@@ -1,5 +1,6 @@
 package com.example.ui.screens.vocabulary
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -108,10 +110,11 @@ fun VocabularyScreen(
                     Text(
                         text = "Lug‘at boyligi (Vocabulary)",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         floatingActionButton = {
@@ -135,13 +138,16 @@ fun VocabularyScreen(
                         onNavigateToFlashcards(mode)
                     },
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                     modifier = Modifier.testTag("start_flashcards_button")
                 ) {
                     Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Flashcard bilan o‘rganish (${currentWordsList.size})")
+                    Text("Flashcard bilan o‘rganish (${currentWordsList.size})", fontWeight = FontWeight.SemiBold)
                 }
             }
         },
@@ -156,7 +162,9 @@ fun VocabularyScreen(
         ) {
             PrimaryTabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = MaterialTheme.colorScheme.background
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outline) }
             ) {
                 tabTitles.forEachIndexed { index, title ->
                     val count = when (index) {
@@ -169,10 +177,12 @@ fun VocabularyScreen(
                     Tab(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
+                        selectedContentColor = MaterialTheme.colorScheme.primary,
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         text = {
                             Text(
                                 text = "$title ($count)",
-                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
+                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium,
                                 maxLines = 1,
                                 fontSize = 12.sp
                             )
@@ -193,9 +203,10 @@ fun VocabularyScreen(
                     items(collections, key = { it.id }) { coll ->
                         Card(
                             onClick = { onNavigateToFlashcards("collection_${coll.id}") },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -220,9 +231,11 @@ fun VocabularyScreen(
                                     Text(
                                         text = coll.title,
                                         style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     if (coll.description.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(2.dp))
                                         Text(
                                             text = coll.description,
                                             style = MaterialTheme.typography.bodySmall,
@@ -250,7 +263,8 @@ fun VocabularyScreen(
                                 else -> "Lug‘atdan so‘zlarni saqlang."
                             },
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
@@ -292,7 +306,14 @@ fun VocabularyScreen(
     if (showCreateCollectionModal) {
         AlertDialog(
             onDismissRequest = { showCreateCollectionModal = false },
-            title = { Text("Yangi lug‘at to‘plami yaratish") },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    text = "Yangi lug‘at to‘plami yaratish",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
@@ -325,14 +346,15 @@ fun VocabularyScreen(
                                 snackbarHostState.showSnackbar("Yangi to‘plam yaratildi")
                             }
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Yaratish")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateCollectionModal = false }) {
-                    Text("Bekor qilish")
+                    Text("Bekor qilish", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -349,9 +371,10 @@ fun SavedWordRow(
 ) {
     Card(
         onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
@@ -364,7 +387,8 @@ fun SavedWordRow(
                     Text(
                         text = word.headword,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     PartOfSpeechChip(partOfSpeech = word.partOfSpeech)

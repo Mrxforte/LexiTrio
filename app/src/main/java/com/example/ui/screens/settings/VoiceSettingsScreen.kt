@@ -1,5 +1,6 @@
 package com.example.ui.screens.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,14 +26,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -79,15 +83,20 @@ fun VoiceSettingsScreen(
                     Text(
                         text = "Ovoz va talaffuz sozlamalari",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -104,20 +113,21 @@ fun VoiceSettingsScreen(
             // Speed Presets & Slider
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
                             text = "Nutq tezligi (Speech Speed): ${(speechRate * 100).toInt()}%",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Suggested presets
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -128,14 +138,25 @@ fun VoiceSettingsScreen(
                                 "Normal (1.0x)" to 1.0f,
                                 "Tez (1.15x)" to 1.15f
                             ).forEach { (label, rate) ->
+                                val isSelected = (speechRate - rate).let { it > -0.05f && it < 0.05f }
                                 FilterChip(
-                                    selected = (speechRate - rate).let { it > -0.05f && it < 0.05f },
+                                    selected = isSelected,
                                     onClick = {
                                         speechRate = rate
                                         ttsManager.setSpeechRate(rate)
                                         coroutineScope.launch { userPreferencesRepository.setSpeechRate(rate) }
                                     },
-                                    label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                                    label = { Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                    ),
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -153,6 +174,10 @@ fun VoiceSettingsScreen(
                                 coroutineScope.launch { userPreferencesRepository.setSpeechRate(speechRate) }
                             },
                             valueRange = 0.5f..1.5f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -162,16 +187,18 @@ fun VoiceSettingsScreen(
             // Pitch Slider
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
                             text = "Ovoz balandligi / Tembr (Pitch): ${(pitch * 100).toInt()}%",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -185,6 +212,10 @@ fun VoiceSettingsScreen(
                                 coroutineScope.launch { userPreferencesRepository.setSpeechPitch(pitch) }
                             },
                             valueRange = 0.6f..1.4f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -194,9 +225,10 @@ fun VoiceSettingsScreen(
             // Auto-play toggle
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -210,7 +242,8 @@ fun VoiceSettingsScreen(
                             Text(
                                 text = "So‘zni ochganda avtomatik talaffuz",
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "Batafsil sahifa ochilganda ovozli o‘qish",
@@ -224,7 +257,11 @@ fun VoiceSettingsScreen(
                             onCheckedChange = {
                                 autoPlay = it
                                 coroutineScope.launch { userPreferencesRepository.setAutoPlayAudio(it) }
-                            }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+                            )
                         )
                     }
                 }
@@ -233,16 +270,18 @@ fun VoiceSettingsScreen(
             // Test Speech Buttons
             item {
                 Card(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(
                             text = "Ovozni sinab ko‘rish:",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -255,9 +294,14 @@ fun VoiceSettingsScreen(
                                     ttsManager.speak("LexiTrio provides excellent linguistic pronunciation.", "en")
                                 },
                                 shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("🇬🇧 EN sinash")
+                                Text("🇬🇧 EN sinash", fontWeight = FontWeight.SemiBold)
                             }
 
                             Button(
@@ -265,9 +309,14 @@ fun VoiceSettingsScreen(
                                     ttsManager.speak("Добро пожаловать в трёхъязычный словарь LexiTrio.", "ru")
                                 },
                                 shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("🇷🇺 RU sinash")
+                                Text("🇷🇺 RU sinash", fontWeight = FontWeight.SemiBold)
                             }
 
                             Button(
@@ -275,9 +324,14 @@ fun VoiceSettingsScreen(
                                     ttsManager.speak("LexiTrio uch tilli lug‘atiga xush kelibsiz.", "uz")
                                 },
                                 shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("🇺🇿 UZ sinash")
+                                Text("🇺🇿 UZ sinash", fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -289,7 +343,8 @@ fun VoiceSettingsScreen(
                 Text(
                     text = "Qurilmangizdagi mavjud TTS ovozlari (${availableVoices.size}):",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -313,6 +368,11 @@ fun VoiceSettingsScreen(
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                         ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -326,7 +386,8 @@ fun VoiceSettingsScreen(
                                 Text(
                                     text = voice.name,
                                     style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "${voice.locale.displayName} • Sifat: ${voice.quality}",

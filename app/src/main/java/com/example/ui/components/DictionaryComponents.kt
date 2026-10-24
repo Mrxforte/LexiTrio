@@ -1,6 +1,6 @@
 package com.example.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,16 +16,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +58,13 @@ fun DictionarySearchBar(
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium) },
+        placeholder = {
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -89,7 +92,9 @@ fun DictionarySearchBar(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -107,19 +112,20 @@ fun LanguageDirectionSelector(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             // Source Language Button
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .clickable {
                         val next = when (selectedSource) {
                             Language.ENGLISH -> Language.RUSSIAN
@@ -162,7 +168,7 @@ fun LanguageDirectionSelector(
             // Target Language Indicator
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .clickable {
                         val next = when (selectedTarget) {
                             Language.UZBEK_LATIN -> Language.RUSSIAN
@@ -204,7 +210,8 @@ fun WordEntryCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier
             .fillMaxWidth()
             .testTag("word_entry_card_${entry.id}")
@@ -215,7 +222,10 @@ fun WordEntryCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = entry.headword,
                         style = MaterialTheme.typography.titleLarge,
@@ -230,51 +240,54 @@ fun WordEntryCard(
                     IconButton(
                         onClick = { onAudioClick(1.0f) },
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(36.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f), CircleShape)
                             .testTag("audio_button_${entry.id}")
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = "Pronounce word",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(4.dp))
 
                     IconButton(
                         onClick = onFavoriteToggle,
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(36.dp)
                             .testTag("favorite_button_${entry.id}")
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Star else Icons.Outlined.StarBorder,
                             contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                            tint = if (isFavorite) Color(0xFFEAB308) else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(22.dp)
+                            tint = if (isFavorite) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
             if (entry.phoneticIpa.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = entry.phoneticIpa,
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Primary translations preview
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (entry.primaryMeaningUz.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         LanguageBadge(lang = "uz", text = "UZ")
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = entry.primaryMeaningUz,
                             style = MaterialTheme.typography.bodyMedium,
@@ -287,7 +300,7 @@ fun WordEntryCard(
                 if (entry.primaryMeaningRu.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         LanguageBadge(lang = "ru", text = "RU")
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = entry.primaryMeaningRu,
                             style = MaterialTheme.typography.bodyMedium,
@@ -299,7 +312,7 @@ fun WordEntryCard(
                 if (entry.language != "en" && entry.primaryMeaningEn.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         LanguageBadge(lang = "en", text = "EN")
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = entry.primaryMeaningEn,
                             style = MaterialTheme.typography.bodyMedium,
@@ -315,11 +328,11 @@ fun WordEntryCard(
 @Composable
 fun PartOfSpeechChip(partOfSpeech: String, modifier: Modifier = Modifier) {
     val (bg, fg) = when (partOfSpeech.lowercase()) {
-        "verb" -> Color(0xFFEFF6FF) to Color(0xFF1D4ED8)
-        "noun" -> Color(0xFFF0FDF4) to Color(0xFF15803D)
-        "adjective" -> Color(0xFFFFFBEB) to Color(0xFFB45309)
+        "verb" -> Color(0xFFEFF6FF) to Color(0xFF1976D2)
+        "noun" -> Color(0xFFF0FDF4) to Color(0xFF059669)
+        "adjective" -> Color(0xFFFFFBEB) to Color(0xFFD97706)
         "adverb" -> Color(0xFFFAF5FF) to Color(0xFF7E22CE)
-        "idiom" -> Color(0xFFFFF1F2) to Color(0xFFBE123C)
+        "idiom" -> Color(0xFFFFF1F2) to Color(0xFFE11D48)
         else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -332,8 +345,8 @@ fun PartOfSpeechChip(partOfSpeech: String, modifier: Modifier = Modifier) {
             text = partOfSpeech.lowercase(),
             color = fg,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
         )
     }
 }
@@ -348,7 +361,7 @@ fun LanguageBadge(lang: String, text: String, modifier: Modifier = Modifier) {
     }
 
     Surface(
-        color = color.copy(alpha = 0.12f),
+        color = color.copy(alpha = 0.1f),
         shape = RoundedCornerShape(6.dp),
         modifier = modifier
     ) {
@@ -356,9 +369,9 @@ fun LanguageBadge(lang: String, text: String, modifier: Modifier = Modifier) {
             text = text,
             color = color,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
     }
 }

@@ -1,6 +1,7 @@
 package com.example.ui.screens.conversation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -84,21 +86,32 @@ fun ConversationDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(conversation?.getTitle(preferences.appLanguage) ?: "Suhbat") },
+                title = {
+                    Text(
+                        text = conversation?.getTitle(preferences.appLanguage) ?: "Suhbat",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { showTranslations = !showTranslations }) {
                         Icon(
                             imageVector = if (showTranslations) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle translations"
+                            contentDescription = "Toggle translations",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -106,7 +119,7 @@ fun ConversationDetailScreen(
     ) { innerPadding ->
         if (conversation == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             val conv = conversation!!
@@ -121,9 +134,10 @@ fun ConversationDetailScreen(
                 // Header Situation Box
                 item {
                     Card(
-                        shape = RoundedCornerShape(18.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(18.dp)) {
@@ -152,12 +166,13 @@ fun ConversationDetailScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
                             Text(
                                 text = conv.getTitle(preferences.appLanguage),
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             Spacer(modifier = Modifier.height(6.dp))
@@ -175,15 +190,18 @@ fun ConversationDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "Tarjimalarni ko‘rsatish",
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                }
+                                Text(
+                                    text = "Tarjimalarni ko‘rsatish",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                                 Switch(
                                     checked = showTranslations,
-                                    onCheckedChange = { showTranslations = it }
+                                    onCheckedChange = { showTranslations = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 )
                             }
                         }
@@ -194,7 +212,8 @@ fun ConversationDetailScreen(
                     Text(
                         text = "Dialog satrlari (${turns.size}):",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -227,13 +246,14 @@ fun ConversationTurnBubble(
     val bubbleColor = if (turn.isSpeakerOne) {
         MaterialTheme.colorScheme.surface
     } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        MaterialTheme.colorScheme.surfaceVariant
     }
 
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = bubbleColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -247,7 +267,7 @@ fun ConversationTurnBubble(
                         modifier = Modifier
                             .size(30.dp)
                             .background(
-                                if (turn.isSpeakerOne) Color(0xFF1E3A8A) else Color(0xFF0D9488),
+                                if (turn.isSpeakerOne) Color(0xFF1976D2) else Color(0xFF0D9488),
                                 CircleShape
                             ),
                         contentAlignment = Alignment.Center
@@ -263,7 +283,8 @@ fun ConversationTurnBubble(
                     Text(
                         text = turn.speakerRole,
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 

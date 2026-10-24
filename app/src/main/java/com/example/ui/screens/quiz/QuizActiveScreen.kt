@@ -1,6 +1,7 @@
 package com.example.ui.screens.quiz
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -102,7 +103,6 @@ fun QuizActiveScreen(
     }
 
     LaunchedEffect(currentQuestion) {
-        // Auto-play audio if prompt audio is provided and question is listening type
         if (currentQuestion != null && currentQuestion.type == QuizType.LISTENING_CHALLENGE) {
             delay(300)
             ttsManager.speak(currentQuestion.promptAudioText, currentQuestion.promptLanguage)
@@ -115,7 +115,6 @@ fun QuizActiveScreen(
             selectedOption = null
             isAnswerSubmitted = false
         } else {
-            // Quiz finished
             val elapsedSec = ((System.currentTimeMillis() - startTime) / 1000).toInt()
             val xpEarned = correctCount * 15
             coroutineScope.launch {
@@ -138,15 +137,20 @@ fun QuizActiveScreen(
                     Text(
                         text = "Savol ${currentIndex + 1} / ${questions.size.coerceAtLeast(1)}",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -154,11 +158,15 @@ fun QuizActiveScreen(
     ) { innerPadding ->
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else if (questions.isEmpty() || currentQuestion == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Savollar topilmadi", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = "Savollar topilmadi",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
             Column(
@@ -172,19 +180,20 @@ fun QuizActiveScreen(
                     progress = { (currentIndex + 1).toFloat() / questions.size },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp)
+                        .height(6.dp)
                         .clip(CircleShape),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
                 // Question Card
                 Card(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -210,7 +219,8 @@ fun QuizActiveScreen(
                             text = currentQuestion.questionText,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         if (currentQuestion.promptAudioText.isNotBlank()) {
@@ -235,7 +245,7 @@ fun QuizActiveScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
                 // Options List
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -243,14 +253,34 @@ fun QuizActiveScreen(
                         val isSelected = selectedOption == option
                         val isCorrect = option == currentQuestion.correctAnswer
 
-                        val (containerColor, contentColor) = when {
+                        val (containerColor, contentColor, borderColor) = when {
                             !isAnswerSubmitted -> {
-                                if (isSelected) MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurface
+                                if (isSelected) Triple(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    MaterialTheme.colorScheme.onPrimaryContainer,
+                                    MaterialTheme.colorScheme.primary
+                                )
+                                else Triple(
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.onSurface,
+                                    MaterialTheme.colorScheme.outline
+                                )
                             }
-                            isCorrect -> Color(0xFFD1FAE5) to Color(0xFF065F46) // Green
-                            isSelected -> Color(0xFFFEE2E2) to Color(0xFF991B1B) // Red
-                            else -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurfaceVariant
+                            isCorrect -> Triple(
+                                Color(0xFFD1FAE5),
+                                Color(0xFF065F46),
+                                Color(0xFF10B981)
+                            )
+                            isSelected -> Triple(
+                                Color(0xFFFEE2E2),
+                                Color(0xFF991B1B),
+                                Color(0xFFEF4444)
+                            )
+                            else -> Triple(
+                                MaterialTheme.colorScheme.surface,
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                MaterialTheme.colorScheme.outline
+                            )
                         }
 
                         Card(
@@ -265,7 +295,8 @@ fun QuizActiveScreen(
                             },
                             shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(containerColor = containerColor),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            border = BorderStroke(1.dp, borderColor),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("quiz_option_${option.hashCode()}")
@@ -310,13 +341,15 @@ fun QuizActiveScreen(
                     Column(modifier = Modifier.padding(top = 16.dp)) {
                         if (currentQuestion.explanation.isNotBlank()) {
                             Surface(
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
                                 shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
                                     text = "💡 Izoh: ${currentQuestion.explanation}",
                                     style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.padding(12.dp)
                                 )
                             }
@@ -326,7 +359,11 @@ fun QuizActiveScreen(
                         Button(
                             onClick = { handleNextQuestion() },
                             shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
