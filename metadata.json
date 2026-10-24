@@ -1,0 +1,6 @@
+{
+  "name": "LexiTrio",
+  "description": "Trilingual English, Russian, and Uzbek dictionary, vocabulary trainer, spaced repetition flashcards, and conversation master.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
