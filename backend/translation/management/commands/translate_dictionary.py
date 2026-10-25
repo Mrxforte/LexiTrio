@@ -1,5 +1,6 @@
 import time
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from translation.services.backfill import backfill_entries
@@ -19,7 +20,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--languages", default="ru,uz")
         parser.add_argument("--limit", type=int, default=0, help="0 = hammasi.")
-        parser.add_argument("--page-size", type=int, default=50)
+        parser.add_argument(
+            "--page-size",
+            type=int,
+            default=0,
+            help="Bir sahifada ishlanadigan yozuvlar soni (0 = parallelikka moslash).",
+        )
         parser.add_argument("--batch-size", type=int, default=None)
         parser.add_argument("--start-id", type=int, default=0)
         parser.add_argument(
@@ -44,8 +50,12 @@ class Command(BaseCommand):
         only_missing = not options["overwrite"]
         remaining = max(0, options["limit"])
         cursor = max(0, options["start_id"])
-        page_size = max(1, options["page_size"])
         batch_size = options["batch_size"]
+        # A page must be wide enough to keep every worker busy; otherwise the
+        # page boundary serialises the parallel batches.
+        effective_batch = batch_size or getattr(settings, "TRANSLATION_BATCH_SIZE", 6)
+        concurrency = max(1, int(getattr(settings, "TRANSLATION_CONCURRENCY", 1)))
+        page_size = options["page_size"] or max(50, int(effective_batch) * concurrency * 2)
         dry_run = options["dry_run"]
         pause = max(0.0, options["sleep"])
 
