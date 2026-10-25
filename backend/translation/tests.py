@@ -295,6 +295,49 @@ class FreedictParseTests(SimpleTestCase):
         self.assertIsNone(entry)
 
 
+class BatchResilienceTests(APITestCase):
+    def _single_item_builder(self, bad_marker: str):
+        def builder(user_prompt: str) -> str:
+            items = json.loads(user_prompt.split("Items:", 1)[1])
+            if len(items) > 1:
+                return bad_marker
+            source = items[0].get("text") or items[0].get("headword") or ""
+            return json.dumps(
+                {
+                    "translations": [
+                        {"index": 0, "ru": f"ru:{source}", "uz": f"uz:{source}"}
+                    ]
+                }
+            )
+
+        return builder
+
+    def test_malformed_json_splits_the_batch_and_still_translates(self):
+        client = FakeClient(self._single_item_builder("not json at all"))
+
+        records, _, warnings = translate_items(
+            ["alpha", "beta", "gamma", "delta"], client=client, batch_size=4
+        )
+
+        self.assertEqual(
+            [record["ru"] for record in records],
+            ["ru:alpha", "ru:beta", "ru:gamma", "ru:delta"],
+        )
+        self.assertTrue(warnings)
+
+    @override_settings(TRANSLATION_CONCURRENCY=4)
+    def test_concurrent_requests_keep_the_input_order(self):
+        client = FakeClient()
+
+        records, _, warnings = translate_items(
+            ["one", "two", "three", "four", "five"], client=client, batch_size=2
+        )
+
+        self.assertEqual([record["source"] for record in records], ["one", "two", "three", "four", "five"])
+        self.assertEqual([record["index"] for record in records], [0, 1, 2, 3, 4])
+        self.assertEqual(warnings, [])
+
+
 class TextTranslationApiTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(

@@ -183,6 +183,7 @@ OPENAI_TIMEOUT = float(os.environ.get("OPENAI_TIMEOUT", "90"))
 OPENAI_MAX_RETRIES = int(os.environ.get("OPENAI_MAX_RETRIES", "2"))
 OPENAI_MAX_BACKOFF = float(os.environ.get("OPENAI_MAX_BACKOFF", "60"))
 OPENAI_MIN_INTERVAL = float(os.environ.get("OPENAI_MIN_INTERVAL", "0"))
+TRANSLATION_CONCURRENCY = int(os.environ.get("TRANSLATION_CONCURRENCY", "1"))
 OPENAI_TEMPERATURE = float(os.environ.get("OPENAI_TEMPERATURE", "0.2"))
 OPENAI_MAX_OUTPUT_TOKENS = int(os.environ.get("OPENAI_MAX_OUTPUT_TOKENS", "8192"))
 TRANSLATION_JSON_MODE = os.environ.get("TRANSLATION_JSON_MODE", "true").lower() == "true"

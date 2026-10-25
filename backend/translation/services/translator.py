@@ -279,33 +279,21 @@ def _translate_batches(
     )
 
     queue = [list(payloads[start : start + step]) for start in range(0, len(payloads), step)]
+    concurrency = max(1, int(getattr(settings, "TRANSLATION_CONCURRENCY", 1) or 1))
 
-    while queue:
-        group = queue.pop(0)
+    def submit_group(group: list[dict]) -> tuple[list[dict], ChatResult]:
         local = [
             {"index": local_index, **{k: v for k, v in item.items() if k != "index"}}
             for local_index, item in enumerate(group)
         ]
-        try:
-            result: ChatResult = client.complete(
-                system_prompt=system_prompt,
-                user_prompt=build_prompt(local, languages),
-            )
-            batch_records = parse_payload(result.content, len(local), languages)
-        except TranslationNotConfigured:
-            raise
-        except TranslationParseError as exc:
-            # Gemini and friends can truncate long JSON, so retry in halves.
-            if len(group) > 1:
-                middle = len(group) // 2
-                queue.insert(0, group[:middle])
-                queue.insert(1 if middle else 0, group[middle:])
-                warnings.append(f"{len(group)} element bo'laklarga bo'lindi: {exc}")
-                continue
-            warnings.append(f"{group[0].get('index')}-element tarjima qilinmadi: {exc}")
-            parsed_by_index[group[0].get("index", 0)] = dict(fallback)
-            continue
+        result = client.complete(
+            system_prompt=system_prompt,
+            user_prompt=build_prompt(local, languages),
+        )
+        return parse_payload(result.content, len(local), languages), result
 
+    def handle(group, batch_records, result) -> None:
+        nonlocal model
         model = result.model or model
         for position, parsed in enumerate(batch_records):
             original_index = group[position].get("index", position)
@@ -315,6 +303,48 @@ def _translate_batches(
                     warnings.append(
                         f"{original_index}-element uchun '{language}' tarjimasi bo'sh qaytdi."
                     )
+
+    def retry_later(group, exc) -> None:
+        if len(group) > 1:
+            middle = len(group) // 2
+            pending.append(group[:middle])
+            pending.append(group[middle:])
+            warnings.append(f"{len(group)} element bo'laklarga bo'lindi: {exc}")
+            return
+        warnings.append(f"{group[0].get('index')}-element tarjima qilinmadi: {exc}")
+        parsed_by_index[group[0].get("index", 0)] = dict(fallback)
+
+    pending: list[list[dict]] = list(queue)
+
+    if concurrency == 1:
+        while pending:
+            group = pending.pop(0)
+            try:
+                batch_records, result = submit_group(group)
+            except TranslationNotConfigured:
+                raise
+            except TranslationParseError as exc:
+                retry_later(group, exc)
+                continue
+            handle(group, batch_records, result)
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+
+        while pending:
+            wave = pending[:concurrency]
+            del pending[:concurrency]
+            with ThreadPoolExecutor(max_workers=len(wave)) as pool:
+                futures = {pool.submit(submit_group, group): group for group in wave}
+                for future in futures:
+                    group = futures[future]
+                    try:
+                        batch_records, result = future.result()
+                    except TranslationNotConfigured:
+                        raise
+                    except TranslationParseError as exc:
+                        retry_later(group, exc)
+                        continue
+                    handle(group, batch_records, result)
 
     records: list[dict] = []
     for payload in payloads:
