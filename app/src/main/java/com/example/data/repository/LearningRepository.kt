@@ -78,7 +78,8 @@ class LearningRepository(
         val updated = current.copy(
             xp = current.xp + xpGain,
             todayWordsReviewed = current.todayWordsReviewed + wordsReviewedDelta,
-            totalQuizzesCompleted = if (isQuiz) current.totalQuizzesCompleted + 1 else current.totalQuizzesCompleted
+            totalQuizzesCompleted = if (isQuiz) current.totalQuizzesCompleted + 1 else current.totalQuizzesCompleted,
+            updatedAt = System.currentTimeMillis()
         )
         quizDao.insertOrUpdateProgress(updated)
     }

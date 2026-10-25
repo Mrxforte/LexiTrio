@@ -3,6 +3,8 @@ package com.example.data.model
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
+import java.util.UUID
 
 enum class LearningStatus {
     NEW,
@@ -32,6 +34,8 @@ enum class ReviewQuality(val grade: Int, val labelEn: String, val labelRu: Strin
 data class SavedWordEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    @ColumnInfo(defaultValue = "''")
+    val clientId: String = UUID.randomUUID().toString(),
     val entryId: Long = 0,
     val headword: String,
     val language: String = "en",
@@ -51,7 +55,9 @@ data class SavedWordEntity(
     val easeFactor: Float = 2.5f,
     val nextReviewTimestamp: Long = System.currentTimeMillis(),
     val lastReviewTimestamp: Long = 0L,
-    val lapsesCount: Int = 0
+    val lapsesCount: Int = 0,
+    @ColumnInfo(defaultValue = "0")
+    val updatedAt: Long = System.currentTimeMillis()
 ) {
     /**
      * Calculates the next review schedule using the SuperMemo SM-2 algorithm.
@@ -98,7 +104,8 @@ data class SavedWordEntity(
             nextReviewTimestamp = nextTimestamp,
             lastReviewTimestamp = now,
             lapsesCount = newLapses,
-            status = newStatus
+            status = newStatus,
+            updatedAt = now
         )
     }
 }
@@ -107,9 +114,13 @@ data class SavedWordEntity(
 data class VocabularyCollectionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    @ColumnInfo(defaultValue = "''")
+    val clientId: String = UUID.randomUUID().toString(),
     val title: String,
     val description: String = "",
     val iconName: String = "folder",
     val isCustom: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "0")
+    val updatedAt: Long = System.currentTimeMillis()
 )

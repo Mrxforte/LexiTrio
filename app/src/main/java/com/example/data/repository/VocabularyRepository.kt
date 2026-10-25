@@ -35,7 +35,8 @@ class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
             val updated = existing.copy(
                 collectionId = collectionId,
                 notes = if (notes.isNotBlank()) notes else existing.notes,
-                isFavorite = isFavorite || existing.isFavorite
+                isFavorite = isFavorite || existing.isFavorite,
+                updatedAt = System.currentTimeMillis()
             )
             vocabularyDao.updateSavedWord(updated)
             return existing.id
@@ -63,7 +64,11 @@ class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
     }
 
     suspend fun toggleFavorite(savedWord: SavedWordEntity) {
-        vocabularyDao.setFavorite(savedWord.id, !savedWord.isFavorite)
+        vocabularyDao.setFavorite(
+            savedWord.id,
+            !savedWord.isFavorite,
+            System.currentTimeMillis()
+        )
     }
 
     suspend fun processReview(savedWord: SavedWordEntity, quality: ReviewQuality): SavedWordEntity {
@@ -72,7 +77,7 @@ class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
         return updated
     }
 
-    suspend fun deleteSavedWord(id: Long) = vocabularyDao.deleteSavedWord(id)
+    suspend fun deleteSavedWord(id: Long) = vocabularyDao.deleteSavedWordAndRecord(id)
 
     suspend fun createCollection(title: String, description: String, icon: String = "folder"): Long {
         return vocabularyDao.insertCollection(

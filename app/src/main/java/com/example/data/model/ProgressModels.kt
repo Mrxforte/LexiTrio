@@ -1,6 +1,7 @@
 package com.example.data.model
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "search_history")
@@ -23,7 +24,9 @@ data class UserProgressEntity(
     val todayWordsReviewed: Int = 4,
     val wordsMasteredCount: Int = 28,
     val totalQuizzesCompleted: Int = 5,
-    val totalMinutesListened: Int = 22
+    val totalMinutesListened: Int = 22,
+    @ColumnInfo(defaultValue = "0")
+    val updatedAt: Long = System.currentTimeMillis()
 ) {
     val level: Int
         get() = (xp / 100) + 1

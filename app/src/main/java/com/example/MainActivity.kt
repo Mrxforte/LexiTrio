@@ -37,6 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.data.database.LexiTrioDatabase
+import com.example.data.cloud.SyncScheduler
 import com.example.data.importer.DictionaryImportManager
 import com.example.data.model.Language
 import com.example.data.preferences.AppPreferences
@@ -58,6 +59,7 @@ import com.example.ui.screens.quiz.QuizActiveScreen
 import com.example.ui.screens.quiz.QuizResultScreen
 import com.example.ui.screens.quiz.QuizSetupScreen
 import com.example.ui.screens.settings.AppSettingsScreen
+import com.example.presentation.cloud.CloudSyncScreen
 import com.example.ui.screens.settings.DataImportScreen
 import com.example.ui.screens.settings.VoiceSettingsScreen
 import com.example.ui.screens.topics.TopicDetailScreen
@@ -73,6 +75,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        SyncScheduler.schedule(applicationContext)
 
         val database = LexiTrioDatabase.getInstance(this)
         val dictionaryRepository = DictionaryRepository(database.dictionaryDao())
@@ -492,8 +495,13 @@ fun MainAppContent(
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },
-                    onNavigateToDataImport = { navController.navigate(Screen.DataImport.route) }
+                    onNavigateToDataImport = { navController.navigate(Screen.DataImport.route) },
+                    onNavigateToCloudSync = { navController.navigate(Screen.CloudSync.route) }
                 )
+            }
+
+            composable(Screen.CloudSync.route) {
+                CloudSyncScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }

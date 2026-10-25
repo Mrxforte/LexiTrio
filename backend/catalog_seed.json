@@ -1,0 +1,2226 @@
+{
+  "dictionary_entries": [
+    {
+      "id": 1,
+      "headword": "acquire",
+      "headwordNormalized": "acquire",
+      "language": "en",
+      "phoneticIpa": "/əˈkwaɪər/",
+      "partOfSpeech": "verb",
+      "cefrLevel": "B2",
+      "frequencyRank": 950,
+      "lemma": "acquire",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "to buy or obtain an asset or object; to gain knowledge or skill",
+      "primaryMeaningRu": "приобретать, получать, овладевать",
+      "primaryMeaningUz": "egallamoq, qo‘lga kiritmoq, o‘zlashtirmoq"
+    },
+    {
+      "id": 2,
+      "headword": "resilience",
+      "headwordNormalized": "resilience",
+      "language": "en",
+      "phoneticIpa": "/rɪˈzɪliəns/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "B2",
+      "frequencyRank": 880,
+      "lemma": "resilience",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "the capacity to withstand or recover quickly from difficulties",
+      "primaryMeaningRu": "стойкость, устойчивость, жизнестойкость",
+      "primaryMeaningUz": "bardoshlilik, chidamlilik, matonat"
+    },
+    {
+      "id": 3,
+      "headword": "eloquent",
+      "headwordNormalized": "eloquent",
+      "language": "en",
+      "phoneticIpa": "/ˈeləkwənt/",
+      "partOfSpeech": "adjective",
+      "cefrLevel": "C1",
+      "frequencyRank": 720,
+      "lemma": "eloquent",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "fluent or persuasive in speaking or writing",
+      "primaryMeaningRu": "красноречивый, выразительный, убедительный",
+      "primaryMeaningUz": "notiqlik qobiliyatiga ega, fasih, chechan"
+    },
+    {
+      "id": 4,
+      "headword": "comprehend",
+      "headwordNormalized": "comprehend",
+      "language": "en",
+      "phoneticIpa": "/ˌkɒmprɪˈhend/",
+      "partOfSpeech": "verb",
+      "cefrLevel": "B2",
+      "frequencyRank": 850,
+      "lemma": "comprehend",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "to grasp mentally; understand thoroughly",
+      "primaryMeaningRu": "постигать, понимать, осознавать",
+      "primaryMeaningUz": "anglamoq, tushunmoq, idrok etmoq"
+    },
+    {
+      "id": 5,
+      "headword": "hospitality",
+      "headwordNormalized": "hospitality",
+      "language": "en",
+      "phoneticIpa": "/ˌhɒspɪˈtæləti/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "B1",
+      "frequencyRank": 620,
+      "lemma": "hospitality",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "friendly and generous reception and entertainment of guests",
+      "primaryMeaningRu": "гостеприимство, радушие",
+      "primaryMeaningUz": "mehmonnavozlik, mehmondo‘stlik"
+    },
+    {
+      "id": 6,
+      "headword": "развивать",
+      "headwordNormalized": "развивать",
+      "language": "ru",
+      "phoneticIpa": "/rəzvʲɪˈvatʲ/",
+      "partOfSpeech": "verb",
+      "cefrLevel": "B1",
+      "frequencyRank": 920,
+      "lemma": "развивать",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "to develop, expand, improve",
+      "primaryMeaningRu": "способствовать росту, совершенствовать, расширять",
+      "primaryMeaningUz": "rivojlantirmoq, taraqqiy ettirmoq, o‘stirmoq"
+    },
+    {
+      "id": 7,
+      "headword": "мудрость",
+      "headwordNormalized": "мудрость",
+      "language": "ru",
+      "phoneticIpa": "/ˈmudrəsʲtʲ/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "B2",
+      "frequencyRank": 650,
+      "lemma": "мудрость",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "wisdom, sagacity, deep understanding",
+      "primaryMeaningRu": "глубокий ум, опирающийся на жизненный опыт",
+      "primaryMeaningUz": "donolik, donishmandlik, hikmat"
+    },
+    {
+      "id": 8,
+      "headword": "tilshunoslik",
+      "headwordNormalized": "tilshunoslik",
+      "language": "uz",
+      "phoneticIpa": "/tɪlʃʊnɒsˈlɪk/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "B2",
+      "frequencyRank": 780,
+      "lemma": "tilshunoslik",
+      "alternativeSpellings": "уймшвоптмйл",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "linguistics, the scientific study of language",
+      "primaryMeaningRu": "лингвистика, языкознание",
+      "primaryMeaningUz": "tilning tuzilishi va qonuniyatlarini o‘rganuvchi fan"
+    },
+    {
+      "id": 9,
+      "headword": "ilhom",
+      "headwordNormalized": "ilhom",
+      "language": "uz",
+      "phoneticIpa": "/ɪlˈhɒm/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "B1",
+      "frequencyRank": 690,
+      "lemma": "ilhom",
+      "alternativeSpellings": "ймипн",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "inspiration, creative impulse",
+      "primaryMeaningRu": "вдохновение, творческий порыв",
+      "primaryMeaningUz": "ijodiy ko‘tarinkilik holati, ilhombaxsh tuyg‘u"
+    },
+    {
+      "id": 10,
+      "headword": "serendipity",
+      "headwordNormalized": "serendipity",
+      "language": "en",
+      "phoneticIpa": "/ˌserənˈdɪpəti/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "C2",
+      "frequencyRank": 520,
+      "lemma": "serendipity",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "the occurrence of events by chance in a happy or beneficial way",
+      "primaryMeaningRu": "счастливая случайность, интуитивная прозорливость",
+      "primaryMeaningUz": "baxtli tasodif, kutilmagan yoqimli topilma"
+    },
+    {
+      "id": 11,
+      "headword": "diligent",
+      "headwordNormalized": "diligent",
+      "language": "en",
+      "phoneticIpa": "/ˈdɪlɪdʒənt/",
+      "partOfSpeech": "adjective",
+      "cefrLevel": "B2",
+      "frequencyRank": 760,
+      "lemma": "diligent",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "having or showing care and conscientiousness in one's work",
+      "primaryMeaningRu": "прилежный, старательный, усердный",
+      "primaryMeaningUz": "tirishqoq, tirishqoqlik bilan ishlaydigan, g‘ayratli"
+    },
+    {
+      "id": 12,
+      "headword": "samimiyat",
+      "headwordNormalized": "samimiyat",
+      "language": "uz",
+      "phoneticIpa": "/sæmɪmɪˈjæt/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "B1",
+      "frequencyRank": 830,
+      "lemma": "samimiyat",
+      "alternativeSpellings": "танйнйяу",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "sincerity, genuineness, warmth",
+      "primaryMeaningRu": "искренность, душевность, чистосердечие",
+      "primaryMeaningUz": "chin dildan bo‘lgan munosabat, soxtalikdan xolilik"
+    },
+    {
+      "id": 13,
+      "headword": "созидание",
+      "headwordNormalized": "созидание",
+      "language": "ru",
+      "phoneticIpa": "/səzʲɪˈdanʲɪje/",
+      "partOfSpeech": "noun",
+      "cefrLevel": "C1",
+      "frequencyRank": 540,
+      "lemma": "созидание",
+      "alternativeSpellings": "",
+      "transliteration": "",
+      "etymology": "",
+      "verified": 1,
+      "source": "LexiTrio Core Corpus",
+      "primaryMeaningEn": "creation, constructive work, building",
+      "primaryMeaningRu": "творческий созидательный процесс, творение нового",
+      "primaryMeaningUz": "bunyodkorlik, yaratuvchanlik, ijod"
+    }
+  ],
+  "word_meanings": [
+    {
+      "id": 1,
+      "entryId": 1,
+      "senseNumber": 1,
+      "definitionEn": "To gain or obtain something through effort, experience, or purchase.",
+      "definitionRu": "Получить или обрести что-либо благодаря усилиям, опыту или покупке.",
+      "definitionUz": "Harakat, tajriba yoki xarid orqali biror narsaga ega bo‘lmoq.",
+      "register": "formal",
+      "grammarNotes": "Transitive verb [T]"
+    },
+    {
+      "id": 2,
+      "entryId": 2,
+      "senseNumber": 1,
+      "definitionEn": "The ability of people or things to recover quickly after something unpleasant, such as shock or injury.",
+      "definitionRu": "Способность быстро восстанавливать силы после потрясений, трудностей или травм.",
+      "definitionUz": "Qiyinchilik, sinov yoki jarohatlardan so‘ng tezda o‘zini tiklay olish qobiliyati.",
+      "register": "general",
+      "grammarNotes": "Uncountable noun [U]"
+    },
+    {
+      "id": 3,
+      "entryId": 3,
+      "senseNumber": 1,
+      "definitionEn": "Giving a clear, strong message; able to express ideas well in speech or writing.",
+      "definitionRu": "Умеющий четко и красиво излагать мысли в устной или письменной форме.",
+      "definitionUz": "O‘z fikrlarini og‘zaki yoki yozma ravishda chiroyli va ta’sirchan bayon qila oladigan.",
+      "register": "formal",
+      "grammarNotes": "Descriptive adjective"
+    },
+    {
+      "id": 4,
+      "entryId": 4,
+      "senseNumber": 1,
+      "definitionEn": "To understand fully the nature or meaning of something.",
+      "definitionRu": "Полностью понять сущность или значение чего-либо.",
+      "definitionUz": "Biror narsaning mohiyatini chuqur tushunib yetmoq.",
+      "register": "general",
+      "grammarNotes": "Transitive [T], often with negative verbs"
+    },
+    {
+      "id": 5,
+      "entryId": 5,
+      "senseNumber": 1,
+      "definitionEn": "The friendly and welcoming behavior shown towards guests or visitors.",
+      "definitionRu": "Дружелюбный и радушный прием гостей или посетителей.",
+      "definitionUz": "Mehmonlarga ko‘rsatiladigan samimiy va saxiy munosabat.",
+      "register": "general",
+      "grammarNotes": "Uncountable noun [U]"
+    },
+    {
+      "id": 6,
+      "entryId": 6,
+      "senseNumber": 1,
+      "definitionEn": "To cause something to grow, mature, or become more advanced.",
+      "definitionRu": "Доводить до более высокой ступени зрелости, совершенства.",
+      "definitionUz": "Biror narsani yanada yuqori, mukammal darajaga yetkazmoq.",
+      "register": "general",
+      "grammarNotes": "Глагол несовершенного вида, переходный"
+    },
+    {
+      "id": 7,
+      "entryId": 7,
+      "senseNumber": 1,
+      "definitionEn": "The quality of having experience, knowledge, and good judgment.",
+      "definitionRu": "Глубокий ум, способность находить верные решения на основе опыта.",
+      "definitionUz": "Hayotiy tajriba va teran aqlga tayangan yuksak fahm-farosat.",
+      "register": "general",
+      "grammarNotes": "Существительное женского рода"
+    },
+    {
+      "id": 8,
+      "entryId": 8,
+      "senseNumber": 1,
+      "definitionEn": "The scientific study of language and its structure.",
+      "definitionRu": "Наука о языке, его структуре, функционировании и развитии.",
+      "definitionUz": "Inson tili, uning tabiati, tuzilishi va tarixiy taraqqiyotini o‘rganuvchi ilmiy soha.",
+      "register": "academic",
+      "grammarNotes": "O‘zlashma so‘z (til + shunos + lik)"
+    },
+    {
+      "id": 9,
+      "entryId": 9,
+      "senseNumber": 1,
+      "definitionEn": "A sudden brilliant or creative thought, or the state of being stimulated to do something creative.",
+      "definitionRu": "Состояние творческого подъема, прилив творческих сил.",
+      "definitionUz": "Ijodiy faoliyatdagi ruhiy ko‘tarinkilik va sermahsul g‘oyalar tug‘ilishi holati.",
+      "register": "general",
+      "grammarNotes": "Arabcha o‘zlashma ot"
+    },
+    {
+      "id": 10,
+      "entryId": 10,
+      "senseNumber": 1,
+      "definitionEn": "The fact of finding valuable or pleasant things by chance in an unexpected way.",
+      "definitionRu": "Способность делать счастливые случайные открытия или находить удачу непреднамеренно.",
+      "definitionUz": "Rejalashtirilmagan holda, tasodifan yoqimli yoki qimmatli narsani topish baxti.",
+      "register": "literary",
+      "grammarNotes": "Uncountable noun [U]"
+    },
+    {
+      "id": 11,
+      "entryId": 11,
+      "senseNumber": 1,
+      "definitionEn": "Showing steady, earnest, and energetic effort.",
+      "definitionRu": "Проявляющий постоянное старание, усердие и добросовестность.",
+      "definitionUz": "O‘z ishiga yoki o‘qishiga puxta, astoydil va g‘ayrat bilan yondashadigan.",
+      "register": "general",
+      "grammarNotes": "Descriptive adjective"
+    },
+    {
+      "id": 12,
+      "entryId": 12,
+      "senseNumber": 1,
+      "definitionEn": "The quality of being free from pretense, deceit, or hypocrisy.",
+      "definitionRu": "Качество человека, выражающееся в правдивости, открытости и отсутствии притворства.",
+      "definitionUz": "Kishining ichki dunyosi va xatti-harakatidagi ochiqlik, to‘g‘rilik va samimiylik.",
+      "register": "general",
+      "grammarNotes": "Mavhum ot"
+    },
+    {
+      "id": 13,
+      "entryId": 13,
+      "senseNumber": 1,
+      "definitionEn": "The process of creating or building something beneficial and lasting.",
+      "definitionRu": "Деятельность по созданию чего-либо ценного, возвышенного.",
+      "definitionUz": "Jamiyat va insoniyat uchun foydali, ezgu narsalarni yaratish faoliyati.",
+      "register": "elevated",
+      "grammarNotes": "Существительное среднего рода"
+    }
+  ],
+  "translations": [
+    {
+      "id": 1,
+      "entryId": 1,
+      "meaningId": 1,
+      "targetLanguage": "ru",
+      "translationText": "приобретать",
+      "transliteration": "",
+      "contextNote": "о навыках, имуществе"
+    },
+    {
+      "id": 2,
+      "entryId": 1,
+      "meaningId": 1,
+      "targetLanguage": "ru",
+      "translationText": "овладевать",
+      "transliteration": "",
+      "contextNote": "о знании языка"
+    },
+    {
+      "id": 3,
+      "entryId": 1,
+      "meaningId": 1,
+      "targetLanguage": "uz",
+      "translationText": "qo‘lga kiritmoq",
+      "transliteration": "",
+      "contextNote": "umumnatijada"
+    },
+    {
+      "id": 4,
+      "entryId": 1,
+      "meaningId": 1,
+      "targetLanguage": "uz",
+      "translationText": "o‘zlashtirmoq",
+      "transliteration": "",
+      "contextNote": "bilim va ko‘nikma haqida"
+    },
+    {
+      "id": 5,
+      "entryId": 2,
+      "meaningId": 2,
+      "targetLanguage": "ru",
+      "translationText": "жизнестойкость",
+      "transliteration": "",
+      "contextNote": "о характере"
+    },
+    {
+      "id": 6,
+      "entryId": 2,
+      "meaningId": 2,
+      "targetLanguage": "ru",
+      "translationText": "упругость",
+      "transliteration": "",
+      "contextNote": "о материалах"
+    },
+    {
+      "id": 7,
+      "entryId": 2,
+      "meaningId": 2,
+      "targetLanguage": "uz",
+      "translationText": "matonat",
+      "transliteration": "",
+      "contextNote": "qiyinchiliklarga qarshi"
+    },
+    {
+      "id": 8,
+      "entryId": 2,
+      "meaningId": 2,
+      "targetLanguage": "uz",
+      "translationText": "egiluvchanlik",
+      "transliteration": "",
+      "contextNote": "fizik xususiyat"
+    },
+    {
+      "id": 9,
+      "entryId": 3,
+      "meaningId": 3,
+      "targetLanguage": "ru",
+      "translationText": "красноречивый",
+      "transliteration": "",
+      "contextNote": "о человеке, тексте"
+    },
+    {
+      "id": 10,
+      "entryId": 3,
+      "meaningId": 3,
+      "targetLanguage": "ru",
+      "translationText": "выразительный",
+      "transliteration": "",
+      "contextNote": "о взгляде, молчании"
+    },
+    {
+      "id": 11,
+      "entryId": 3,
+      "meaningId": 3,
+      "targetLanguage": "uz",
+      "translationText": "fasih",
+      "transliteration": "",
+      "contextNote": "go‘zal nutq sohibi"
+    },
+    {
+      "id": 12,
+      "entryId": 3,
+      "meaningId": 3,
+      "targetLanguage": "uz",
+      "translationText": "chechan",
+      "transliteration": "",
+      "contextNote": "so‘zga usta"
+    },
+    {
+      "id": 13,
+      "entryId": 4,
+      "meaningId": 4,
+      "targetLanguage": "ru",
+      "translationText": "постигать",
+      "transliteration": "",
+      "contextNote": "глубокий смысл"
+    },
+    {
+      "id": 14,
+      "entryId": 4,
+      "meaningId": 4,
+      "targetLanguage": "ru",
+      "translationText": "понимать",
+      "transliteration": "",
+      "contextNote": "общий смысл"
+    },
+    {
+      "id": 15,
+      "entryId": 4,
+      "meaningId": 4,
+      "targetLanguage": "uz",
+      "translationText": "anglamoq",
+      "transliteration": "",
+      "contextNote": "chuqur mohiyatni"
+    },
+    {
+      "id": 16,
+      "entryId": 4,
+      "meaningId": 4,
+      "targetLanguage": "uz",
+      "translationText": "idrok qilmoq",
+      "transliteration": "",
+      "contextNote": "aql bilan tushunmoq"
+    },
+    {
+      "id": 17,
+      "entryId": 5,
+      "meaningId": 5,
+      "targetLanguage": "ru",
+      "translationText": "гостеприимство",
+      "transliteration": "",
+      "contextNote": "традиция приема гостей"
+    },
+    {
+      "id": 18,
+      "entryId": 5,
+      "meaningId": 5,
+      "targetLanguage": "ru",
+      "translationText": "радушие",
+      "transliteration": "",
+      "contextNote": "сердечность"
+    },
+    {
+      "id": 19,
+      "entryId": 5,
+      "meaningId": 5,
+      "targetLanguage": "uz",
+      "translationText": "mehmondo‘stlik",
+      "transliteration": "",
+      "contextNote": "o‘zbek xalqining eng go‘zal fazilati"
+    },
+    {
+      "id": 20,
+      "entryId": 5,
+      "meaningId": 5,
+      "targetLanguage": "uz",
+      "translationText": "mehmonnavozlik",
+      "transliteration": "",
+      "contextNote": "rasmiy va adabiy"
+    },
+    {
+      "id": 21,
+      "entryId": 6,
+      "meaningId": 6,
+      "targetLanguage": "en",
+      "translationText": "develop",
+      "transliteration": "",
+      "contextNote": "skills, intellect, industry"
+    },
+    {
+      "id": 22,
+      "entryId": 6,
+      "meaningId": 6,
+      "targetLanguage": "en",
+      "translationText": "cultivate",
+      "transliteration": "",
+      "contextNote": "habits, relationships"
+    },
+    {
+      "id": 23,
+      "entryId": 6,
+      "meaningId": 6,
+      "targetLanguage": "uz",
+      "translationText": "rivojlantirmoq",
+      "transliteration": "",
+      "contextNote": "umumiy ma’no"
+    },
+    {
+      "id": 24,
+      "entryId": 6,
+      "meaningId": 6,
+      "targetLanguage": "uz",
+      "translationText": "taraqqiy ettirmoq",
+      "transliteration": "",
+      "contextNote": "ilm-fan va jamiyat"
+    },
+    {
+      "id": 25,
+      "entryId": 7,
+      "meaningId": 7,
+      "targetLanguage": "en",
+      "translationText": "wisdom",
+      "transliteration": "",
+      "contextNote": "general concept"
+    },
+    {
+      "id": 26,
+      "entryId": 7,
+      "meaningId": 7,
+      "targetLanguage": "uz",
+      "translationText": "donolik",
+      "transliteration": "",
+      "contextNote": "aql-idrok"
+    },
+    {
+      "id": 27,
+      "entryId": 7,
+      "meaningId": 7,
+      "targetLanguage": "uz",
+      "translationText": "hikmat",
+      "transliteration": "",
+      "contextNote": "teran ma’no"
+    },
+    {
+      "id": 28,
+      "entryId": 8,
+      "meaningId": 8,
+      "targetLanguage": "en",
+      "translationText": "linguistics",
+      "transliteration": "",
+      "contextNote": "scientific field"
+    },
+    {
+      "id": 29,
+      "entryId": 8,
+      "meaningId": 8,
+      "targetLanguage": "ru",
+      "translationText": "языкознание",
+      "transliteration": "",
+      "contextNote": "наука о языке"
+    },
+    {
+      "id": 30,
+      "entryId": 8,
+      "meaningId": 8,
+      "targetLanguage": "ru",
+      "translationText": "лингвистика",
+      "transliteration": "",
+      "contextNote": "научная дисциплина"
+    },
+    {
+      "id": 31,
+      "entryId": 9,
+      "meaningId": 9,
+      "targetLanguage": "en",
+      "translationText": "inspiration",
+      "transliteration": "",
+      "contextNote": "creative state"
+    },
+    {
+      "id": 32,
+      "entryId": 9,
+      "meaningId": 9,
+      "targetLanguage": "ru",
+      "translationText": "вдохновение",
+      "transliteration": "",
+      "contextNote": "творческий подъем"
+    },
+    {
+      "id": 33,
+      "entryId": 10,
+      "meaningId": 10,
+      "targetLanguage": "ru",
+      "translationText": "счастливая случайность",
+      "transliteration": "",
+      "contextNote": "удачное стечение"
+    },
+    {
+      "id": 34,
+      "entryId": 10,
+      "meaningId": 10,
+      "targetLanguage": "uz",
+      "translationText": "baxtli tasodif",
+      "transliteration": "",
+      "contextNote": "yoqimli voqea"
+    },
+    {
+      "id": 35,
+      "entryId": 11,
+      "meaningId": 11,
+      "targetLanguage": "ru",
+      "translationText": "усердный",
+      "transliteration": "",
+      "contextNote": "в учебе и труде"
+    },
+    {
+      "id": 36,
+      "entryId": 11,
+      "meaningId": 11,
+      "targetLanguage": "ru",
+      "translationText": "старательный",
+      "transliteration": "",
+      "contextNote": "добросовестный"
+    },
+    {
+      "id": 37,
+      "entryId": 11,
+      "meaningId": 11,
+      "targetLanguage": "uz",
+      "translationText": "tirishqoq",
+      "transliteration": "",
+      "contextNote": "o‘quvchi yoki xodim"
+    },
+    {
+      "id": 38,
+      "entryId": 11,
+      "meaningId": 11,
+      "targetLanguage": "uz",
+      "translationText": "quntli",
+      "transliteration": "",
+      "contextNote": "qunt bilan o‘rganuvchi"
+    },
+    {
+      "id": 39,
+      "entryId": 12,
+      "meaningId": 12,
+      "targetLanguage": "en",
+      "translationText": "sincerity",
+      "transliteration": "",
+      "contextNote": "warmth of heart"
+    },
+    {
+      "id": 40,
+      "entryId": 12,
+      "meaningId": 12,
+      "targetLanguage": "ru",
+      "translationText": "искренность",
+      "transliteration": "",
+      "contextNote": "открытость души"
+    },
+    {
+      "id": 41,
+      "entryId": 13,
+      "meaningId": 13,
+      "targetLanguage": "en",
+      "translationText": "creation",
+      "transliteration": "",
+      "contextNote": "constructive work"
+    },
+    {
+      "id": 42,
+      "entryId": 13,
+      "meaningId": 13,
+      "targetLanguage": "uz",
+      "translationText": "bunyodkorlik",
+      "transliteration": "",
+      "contextNote": "qurish va yaratish"
+    }
+  ],
+  "example_sentences": [
+    {
+      "id": 1,
+      "entryId": 1,
+      "meaningId": 1,
+      "sentenceEn": "She has acquired a good working knowledge of three languages.",
+      "sentenceRu": "Она приобрела хорошее практическое знание трех языков.",
+      "sentenceUz": "U uchta tilni yaxshi amaliy darajada o‘zlashtirdi."
+    },
+    {
+      "id": 2,
+      "entryId": 1,
+      "meaningId": 1,
+      "sentenceEn": "The museum has recently acquired several rare manuscripts.",
+      "sentenceRu": "Музей недавно приобрел несколько редких рукописей.",
+      "sentenceUz": "Muzey yaqinda bir nechta noyob qo‘lyozmalarni sotib oldi."
+    },
+    {
+      "id": 3,
+      "entryId": 2,
+      "meaningId": 2,
+      "sentenceEn": "Courage and resilience helped the community rebuild after the disaster.",
+      "sentenceRu": "Мужество и стойкость помогли обществу восстановиться после катастрофы.",
+      "sentenceUz": "Jasorat va matonat jamiyatga ofatdan so‘ng qayta tiklanishga yordam berdi."
+    },
+    {
+      "id": 4,
+      "entryId": 3,
+      "meaningId": 3,
+      "sentenceEn": "He delivered an eloquent defense of human rights.",
+      "sentenceRu": "Он произнес красноречивую речь в защиту прав человека.",
+      "sentenceUz": "U inson huquqlarini himoya qilib, nihoyatda fasih nutq so‘zladi."
+    },
+    {
+      "id": 5,
+      "entryId": 4,
+      "meaningId": 4,
+      "sentenceEn": "I cannot comprehend why they decided to cancel the project.",
+      "sentenceRu": "Я не могу понять, почему они решили отменить проект.",
+      "sentenceUz": "Nima sababdan ular loyihani bekor qilishganini aslo tushuna olmayapman."
+    },
+    {
+      "id": 6,
+      "entryId": 5,
+      "meaningId": 5,
+      "sentenceEn": "We were overwhelmed by the warm hospitality of the local people in Bukhara and Samarkand.",
+      "sentenceRu": "Мы были поражены теплым гостеприимством местных жителей в Бухаре и Самарканде.",
+      "sentenceUz": "Bizni Buxoro va Samarqanddagi mahalliy aholining samimiy mehmondo‘stligi lol qoldirdi."
+    },
+    {
+      "id": 7,
+      "entryId": 6,
+      "meaningId": 6,
+      "sentenceEn": "Reading books helps develop critical thinking.",
+      "sentenceRu": "Чтение книг помогает развивать критическое мышление.",
+      "sentenceUz": "Kitob o‘qish tanqidiy fikrlashni rivojlantirishga yordam beradi."
+    },
+    {
+      "id": 8,
+      "entryId": 7,
+      "meaningId": 7,
+      "sentenceEn": "True wisdom comes from experience and reflection.",
+      "sentenceRu": "Истинная мудрость приходит с опытом и размышлениями.",
+      "sentenceUz": "Haqiqiy donolik tajriba va mulohaza yuritish orqali keladi."
+    },
+    {
+      "id": 9,
+      "entryId": 8,
+      "meaningId": 8,
+      "sentenceEn": "Modern linguistics uses computational methods to analyze big text corpora.",
+      "sentenceRu": "Современная лингвистика использует компьютерные методы для анализа больших корпусов текстов.",
+      "sentenceUz": "Zamonaviy tilshunoslik katta matn korpuslarini tahlil qilish uchun hisoblash usullaridan foydalanadi."
+    },
+    {
+      "id": 10,
+      "entryId": 9,
+      "meaningId": 9,
+      "sentenceEn": "Nature has always been a great source of inspiration for poets.",
+      "sentenceRu": "Природа всегда была великим источником вдохновения для поэтов.",
+      "sentenceUz": "Tabiat har doim shoirlar uchun buyuk ilhom manbai bo‘lib kelgan."
+    },
+    {
+      "id": 11,
+      "entryId": 10,
+      "meaningId": 10,
+      "sentenceEn": "Penicillin was discovered through sheer serendipity.",
+      "sentenceRu": "Пенициллин был открыт благодаря чистой счастливой случайности.",
+      "sentenceUz": "Penitsillin mutlaqo baxtli tasodif tufayli kashf etilgan."
+    },
+    {
+      "id": 12,
+      "entryId": 11,
+      "meaningId": 11,
+      "sentenceEn": "Through diligent practice, he mastered the complex pronunciation rules.",
+      "sentenceRu": "Благодаря прилежной практике он освоил сложные правила произношения.",
+      "sentenceUz": "Tirishqoqlik bilan qilingan mashqlar orqali u murakkab talaffuz qoidalarini to‘liq o‘zlashtirdi."
+    },
+    {
+      "id": 13,
+      "entryId": 12,
+      "meaningId": 12,
+      "sentenceEn": "Her sincerity immediately put everyone at ease.",
+      "sentenceRu": "Ее искренность сразу же расположила всех к себе.",
+      "sentenceUz": "Uning samimiyati darhol barchaning ko‘nglini erkin va quvnoq qildi."
+    },
+    {
+      "id": 14,
+      "entryId": 13,
+      "meaningId": 13,
+      "sentenceEn": "Science and education are the true foundations of societal creation.",
+      "sentenceRu": "Наука и образование — истинные основы созидания общества.",
+      "sentenceUz": "Ilm-fan va ta’lim jamiyat bunyodkorligining haqiqiy poydevoridir."
+    }
+  ],
+  "synonyms_antonyms": [
+    {
+      "id": 1,
+      "meaningId": 1,
+      "word": "obtain",
+      "isAntonym": 0
+    },
+    {
+      "id": 2,
+      "meaningId": 1,
+      "word": "gain",
+      "isAntonym": 0
+    },
+    {
+      "id": 3,
+      "meaningId": 1,
+      "word": "attain",
+      "isAntonym": 0
+    },
+    {
+      "id": 4,
+      "meaningId": 1,
+      "word": "procure",
+      "isAntonym": 0
+    },
+    {
+      "id": 5,
+      "meaningId": 1,
+      "word": "lose",
+      "isAntonym": 1
+    },
+    {
+      "id": 6,
+      "meaningId": 1,
+      "word": "relinquish",
+      "isAntonym": 1
+    },
+    {
+      "id": 7,
+      "meaningId": 1,
+      "word": "forfeit",
+      "isAntonym": 1
+    },
+    {
+      "id": 8,
+      "meaningId": 2,
+      "word": "toughness",
+      "isAntonym": 0
+    },
+    {
+      "id": 9,
+      "meaningId": 2,
+      "word": "endurance",
+      "isAntonym": 0
+    },
+    {
+      "id": 10,
+      "meaningId": 2,
+      "word": "fortitude",
+      "isAntonym": 0
+    },
+    {
+      "id": 11,
+      "meaningId": 2,
+      "word": "adaptability",
+      "isAntonym": 0
+    },
+    {
+      "id": 12,
+      "meaningId": 2,
+      "word": "vulnerability",
+      "isAntonym": 1
+    },
+    {
+      "id": 13,
+      "meaningId": 2,
+      "word": "fragility",
+      "isAntonym": 1
+    },
+    {
+      "id": 14,
+      "meaningId": 2,
+      "word": "weakness",
+      "isAntonym": 1
+    },
+    {
+      "id": 15,
+      "meaningId": 3,
+      "word": "articulate",
+      "isAntonym": 0
+    },
+    {
+      "id": 16,
+      "meaningId": 3,
+      "word": "persuasive",
+      "isAntonym": 0
+    },
+    {
+      "id": 17,
+      "meaningId": 3,
+      "word": "expressive",
+      "isAntonym": 0
+    },
+    {
+      "id": 18,
+      "meaningId": 3,
+      "word": "fluent",
+      "isAntonym": 0
+    },
+    {
+      "id": 19,
+      "meaningId": 3,
+      "word": "inarticulate",
+      "isAntonym": 1
+    },
+    {
+      "id": 20,
+      "meaningId": 3,
+      "word": "hesitant",
+      "isAntonym": 1
+    },
+    {
+      "id": 21,
+      "meaningId": 3,
+      "word": "unconvincing",
+      "isAntonym": 1
+    },
+    {
+      "id": 22,
+      "meaningId": 4,
+      "word": "understand",
+      "isAntonym": 0
+    },
+    {
+      "id": 23,
+      "meaningId": 4,
+      "word": "fathom",
+      "isAntonym": 0
+    },
+    {
+      "id": 24,
+      "meaningId": 4,
+      "word": "grasp",
+      "isAntonym": 0
+    },
+    {
+      "id": 25,
+      "meaningId": 4,
+      "word": "perceive",
+      "isAntonym": 0
+    },
+    {
+      "id": 26,
+      "meaningId": 4,
+      "word": "misunderstand",
+      "isAntonym": 1
+    },
+    {
+      "id": 27,
+      "meaningId": 4,
+      "word": "misinterpret",
+      "isAntonym": 1
+    },
+    {
+      "id": 28,
+      "meaningId": 5,
+      "word": "warmth",
+      "isAntonym": 0
+    },
+    {
+      "id": 29,
+      "meaningId": 5,
+      "word": "welcomeness",
+      "isAntonym": 0
+    },
+    {
+      "id": 30,
+      "meaningId": 5,
+      "word": "friendliness",
+      "isAntonym": 0
+    },
+    {
+      "id": 31,
+      "meaningId": 5,
+      "word": "generosity",
+      "isAntonym": 0
+    },
+    {
+      "id": 32,
+      "meaningId": 5,
+      "word": "hostility",
+      "isAntonym": 1
+    },
+    {
+      "id": 33,
+      "meaningId": 5,
+      "word": "coldness",
+      "isAntonym": 1
+    },
+    {
+      "id": 34,
+      "meaningId": 5,
+      "word": "unfriendliness",
+      "isAntonym": 1
+    },
+    {
+      "id": 35,
+      "meaningId": 6,
+      "word": "совершенствовать",
+      "isAntonym": 0
+    },
+    {
+      "id": 36,
+      "meaningId": 6,
+      "word": "улучшать",
+      "isAntonym": 0
+    },
+    {
+      "id": 37,
+      "meaningId": 6,
+      "word": "расширять",
+      "isAntonym": 0
+    },
+    {
+      "id": 38,
+      "meaningId": 6,
+      "word": "культивировать",
+      "isAntonym": 0
+    },
+    {
+      "id": 39,
+      "meaningId": 6,
+      "word": "угнетать",
+      "isAntonym": 1
+    },
+    {
+      "id": 40,
+      "meaningId": 6,
+      "word": "разрушать",
+      "isAntonym": 1
+    },
+    {
+      "id": 41,
+      "meaningId": 6,
+      "word": "тормозить",
+      "isAntonym": 1
+    },
+    {
+      "id": 42,
+      "meaningId": 7,
+      "word": "благоразумие",
+      "isAntonym": 0
+    },
+    {
+      "id": 43,
+      "meaningId": 7,
+      "word": "рассудительность",
+      "isAntonym": 0
+    },
+    {
+      "id": 44,
+      "meaningId": 7,
+      "word": "дальновидность",
+      "isAntonym": 0
+    },
+    {
+      "id": 45,
+      "meaningId": 7,
+      "word": "глупость",
+      "isAntonym": 1
+    },
+    {
+      "id": 46,
+      "meaningId": 7,
+      "word": "невежество",
+      "isAntonym": 1
+    },
+    {
+      "id": 47,
+      "meaningId": 7,
+      "word": "легкомыслие",
+      "isAntonym": 1
+    },
+    {
+      "id": 48,
+      "meaningId": 8,
+      "word": "lingvistika",
+      "isAntonym": 0
+    },
+    {
+      "id": 49,
+      "meaningId": 8,
+      "word": "til bilimi",
+      "isAntonym": 0
+    },
+    {
+      "id": 50,
+      "meaningId": 9,
+      "word": "jo‘shqinlik",
+      "isAntonym": 0
+    },
+    {
+      "id": 51,
+      "meaningId": 9,
+      "word": "zavq",
+      "isAntonym": 0
+    },
+    {
+      "id": 52,
+      "meaningId": 9,
+      "word": "ruhiy ko‘tarinkilik",
+      "isAntonym": 0
+    },
+    {
+      "id": 53,
+      "meaningId": 9,
+      "word": "tushkunlik",
+      "isAntonym": 1
+    },
+    {
+      "id": 54,
+      "meaningId": 9,
+      "word": "hafsalasizlik",
+      "isAntonym": 1
+    },
+    {
+      "id": 55,
+      "meaningId": 10,
+      "word": "fluke",
+      "isAntonym": 0
+    },
+    {
+      "id": 56,
+      "meaningId": 10,
+      "word": "fortune",
+      "isAntonym": 0
+    },
+    {
+      "id": 57,
+      "meaningId": 10,
+      "word": "providence",
+      "isAntonym": 0
+    },
+    {
+      "id": 58,
+      "meaningId": 10,
+      "word": "happy accident",
+      "isAntonym": 0
+    },
+    {
+      "id": 59,
+      "meaningId": 10,
+      "word": "misfortune",
+      "isAntonym": 1
+    },
+    {
+      "id": 60,
+      "meaningId": 10,
+      "word": "bad luck",
+      "isAntonym": 1
+    },
+    {
+      "id": 61,
+      "meaningId": 11,
+      "word": "industrious",
+      "isAntonym": 0
+    },
+    {
+      "id": 62,
+      "meaningId": 11,
+      "word": "assiduous",
+      "isAntonym": 0
+    },
+    {
+      "id": 63,
+      "meaningId": 11,
+      "word": "hardworking",
+      "isAntonym": 0
+    },
+    {
+      "id": 64,
+      "meaningId": 11,
+      "word": "meticulous",
+      "isAntonym": 0
+    },
+    {
+      "id": 65,
+      "meaningId": 11,
+      "word": "lazy",
+      "isAntonym": 1
+    },
+    {
+      "id": 66,
+      "meaningId": 11,
+      "word": "negligent",
+      "isAntonym": 1
+    },
+    {
+      "id": 67,
+      "meaningId": 11,
+      "word": "careless",
+      "isAntonym": 1
+    },
+    {
+      "id": 68,
+      "meaningId": 12,
+      "word": "dillik",
+      "isAntonym": 0
+    },
+    {
+      "id": 69,
+      "meaningId": 12,
+      "word": "ochiqko‘ngillilik",
+      "isAntonym": 0
+    },
+    {
+      "id": 70,
+      "meaningId": 12,
+      "word": "beg‘uborlik",
+      "isAntonym": 0
+    },
+    {
+      "id": 71,
+      "meaningId": 12,
+      "word": "soxtalik",
+      "isAntonym": 1
+    },
+    {
+      "id": 72,
+      "meaningId": 12,
+      "word": "munofiqlik",
+      "isAntonym": 1
+    },
+    {
+      "id": 73,
+      "meaningId": 12,
+      "word": "ikkiyuzlamachilik",
+      "isAntonym": 1
+    },
+    {
+      "id": 74,
+      "meaningId": 13,
+      "word": "творение",
+      "isAntonym": 0
+    },
+    {
+      "id": 75,
+      "meaningId": 13,
+      "word": "строительство",
+      "isAntonym": 0
+    },
+    {
+      "id": 76,
+      "meaningId": 13,
+      "word": "сотворение",
+      "isAntonym": 0
+    },
+    {
+      "id": 77,
+      "meaningId": 13,
+      "word": "разрушение",
+      "isAntonym": 1
+    },
+    {
+      "id": 78,
+      "meaningId": 13,
+      "word": "деструкция",
+      "isAntonym": 1
+    },
+    {
+      "id": 79,
+      "meaningId": 13,
+      "word": "уничтожение",
+      "isAntonym": 1
+    }
+  ],
+  "word_forms": [
+    {
+      "id": 1,
+      "entryId": 1,
+      "formType": "Past",
+      "formValue": "acquired"
+    },
+    {
+      "id": 2,
+      "entryId": 1,
+      "formType": "Past Participle",
+      "formValue": "acquired"
+    },
+    {
+      "id": 3,
+      "entryId": 1,
+      "formType": "3rd Person",
+      "formValue": "acquires"
+    },
+    {
+      "id": 4,
+      "entryId": 1,
+      "formType": "-ing",
+      "formValue": "acquiring"
+    },
+    {
+      "id": 5,
+      "entryId": 2,
+      "formType": "Adjective",
+      "formValue": "resilient"
+    },
+    {
+      "id": 6,
+      "entryId": 2,
+      "formType": "Adverb",
+      "formValue": "resiliently"
+    },
+    {
+      "id": 7,
+      "entryId": 3,
+      "formType": "Adverb",
+      "formValue": "eloquently"
+    },
+    {
+      "id": 8,
+      "entryId": 3,
+      "formType": "Noun",
+      "formValue": "eloquence"
+    },
+    {
+      "id": 9,
+      "entryId": 4,
+      "formType": "Past",
+      "formValue": "comprehended"
+    },
+    {
+      "id": 10,
+      "entryId": 4,
+      "formType": "Noun",
+      "formValue": "comprehension"
+    },
+    {
+      "id": 11,
+      "entryId": 4,
+      "formType": "Adjective",
+      "formValue": "comprehensible"
+    },
+    {
+      "id": 12,
+      "entryId": 5,
+      "formType": "Adjective",
+      "formValue": "hospitable"
+    },
+    {
+      "id": 13,
+      "entryId": 5,
+      "formType": "Adverb",
+      "formValue": "hospitably"
+    },
+    {
+      "id": 14,
+      "entryId": 6,
+      "formType": "Совершенный вид",
+      "formValue": "развить"
+    },
+    {
+      "id": 15,
+      "entryId": 6,
+      "formType": "Настоящее время",
+      "formValue": "развиваю, развиваешь"
+    },
+    {
+      "id": 16,
+      "entryId": 6,
+      "formType": "Прошедшее",
+      "formValue": "развивал, развивала"
+    },
+    {
+      "id": 17,
+      "entryId": 6,
+      "formType": "Причастие",
+      "formValue": "развивающий, развиваемый"
+    },
+    {
+      "id": 18,
+      "entryId": 7,
+      "formType": "Род",
+      "formValue": "Женский род, 3-е склонение"
+    },
+    {
+      "id": 19,
+      "entryId": 7,
+      "formType": "Родительный",
+      "formValue": "мудрости"
+    },
+    {
+      "id": 20,
+      "entryId": 7,
+      "formType": "Творительный",
+      "formValue": "мудростью"
+    },
+    {
+      "id": 21,
+      "entryId": 8,
+      "formType": "Ko‘plik",
+      "formValue": "tilshunosliklar"
+    },
+    {
+      "id": 22,
+      "entryId": 8,
+      "formType": "Qaratqich kelishigi",
+      "formValue": "tilshunoslikning"
+    },
+    {
+      "id": 23,
+      "entryId": 8,
+      "formType": "Kirillcha",
+      "formValue": "тилшунослик"
+    },
+    {
+      "id": 24,
+      "entryId": 9,
+      "formType": "Fe’l shakli",
+      "formValue": "ilhomlanmoq"
+    },
+    {
+      "id": 25,
+      "entryId": 9,
+      "formType": "Sifat",
+      "formValue": "ilhombaxsh"
+    },
+    {
+      "id": 26,
+      "entryId": 9,
+      "formType": "Kirillcha",
+      "formValue": "илҳом"
+    },
+    {
+      "id": 27,
+      "entryId": 10,
+      "formType": "Adjective",
+      "formValue": "serendipitous"
+    },
+    {
+      "id": 28,
+      "entryId": 10,
+      "formType": "Adverb",
+      "formValue": "serendipitously"
+    },
+    {
+      "id": 29,
+      "entryId": 11,
+      "formType": "Adverb",
+      "formValue": "diligently"
+    },
+    {
+      "id": 30,
+      "entryId": 11,
+      "formType": "Noun",
+      "formValue": "diligence"
+    },
+    {
+      "id": 31,
+      "entryId": 12,
+      "formType": "Sifat",
+      "formValue": "samimiy"
+    },
+    {
+      "id": 32,
+      "entryId": 12,
+      "formType": "Ravish",
+      "formValue": "samimiyat bilan"
+    },
+    {
+      "id": 33,
+      "entryId": 12,
+      "formType": "Kirillcha",
+      "formValue": "самимият"
+    },
+    {
+      "id": 34,
+      "entryId": 13,
+      "formType": "Глагол",
+      "formValue": "созидать"
+    },
+    {
+      "id": 35,
+      "entryId": 13,
+      "formType": "Прилагательное",
+      "formValue": "созидательный"
+    }
+  ],
+  "collocations": [
+    {
+      "id": 1,
+      "entryId": 1,
+      "expression": "acquire knowledge",
+      "translationRu": "приобретать знания",
+      "translationUz": "bilim egallamoq"
+    },
+    {
+      "id": 2,
+      "entryId": 1,
+      "expression": "acquire a taste for",
+      "translationRu": "полюбить со временем",
+      "translationUz": "vaqt o‘tib yoqtirib qolmoq"
+    },
+    {
+      "id": 3,
+      "entryId": 2,
+      "expression": "show remarkable resilience",
+      "translationRu": "проявлять удивительную стойкость",
+      "translationUz": "hayratlanarli darajada matonat ko‘rsatmoq"
+    },
+    {
+      "id": 4,
+      "entryId": 2,
+      "expression": "economic resilience",
+      "translationRu": "экономическая устойчивость",
+      "translationUz": "iqtisodiy barqarorlik"
+    },
+    {
+      "id": 5,
+      "entryId": 3,
+      "expression": "an eloquent speech",
+      "translationRu": "красноречивая речь",
+      "translationUz": "fasih nutq"
+    },
+    {
+      "id": 6,
+      "entryId": 3,
+      "expression": "eloquent silence",
+      "translationRu": "выразительное молчание",
+      "translationUz": "ma’noli sukut"
+    },
+    {
+      "id": 7,
+      "entryId": 4,
+      "expression": "fail to comprehend",
+      "translationRu": "не быть в состоянии понять",
+      "translationUz": "tushunishga ojiz bo‘lmoq"
+    },
+    {
+      "id": 8,
+      "entryId": 4,
+      "expression": "fully comprehend",
+      "translationRu": "полностью осознать",
+      "translationUz": "to‘liq anglab yetmoq"
+    },
+    {
+      "id": 9,
+      "entryId": 5,
+      "expression": "warm hospitality",
+      "translationRu": "теплое гостеприимство",
+      "translationUz": "samimiy mehmondo‘stlik"
+    },
+    {
+      "id": 10,
+      "entryId": 5,
+      "expression": "hospitality industry",
+      "translationRu": "гостиничный бизнес",
+      "translationUz": "mehmondo‘stlik sohasi"
+    },
+    {
+      "id": 11,
+      "entryId": 6,
+      "expression": "развивать навыки",
+      "translationRu": "develop skills",
+      "translationUz": "ko‘nikmalarni rivojlantirmoq"
+    },
+    {
+      "id": 12,
+      "entryId": 6,
+      "expression": "развивать экономику",
+      "translationRu": "develop the economy",
+      "translationUz": "iqtisodiyotni rivojlantirmoq"
+    },
+    {
+      "id": 13,
+      "entryId": 7,
+      "expression": "народная мудрость",
+      "translationRu": "folk wisdom",
+      "translationUz": "xalq donoligi"
+    },
+    {
+      "id": 14,
+      "entryId": 7,
+      "expression": "слова мудрости",
+      "translationRu": "words of wisdom",
+      "translationUz": "hikmatli so‘zlar"
+    },
+    {
+      "id": 15,
+      "entryId": 8,
+      "expression": "amaliy tilshunoslik",
+      "translationRu": "прикладная лингвистика",
+      "translationUz": "applied linguistics"
+    },
+    {
+      "id": 16,
+      "entryId": 8,
+      "expression": "qiyosiy tilshunoslik",
+      "translationRu": "сравнительное языкознание",
+      "translationUz": "comparative linguistics"
+    },
+    {
+      "id": 17,
+      "entryId": 9,
+      "expression": "ilhom manbai",
+      "translationRu": "источник вдохновения",
+      "translationUz": "source of inspiration"
+    },
+    {
+      "id": 18,
+      "entryId": 9,
+      "expression": "ilhom kelmoq",
+      "translationRu": "прийти вдохновению",
+      "translationUz": "to get inspired"
+    },
+    {
+      "id": 19,
+      "entryId": 10,
+      "expression": "a stroke of serendipity",
+      "translationRu": "счастливое стечение обстоятельств",
+      "translationUz": "baxtli tasodif natijasi"
+    },
+    {
+      "id": 20,
+      "entryId": 11,
+      "expression": "diligent student",
+      "translationRu": "прилежный студент",
+      "translationUz": "tirishqoq talaba"
+    },
+    {
+      "id": 21,
+      "entryId": 11,
+      "expression": "diligent research",
+      "translationRu": "тщательное исследование",
+      "translationUz": "qunt bilan olib borilgan tadqiqot"
+    },
+    {
+      "id": 22,
+      "entryId": 12,
+      "expression": "samimiyat bilan gapirmoq",
+      "translationRu": "говорить с искренностью",
+      "translationUz": "speak with sincerity"
+    },
+    {
+      "id": 23,
+      "entryId": 13,
+      "expression": "дух созидания",
+      "translationRu": "spirit of creation",
+      "translationUz": "bunyodkorlik ruhi"
+    },
+    {
+      "id": 24,
+      "entryId": 13,
+      "expression": "созидательный труд",
+      "translationRu": "constructive labor",
+      "translationUz": "yaratuvchan mehnat"
+    }
+  ],
+  "topics": [
+    {
+      "id": 1,
+      "titleEn": "Daily Life & Routines",
+      "titleRu": "Повседневная жизнь и распорядок",
+      "titleUzLatn": "Kundalik hayot va odatlar",
+      "titleUzCyrl": "Кундалик ҳаёт ва одатлар",
+      "category": "General",
+      "iconName": "today",
+      "descriptionEn": "Essential words for talking about your everyday schedule, morning habits, and domestic chores.",
+      "descriptionRu": "Основные слова для описания ежедневного расписания, привычек и домашнего быта.",
+      "descriptionUzLatn": "Har kungi ish tartibi, ertalabki odatlar va maishiy yumushlar uchun zaruriy so‘zlar to‘plami.",
+      "cefrLevel": "A1",
+      "estimatedMinutes": 8,
+      "totalWords": 15
+    },
+    {
+      "id": 2,
+      "titleEn": "Airports & International Flights",
+      "titleRu": "Аэропорты и международные перелеты",
+      "titleUzLatn": "Aeroport va xalqaro parvozlar",
+      "titleUzCyrl": "Аэропорт ва халқаро парвозлар",
+      "category": "Travel",
+      "iconName": "flight_takeoff",
+      "descriptionEn": "Boarding passes, luggage check-in, customs control, layovers, and in-flight etiquette.",
+      "descriptionRu": "Посадочные талоны, сдача багажа, таможенный контроль, пересадки и правила на борту.",
+      "descriptionUzLatn": "Samolyotga chiqish taloni, bagaj topshirish, bojxona nazorati va parvozdagi qulayliklar.",
+      "cefrLevel": "A2",
+      "estimatedMinutes": 12,
+      "totalWords": 18
+    },
+    {
+      "id": 3,
+      "titleEn": "Food, Dining & Restaurants",
+      "titleRu": "Еда, кулинария и рестораны",
+      "titleUzLatn": "Taomlar, pazandachilik va restoranlar",
+      "titleUzCyrl": "Таомлар, пазандачилик ва ресторанлар",
+      "category": "Food",
+      "iconName": "restaurant",
+      "descriptionEn": "Ordering meals, asking for dietary recommendations, paying the bill, and traditional cuisine.",
+      "descriptionRu": "Заказ блюд, диетические предпочтения, оплата счета и национальная кухня.",
+      "descriptionUzLatn": "Buyurtma berish, hisob-kitob qilish, milliy taomlar va mehmondorchilik odoblari.",
+      "cefrLevel": "A2",
+      "estimatedMinutes": 10,
+      "totalWords": 20
+    },
+    {
+      "id": 4,
+      "titleEn": "Technology, AI & Programming",
+      "titleRu": "Технологии, ИИ и программирование",
+      "titleUzLatn": "Texnologiya, SI va dasturlash",
+      "titleUzCyrl": "Технология, СИ ва дастурлаш",
+      "category": "Tech",
+      "iconName": "code",
+      "descriptionEn": "Software development, neural networks, cloud computing, algorithms, and cybersecurity.",
+      "descriptionRu": "Разработка ПО, нейросети, облачные вычисления, алгоритмы и кибербезопасность.",
+      "descriptionUzLatn": "Dasturiy ta’minot, neyron tarmoqlar, bulutli texnologiyalar va axborot xavfsizligi.",
+      "cefrLevel": "B2",
+      "estimatedMinutes": 15,
+      "totalWords": 25
+    },
+    {
+      "id": 5,
+      "titleEn": "Healthcare, Medicine & Emergencies",
+      "titleRu": "Здравоохранение, медицина и скорая помощь",
+      "titleUzLatn": "Sog‘liqni saqlash, tibbiyot va tez yordam",
+      "titleUzCyrl": "Соғлиқни сақлаш, тиббиёт ва тез ёрдам",
+      "category": "Health",
+      "iconName": "medical_services",
+      "descriptionEn": "Symptoms, doctor appointments, pharmacy prescriptions, and emergency calls.",
+      "descriptionRu": "Симптомы, прием у врача, рецепты в аптеке и вызов экстренных служб.",
+      "descriptionUzLatn": "Kasal alomatlari, shifokor qabulida bo‘lish, dorixona va shoshilinch yordam chaqirish.",
+      "cefrLevel": "B1",
+      "estimatedMinutes": 10,
+      "totalWords": 16
+    },
+    {
+      "id": 6,
+      "titleEn": "Business Meetings & Negotiations",
+      "titleRu": "Деловые встречи и переговоры",
+      "titleUzLatn": "Ishbilarmonlik uchrashuvlari va muzokaralar",
+      "titleUzCyrl": "Ишбилармонлик учрашувлари ва музокаралар",
+      "category": "Business",
+      "iconName": "business_center",
+      "descriptionEn": "Agendas, contract terms, pitching ideas, diplomacy, and strategic partnership.",
+      "descriptionRu": "Повестка дня, условия контракта, презентация идей и деловой этикет.",
+      "descriptionUzLatn": "Kun tartibi, shartnoma shartlari, g‘oyalarni taqdim etish va o‘zaro hamkorlik.",
+      "cefrLevel": "B2",
+      "estimatedMinutes": 14,
+      "totalWords": 22
+    },
+    {
+      "id": 7,
+      "titleEn": "Everyday Idioms & Phrasal Verbs",
+      "titleRu": "Повседневные идиомы и фразовые глаголы",
+      "titleUzLatn": "Kundalik idiomalar va frazeologik fe’llar",
+      "titleUzCyrl": "Кундалик идиомалар ва фразеологик феъллар",
+      "category": "Advanced",
+      "iconName": "record_voice_over",
+      "descriptionEn": "Figurative expressions, natural spoken English, Russian phraseology, and Uzbek matallar.",
+      "descriptionRu": "Фигуральные выражения, живая речь, русская фразеология и узбекские пословицы.",
+      "descriptionUzLatn": "Ko‘chma ma’nodagi iboralar, jonli so‘zlashuv nutqi va xalq maqollari.",
+      "cefrLevel": "C1",
+      "estimatedMinutes": 15,
+      "totalWords": 30
+    },
+    {
+      "id": 8,
+      "titleEn": "Nature, Weather & Environment",
+      "titleRu": "Природа, погода и экология",
+      "titleUzLatn": "Tabiat, ob-havo va atrof-muhit",
+      "titleUzCyrl": "Табиат, об-ҳаво ва атроф-муҳит",
+      "category": "General",
+      "iconName": "wb_sunny",
+      "descriptionEn": "Climate change, weather forecasts, flora and fauna, and seasonal wonders.",
+      "descriptionRu": "Изменение климата, прогноз погоды, флора, фауна и времена года.",
+      "descriptionUzLatn": "Iqlim o‘zgarishi, ob-havo ma’lumotlari, o‘simlik va hayvonot olami, fasllar go‘zalligi.",
+      "cefrLevel": "A2",
+      "estimatedMinutes": 8,
+      "totalWords": 14
+    }
+  ],
+  "topic_word_cross_ref": [
+    {
+      "topicId": 1,
+      "wordId": 1
+    },
+    {
+      "topicId": 4,
+      "wordId": 1
+    },
+    {
+      "topicId": 2,
+      "wordId": 5
+    },
+    {
+      "topicId": 3,
+      "wordId": 5
+    },
+    {
+      "topicId": 6,
+      "wordId": 2
+    },
+    {
+      "topicId": 4,
+      "wordId": 4
+    },
+    {
+      "topicId": 7,
+      "wordId": 3
+    },
+    {
+      "topicId": 6,
+      "wordId": 3
+    }
+  ],
+  "conversations": [
+    {
+      "id": 1,
+      "titleEn": "Checking in at an International Hotel",
+      "titleRu": "Заселение в международный отель",
+      "titleUzLatn": "Xalqaro mehmonxonaga joylashish",
+      "titleUzCyrl": "Халқаро меҳмонхонага жойлашиш",
+      "situationEn": "A guest arrives at the hotel reception in Tashkent to check in for a three-night stay.",
+      "situationRu": "Гость прибывает на ресепшн отеля в Ташкенте, чтобы оформить трехдневное проживание.",
+      "situationUzLatn": "Mehmon Toshkentdagi mehmonxona qabulxonasiga kelib, 3 kunga xona rasmiylashtirmoqda.",
+      "category": "Travel",
+      "difficulty": "A2",
+      "iconName": "hotel",
+      "speakerOneName": "Receptionist (Qabulxona xodimi)",
+      "speakerTwoName": "Guest (Mehmon)"
+    },
+    {
+      "id": 2,
+      "titleEn": "Ordering at a Traditional Teahouse (Choyxona)",
+      "titleRu": "Заказ в традиционной чайхане",
+      "titleUzLatn": "Choyxonada milliy taomlar buyurtma qilish",
+      "titleUzCyrl": "Чойхонада миллий таомлар буюртма қилиш",
+      "situationEn": "Friends visit a renowned Tashkent choyxona to savor authentic plov, somsa, and green tea.",
+      "situationRu": "Друзья пришли в чайхану, чтобы отведать настоящий плов, сомсу и зеленый чай.",
+      "situationUzLatn": "Do‘stlar mazali palov, somsa va ko‘k choy buyurtma qilish uchun choyxonaga kirishdi.",
+      "category": "Dining",
+      "difficulty": "A2",
+      "iconName": "restaurant",
+      "speakerOneName": "Waiter (Ofitsiant)",
+      "speakerTwoName": "Customer (Mijoz)"
+    },
+    {
+      "id": 3,
+      "titleEn": "Software Engineer Job Interview",
+      "titleRu": "Собеседование на должность разработчика",
+      "titleUzLatn": "Dasturchilik bo‘yicha ish suhbati",
+      "titleUzCyrl": "Дастурчилик бўйича иш суҳбати",
+      "situationEn": "A candidate discusses Android architecture, coroutines, and problem-solving with a tech lead.",
+      "situationRu": "Кандидат обсуждает архитектуру Android, корутины и решение задач с техлидом.",
+      "situationUzLatn": "Nomzod bosh muhandis bilan Android arxitekturasi va koroutinlar haqida suhbatlashmoqda.",
+      "category": "Career",
+      "difficulty": "B2",
+      "iconName": "work",
+      "speakerOneName": "Tech Lead (Texnik rahbar)",
+      "speakerTwoName": "Candidate (Nomzod)"
+    }
+  ],
+  "conversation_turns": [
+    {
+      "id": 1,
+      "conversationId": 1,
+      "turnIndex": 1,
+      "speakerRole": "Receptionist",
+      "isSpeakerOne": 1,
+      "textEn": "Good evening! Welcome to Hotel Uzbekistan. How may I assist you today?",
+      "textRu": "Добрый вечер! Добро пожаловать в отель «Узбекистан». Чем я могу вам помочь?",
+      "textUz": "Xayrli kech! «O‘zbekiston» mehmonxonasiga xush kelibsiz. Sizga qanday yordam bera olaman?",
+      "culturalNote": "Polite hospitality greeting in Central Asia"
+    },
+    {
+      "id": 2,
+      "conversationId": 1,
+      "turnIndex": 2,
+      "speakerRole": "Guest",
+      "isSpeakerOne": 0,
+      "textEn": "Good evening. I have a reservation under the name John Carter for three nights.",
+      "textRu": "Добрый вечер. У меня забронирован номер на имя Джон Картер на три ночи.",
+      "textUz": "Xayrli kech. Men uch kechaga Jon Karter nomiga xona band qilgan edim.",
+      "culturalNote": "Presenting reservation details"
+    },
+    {
+      "id": 3,
+      "conversationId": 1,
+      "turnIndex": 3,
+      "speakerRole": "Receptionist",
+      "isSpeakerOne": 1,
+      "textEn": "Thank you, Mr. Carter. May I please see your passport and immigration slip?",
+      "textRu": "Спасибо, господин Картер. Могу я взглянуть на ваш паспорт и иммиграционный бланк?",
+      "textUz": "Rahmat, janob Karter. Iltimos, pasportingizni ko‘rsatsangiz?",
+      "culturalNote": "Hotel registration requirement"
+    },
+    {
+      "id": 4,
+      "conversationId": 1,
+      "turnIndex": 4,
+      "speakerRole": "Guest",
+      "isSpeakerOne": 0,
+      "textEn": "Certainly, here you go. Could you tell me if breakfast is included, and what time it starts?",
+      "textRu": "Конечно, вот, пожалуйста. Скажите, включен ли завтрак и во сколько он начинается?",
+      "textUz": "Albatta, marhamat. Ayting-chi, nonushta xona narxiga kiritilganmi va u soat nechida boshlanadi?",
+      "culturalNote": "Breakfast dining question"
+    },
+    {
+      "id": 5,
+      "conversationId": 1,
+      "turnIndex": 5,
+      "speakerRole": "Receptionist",
+      "isSpeakerOne": 1,
+      "textEn": "Yes, complimentary buffet breakfast is served on the second floor from 7:00 AM to 10:30 AM. Here is your keycard for room 412.",
+      "textRu": "Да, бесплатный завтрак «шведский стол» подается на втором этаже с 7:00 до 10:30. Вот ваш электронный ключ от номера 412.",
+      "textUz": "Ha, bepul shved stoli nonushtasi 2-qavatda soat 7:00 dan 10:30 gacha taqdim etiladi. Mana, 412-xona kalit kartasi.",
+      "culturalNote": "Handing keycard and directions"
+    },
+    {
+      "id": 6,
+      "conversationId": 2,
+      "turnIndex": 1,
+      "speakerRole": "Waiter",
+      "isSpeakerOne": 1,
+      "textEn": "Assalomu alaykum! Welcome, dear guests. Please take a seat on the tapchan.",
+      "textRu": "Ассалому алейкум! Добро пожаловать, дорогие гости. Присаживайтесь на топчан.",
+      "textUz": "Assalomu alaykum! Xush kelibsiz, aziz mehmonlar. Marhamat, so‘riga o‘tiringizlar.",
+      "culturalNote": "Traditional Central Asian tapchan seating"
+    },
+    {
+      "id": 7,
+      "conversationId": 2,
+      "turnIndex": 2,
+      "speakerRole": "Customer",
+      "isSpeakerOne": 0,
+      "textEn": "Thank you! We would like to try your wedding plov and crispy tandoor somsa.",
+      "textRu": "Спасибо! Мы бы хотели попробовать ваш праздничный плов и хрустящую тандырную сомсу.",
+      "textUz": "Rahmat! Biz to‘y oshi (palov) va tandirda pishgan tansiq somsalaringizdan tatib ko‘rmoqchimiz.",
+      "culturalNote": "National culinary pride"
+    },
+    {
+      "id": 8,
+      "conversationId": 2,
+      "turnIndex": 3,
+      "speakerRole": "Waiter",
+      "isSpeakerOne": 1,
+      "textEn": "Excellent choice. Would you prefer hot green tea with lemon, or black tea?",
+      "textRu": "Прекрасный выбор. Желаете горячий зеленый чай с лимоном или черный чай?",
+      "textUz": "Ajoyib tanlov. Ko‘k choyga limon qo‘shib damlab kelaymi yoki qora choy ma’qulmi?",
+      "culturalNote": "Green tea is an essential digestive companion"
+    },
+    {
+      "id": 9,
+      "conversationId": 2,
+      "turnIndex": 4,
+      "speakerRole": "Customer",
+      "isSpeakerOne": 0,
+      "textEn": "Green tea in a traditional teapot, please. And could you bring some fresh flatbread (non)?",
+      "textRu": "Зеленый чай в традиционном чайнике, пожалуйста. И принесите горячую лепешку.",
+      "textUz": "Choynakda damlangan ko‘k choy bo‘lsin, iltimos. Yoniga yangi uzilgan issiq patir non ham keltirsangiz.",
+      "culturalNote": "Respect for bread (non) is sacred in Uzbek culture"
+    },
+    {
+      "id": 10,
+      "conversationId": 3,
+      "turnIndex": 1,
+      "speakerRole": "Tech Lead",
+      "isSpeakerOne": 1,
+      "textEn": "Could you walk us through how you manage state and asynchronous operations in Jetpack Compose?",
+      "textRu": "Расскажите, как вы управляете состоянием и асинхронными операциями в Jetpack Compose?",
+      "textUz": "Jetpack Compose muhitida holatni boshqarish va asinxron jarayonlarni qanday tashkil qilganingizni so‘zlab bersangiz?",
+      "culturalNote": "Standard senior architectural interview inquiry"
+    },
+    {
+      "id": 11,
+      "conversationId": 3,
+      "turnIndex": 2,
+      "speakerRole": "Candidate",
+      "isSpeakerOne": 0,
+      "textEn": "I employ clean MVVM architecture, exposing UI state via StateFlow from the ViewModel and collecting it with lifecycle awareness.",
+      "textRu": "Я использую чистую архитектуру MVVM, передавая состояние через StateFlow из ViewModel с учетом жизненного цикла.",
+      "textUz": "Men toza MVVM arxitekturasiga tayanaman: ViewModel ichidan StateFlow orqali holatni uzatib, Compose ekranlarida uni xavfsiz qabul qilaman.",
+      "culturalNote": "Professional engineering explanation"
+    }
+  ],
+  "grammar_lessons": [
+    {
+      "id": 1,
+      "titleEn": "English Articles: A, An, and The",
+      "titleRu": "Артикли в английском: A, An и The",
+      "titleUzLatn": "Ingliz tili artikllari: A, An va The",
+      "titleUzCyrl": "Инглиз тили артисллари: A, An ва The",
+      "category": "Nouns & Articles",
+      "level": "A1",
+      "summaryEn": "Master indefinite (a/an) and definite (the) article usage rules with clear comparisons to Russian and Uzbek.",
+      "summaryRu": "Правила употребления неопределенных (a/an) и определенного (the) артиклей в сравнении с русским и узбекским.",
+      "summaryUzLatn": "Noaniq (a/an) va aniq (the) artikllarining qo‘llanish qoidalari va o‘zbek tilidagi ekvivalentlari.",
+      "ruleDetailsJson": "### 1. The Indefinite Article: A / An\nUsed before singular countable nouns when mentioned for the first time:\n- **a** before consonant sounds: *a book, a university* (/juː/ is consonant sound!)\n- **an** before vowel sounds: *an apple, an hour* (/aʊər/ has silent 'h'!)\n\n*O‘zbek tilida*: Ko‘pincha «bir» so‘zi yoki shunchaki otning o‘zi orqali ifodalanadi (*Men **bir** kitob o‘qidim*).\n*На русском*: Соответствует словам «какой-то», «один», либо опускается (*Я прочитал книгу*).\n\n### 2. The Definite Article: The\nUsed when both the speaker and listener know specifically what is being referred to:\n- *The book on the table* (Ushbu stol ustidagi o‘sha kitob / Та самая книга на столе).\n- Unique entities: *the sun, the moon, the world*.\n\n### 3. Zero Article\nDo not use articles with plurals or uncountable nouns in general statements:\n- *Water is life.* (Suv bu hayot / Вода — это жизнь).",
+      "examplesJson": ""
+    },
+    {
+      "id": 2,
+      "titleEn": "Uzbek Agglutinative Suffixes & Vowel Harmony",
+      "titleRu": "Агглютинативные суффиксы в узбекском языке",
+      "titleUzLatn": "O‘zbek tili agglyutinativ qo‘shimchalari va kelishiklar",
+      "titleUzCyrl": "Ўзбек тили агглютинатив қўшимчалари ва келишиклар",
+      "category": "Uzbek Suffixes",
+      "level": "B1",
+      "summaryEn": "Understand how suffixes stack logically in Uzbek (noun + plural + possessive + case) without irregular gender changes.",
+      "summaryRu": "Понимание логики присоединения суффиксов в узбекском: основа + мн. число + принадлежность + падеж.",
+      "summaryUzLatn": "O‘zbek tilida qo‘shimchalarning zanjir kabi ulanish tartibi: Ot + ko‘plik + egalik + kelishik.",
+      "ruleDetailsJson": "### Suffix Stacking Order in Uzbek\nUnlike English or Russian, Uzbek adds suffixes sequentially in a strict predictable order:\n\n**Base Word + Plural (-lar) + Possessive (-im/-ing/-i) + Case (-da/-dan/-ga/-ni/-ning)**\n\n*Example*:\n- `kitob` (book / книга)\n- `kitob` + `lar` = `kitoblar` (books / книги)\n- `kitob` + `lar` + `im` = `kitoblarim` (my books / мои книги)\n- `kitob` + `lar` + `im` + `da` = `kitoblarimda` (in my books / в моих книгах)\n\n### 6 Cases in Uzbek:\n1. **Bosh kelishik** (Nominative): *kitob* (nol qo‘shimcha)\n2. **Qaratqich** (Genitive -ning): *kitobning* (of the book / книги)\n3. **Tushum** (Accusative -ni): *kitobni* (the book as direct object / книгу)\n4. **Jo‘nalish** (Dative -ga): *kitobga* (to the book / к книге)\n5. **O‘rin-payt** (Locative -da): *kitobda* (in/on the book / в книге)\n6. **Chiqish** (Ablative -dan): *kitobdan* (from the book / из книги)",
+      "examplesJson": ""
+    },
+    {
+      "id": 3,
+      "titleEn": "Russian Grammatical Gender & Cases",
+      "titleRu": "Род и падежи в русском языке",
+      "titleUzLatn": "Rus tilida grammatik jins (Rod) va kelishiklar",
+      "titleUzCyrl": "Рус тилида грамматик жинс (Род) ва келишиклар",
+      "category": "Russian Cases",
+      "level": "B1",
+      "summaryEn": "Master masculine, feminine, and neuter nouns and their six case declension endings.",
+      "summaryRu": "Мужской, женский и средний род, а также 6 падежей русского языка и их окончания.",
+      "summaryUzLatn": "Rus tilidagi uchta rod (mujskoy, jenskiy, sredniy) va 6 ta kelishikning tuslanishi.",
+      "ruleDetailsJson": "### 3 Grammatical Genders in Russian:\n1. **Мужской род (Masculine)**: ends in consonant or -й: *город, чай, словарь*\n2. **Женский род (Feminine)**: ends in -а, -я, or soft sign -ь: *книга, земля, радость*\n3. **Средний род (Neuter)**: ends in -о, -е, -мя: *окно, здание, время*\n\n### Russian Case System (6 Cases):\n- **Именительный (Кто? Что?)**: *студент читает*\n- **Родительный (Кого? Чего?)**: *нет студента*\n- **Дательный (Кому? Чему?)**: *дать студенту*\n- **Винительный (Кого? Что?)**: *вижу студента*\n- **Творительный (Кем? Чем?)**: *горжусь студентом*\n- **Предложный (О ком? О чем?)**: *думаю о студенте*",
+      "examplesJson": ""
+    },
+    {
+      "id": 4,
+      "titleEn": "Present Perfect vs. Past Simple in English",
+      "titleRu": "Present Perfect и Past Simple в английском",
+      "titleUzLatn": "Present Perfect va Past Simple zamonlari farqi",
+      "titleUzCyrl": "Present Perfect ва Past Simple замонлари фарқи",
+      "category": "Verb Tenses",
+      "level": "B1",
+      "summaryEn": "Definite past time markers vs. present relevance and life experiences.",
+      "summaryRu": "Разница между действием с точным указанием времени в прошлом и результатом в настоящем.",
+      "summaryUzLatn": "O‘tmishda aniq vaqtda tugallangan ish-harakat va natijasi hozirgi zamonga bog‘liq ish-harakat farqi.",
+      "ruleDetailsJson": "### Past Simple (Finished Time)\nUsed when a specific past time is stated or implied (*yesterday, in 2021, two days ago, when I was young*):\n- *I visited Samarkand last year.* (Men o‘tgan yili Samarqandga bordim).\n\n### Present Perfect (Connection to Now / Life Experience)\nFormed with `have/has + Past Participle (V3)`. Used when the result matters now, or the time is open:\n- *I have visited Samarkand twice.* (Men Samarqandda ikki marta bo‘lganman — hayotiy tajriba).\n- *She has lost her key.* (U kalitini yo‘qotib qo‘ydi — natijada hozir eshikni ocha olmayapti).",
+      "examplesJson": ""
+    }
+  ],
+  "quiz_questions": [
+    {
+      "id": 1,
+      "type": "WORD_TO_TRANSLATION",
+      "questionText": "What is the primary Uzbek translation of the English word 'resilience'?",
+      "promptAudioText": "resilience",
+      "promptLanguage": "en",
+      "correctAnswer": "bardoshlilik, matonat",
+      "optionA": "bardoshlilik, matonat",
+      "optionB": "xushmuomalalik",
+      "optionC": "kutilmagan topilma",
+      "optionD": "dangasalik",
+      "explanation": "'Resilience' means the capacity to recover quickly from difficulties (matonat, bardoshlilik).",
+      "category": "Vocabulary",
+      "difficulty": "B2"
+    },
+    {
+      "id": 2,
+      "type": "WORD_TO_TRANSLATION",
+      "questionText": "Как переводится на русский язык слово 'hospitality'?",
+      "promptAudioText": "hospitality",
+      "promptLanguage": "en",
+      "correctAnswer": "гостеприимство, радушие",
+      "optionA": "гостеприимство, радушие",
+      "optionB": "больничное лечение",
+      "optionC": "невежество",
+      "optionD": "враждебность",
+      "explanation": "'Hospitality' обозначает радушный прием гостей (гостеприимство).",
+      "category": "Vocabulary",
+      "difficulty": "A2"
+    },
+    {
+      "id": 3,
+      "type": "CHOOSE_DEFINITION",
+      "questionText": "Which definition correctly describes 'eloquent'?",
+      "promptAudioText": "eloquent",
+      "promptLanguage": "en",
+      "correctAnswer": "Fluent and persuasive in speaking or writing",
+      "optionA": "Fluent and persuasive in speaking or writing",
+      "optionB": "Unable to make quick decisions",
+      "optionC": "Easily frightened by sudden events",
+      "optionD": "Relating to deep geological formations",
+      "explanation": "'Eloquent' means expressing ideas persuasively and beautifully (fasih, chechan).",
+      "category": "Definition",
+      "difficulty": "C1"
+    },
+    {
+      "id": 4,
+      "type": "LISTENING_CHALLENGE",
+      "questionText": "Listen to the word and choose the correct Russian and Uzbek translation:",
+      "promptAudioText": "comprehend",
+      "promptLanguage": "en",
+      "correctAnswer": "понимать, постигать • anglamoq",
+      "optionA": "понимать, постигать • anglamoq",
+      "optionB": "приобретать • sotib olmoq",
+      "optionC": "радоваться • quvonmoq",
+      "optionD": "сравнивать • solishtirmoq",
+      "explanation": "'Comprehend' means to understand thoroughly (tushunmoq, idrok qilmoq).",
+      "category": "Listening",
+      "difficulty": "B2"
+    },
+    {
+      "id": 5,
+      "type": "FILL_IN_BLANK",
+      "questionText": "Complete the sentence: 'She has ______ a deep working knowledge of linguistics.'",
+      "promptAudioText": "She has acquired a deep working knowledge of linguistics.",
+      "promptLanguage": "en",
+      "correctAnswer": "acquired",
+      "optionA": "acquired",
+      "optionB": "forgotten",
+      "optionC": "declined",
+      "optionD": "escaped",
+      "explanation": "'To acquire knowledge' is the standard collocation for gaining understanding.",
+      "category": "Collocations",
+      "difficulty": "B2"
+    },
+    {
+      "id": 6,
+      "type": "GRAMMAR_CHECK",
+      "questionText": "Qaysi gapda noaniq artikl (a/an) to‘g‘ri qo‘llangan?",
+      "promptAudioText": "an honest person",
+      "promptLanguage": "en",
+      "correctAnswer": "She is an honest and diligent person.",
+      "optionA": "She is an honest and diligent person.",
+      "optionB": "She is a honest person.",
+      "optionC": "He works as an university teacher.",
+      "optionD": "They bought an house yesterday.",
+      "explanation": "'Honest' so‘zi unli tovush (/ɒ/) bilan boshlangani sababli 'an' artikli ishlatiladi.",
+      "category": "Grammar",
+      "difficulty": "B1"
+    },
+    {
+      "id": 7,
+      "type": "SYNONYM_ANTONYM",
+      "questionText": "What is an antonym of 'diligent'?",
+      "promptAudioText": "diligent",
+      "promptLanguage": "en",
+      "correctAnswer": "lazy / negligent",
+      "optionA": "lazy / negligent",
+      "optionB": "industrious",
+      "optionC": "meticulous",
+      "optionD": "creative",
+      "explanation": "'Diligent' means hardworking; its direct antonym is lazy or negligent.",
+      "category": "Synonyms & Antonyms",
+      "difficulty": "B2"
+    }
+  ]
+}

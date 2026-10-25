@@ -38,4 +38,5 @@ sealed class Screen(val route: String) {
     data object VoiceSettings : Screen("voice_settings")
     data object DataImport : Screen("data_import")
     data object Settings : Screen("settings")
+    data object CloudSync : Screen("cloud_sync")
 }

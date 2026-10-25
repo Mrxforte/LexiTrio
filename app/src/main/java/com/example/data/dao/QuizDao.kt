@@ -30,8 +30,14 @@ interface QuizDao {
     @Query("SELECT * FROM quiz_attempts ORDER BY timestamp DESC LIMIT 30")
     fun getRecentAttempts(): Flow<List<QuizAttemptEntity>>
 
+    @Query("SELECT * FROM quiz_attempts ORDER BY timestamp DESC")
+    suspend fun getAllAttemptsOnce(): List<QuizAttemptEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAttempt(attempt: QuizAttemptEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAttempts(attempts: List<QuizAttemptEntity>)
 
     // User Progress
     @Query("SELECT * FROM user_progress WHERE id = 1 LIMIT 1")

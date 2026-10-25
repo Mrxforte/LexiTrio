@@ -2,6 +2,8 @@ package com.example.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
+import java.util.UUID
 
 enum class QuizType(val titleEn: String, val titleRu: String, val titleUz: String) {
     WORD_TO_TRANSLATION("Word → Translation", "Слово → Перевод", "So‘z → Tarjima"),
@@ -39,6 +41,8 @@ data class QuizQuestionEntity(
 data class QuizAttemptEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    @ColumnInfo(defaultValue = "''")
+    val clientId: String = UUID.randomUUID().toString(),
     val timestamp: Long = System.currentTimeMillis(),
     val category: String,
     val totalQuestions: Int,

@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.data.model.Language
@@ -23,7 +24,8 @@ data class AppPreferences(
     val selectedVoiceId: String = "",
     val autoPlayAudio: Boolean = false,
     val dailyGoalWords: Int = 10,
-    val isDarkMode: Boolean? = null
+    val isDarkMode: Boolean? = null,
+    val lastUpdatedTimestamp: Long = 0L
 )
 
 class UserPreferencesRepository(private val context: Context) {
@@ -37,6 +39,7 @@ class UserPreferencesRepository(private val context: Context) {
         val AUTO_PLAY_AUDIO = booleanPreferencesKey("auto_play_audio")
         val DAILY_GOAL_WORDS = intPreferencesKey("daily_goal_words")
         val DARK_MODE = stringPreferencesKey("dark_mode")
+        val LAST_UPDATED_TIMESTAMP = longPreferencesKey("preferences_last_updated_timestamp")
     }
 
     val preferences: Flow<AppPreferences> = context.dataStore.data.map { prefs ->
@@ -56,49 +59,57 @@ class UserPreferencesRepository(private val context: Context) {
                 "true" -> true
                 "false" -> false
                 else -> null
-            }
+            },
+            lastUpdatedTimestamp = prefs[Keys.LAST_UPDATED_TIMESTAMP] ?: 0L
         )
     }
 
     suspend fun setAppLanguage(language: Language) {
         context.dataStore.edit { prefs ->
             prefs[Keys.APP_LANGUAGE] = language.code
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
     suspend fun setSearchSourceLanguage(language: Language) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SEARCH_SOURCE_LANG] = language.code
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
     suspend fun setSpeechRate(rate: Float) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SPEECH_RATE] = rate
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
     suspend fun setSpeechPitch(pitch: Float) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SPEECH_PITCH] = pitch
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
     suspend fun setSelectedVoiceId(voiceId: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SELECTED_VOICE_ID] = voiceId
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
     suspend fun setAutoPlayAudio(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.AUTO_PLAY_AUDIO] = enabled
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
     suspend fun setDailyGoalWords(goal: Int) {
         context.dataStore.edit { prefs ->
             prefs[Keys.DAILY_GOAL_WORDS] = goal
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
@@ -108,6 +119,25 @@ class UserPreferencesRepository(private val context: Context) {
                 prefs.remove(Keys.DARK_MODE)
             } else {
                 prefs[Keys.DARK_MODE] = darkMode.toString()
+            }
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
+        }
+    }
+
+    suspend fun replaceWith(preferences: AppPreferences) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.APP_LANGUAGE] = preferences.appLanguage.code
+            prefs[Keys.SEARCH_SOURCE_LANG] = preferences.searchSourceLanguage.code
+            prefs[Keys.SPEECH_RATE] = preferences.speechRate
+            prefs[Keys.SPEECH_PITCH] = preferences.speechPitch
+            prefs[Keys.SELECTED_VOICE_ID] = preferences.selectedVoiceId
+            prefs[Keys.AUTO_PLAY_AUDIO] = preferences.autoPlayAudio
+            prefs[Keys.DAILY_GOAL_WORDS] = preferences.dailyGoalWords
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = preferences.lastUpdatedTimestamp
+            if (preferences.isDarkMode == null) {
+                prefs.remove(Keys.DARK_MODE)
+            } else {
+                prefs[Keys.DARK_MODE] = preferences.isDarkMode.toString()
             }
         }
     }

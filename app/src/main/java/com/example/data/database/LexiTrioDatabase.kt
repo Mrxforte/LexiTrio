@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.dao.ConversationGrammarDao
 import com.example.data.dao.DictionaryDao
@@ -21,6 +22,7 @@ import com.example.data.model.QuizQuestionEntity
 import com.example.data.model.SavedWordEntity
 import com.example.data.model.SearchHistoryEntity
 import com.example.data.model.SynonymAntonymEntity
+import com.example.data.model.SyncTombstoneEntity
 import com.example.data.model.TopicEntity
 import com.example.data.model.TopicWordCrossRef
 import com.example.data.model.TranslationEntity
@@ -51,9 +53,10 @@ import kotlinx.coroutines.launch
         QuizQuestionEntity::class,
         QuizAttemptEntity::class,
         SearchHistoryEntity::class,
-        UserProgressEntity::class
+        UserProgressEntity::class,
+        SyncTombstoneEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class LexiTrioDatabase : RoomDatabase() {
@@ -68,6 +71,66 @@ abstract class LexiTrioDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: LexiTrioDatabase? = null
 
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE saved_words ADD COLUMN clientId TEXT NOT NULL DEFAULT ''"
+                )
+                db.execSQL(
+                    "UPDATE saved_words SET clientId = printf('00000000-0000-4000-8000-%012x', id)"
+                )
+                db.execSQL(
+                    "ALTER TABLE vocabulary_collections ADD COLUMN clientId TEXT NOT NULL DEFAULT ''"
+                )
+                db.execSQL(
+                    "UPDATE vocabulary_collections SET clientId = printf('00000000-0000-4000-8000-%012x', id)"
+                )
+                db.execSQL(
+                    "ALTER TABLE quiz_attempts ADD COLUMN clientId TEXT NOT NULL DEFAULT ''"
+                )
+                db.execSQL(
+                    "UPDATE quiz_attempts SET clientId = printf('00000000-0000-4000-8000-%012x', id)"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS sync_tombstones (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        entityType TEXT NOT NULL,
+                        clientId TEXT NOT NULL,
+                        deletedAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_sync_tombstones_entityType_clientId " +
+                        "ON sync_tombstones (entityType, clientId)"
+                )
+            }
+        }
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE saved_words ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "UPDATE saved_words SET updatedAt = MAX(savedAt, lastReviewTimestamp)"
+                )
+                db.execSQL(
+                    "ALTER TABLE vocabulary_collections ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "UPDATE vocabulary_collections SET updatedAt = createdAt"
+                )
+                db.execSQL(
+                    "ALTER TABLE user_progress ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "UPDATE user_progress SET updatedAt = lastStudyDateTimestamp"
+                )
+            }
+        }
+
         fun getInstance(context: Context): LexiTrioDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -75,6 +138,7 @@ abstract class LexiTrioDatabase : RoomDatabase() {
                     LexiTrioDatabase::class.java,
                     "lexitrio_database.db"
                 )
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .addCallback(DatabaseCallback())
                     .fallbackToDestructiveMigration()
                     .build()
