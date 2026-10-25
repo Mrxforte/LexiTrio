@@ -177,12 +177,12 @@ def backfill_entries(
                 entry.article = article[:8]
                 changed_fields.append("article")
             if plural and not (entry.plural_form or entry.comparative_form):
-                if pos == "adjective":
-                    entry.comparative_form = plural[:200]
-                    changed_fields.append("comparative_form")
-                else:
+                if pos == "noun":
                     entry.plural_form = plural[:200]
                     changed_fields.append("plural_form")
+                elif pos == "adjective":
+                    entry.comparative_form = plural[:200]
+                    changed_fields.append("comparative_form")
 
         for language, value in translated[index].items():
             field_name = f"primary_meaning_{language}"
