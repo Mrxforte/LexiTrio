@@ -8,7 +8,13 @@ from collections.abc import Sequence
 
 from django.conf import settings
 
-from .openai_client import ChatResult, OpenAIClient, TranslationProviderError
+from .openai_client import (
+    ChatResult,
+    OpenAIClient,
+    TranslationNotConfigured,
+    TranslationParseError,
+    TranslationProviderError,
+)
 from .text_extraction import normalize_text
 
 SUPPORTED_TARGETS = ("ru", "uz")
@@ -240,6 +246,7 @@ def translate_professional(
         system_prompt=_PROFESSIONAL_SYSTEM_PROMPT,
         build_prompt=_build_professional_prompt,
         parse_payload=_parse_professional_payload,
+        empty_record=_professional_empty_record(languages),
     )
     for record, payload in zip(records, payloads):
         record["headword"] = payload["headword"]
@@ -255,35 +262,66 @@ def _translate_batches(
     system_prompt: str,
     build_prompt,
     parse_payload=None,
+    empty_record: dict | None = None,
 ) -> tuple[list[dict], str, list[str]]:
     client = client or OpenAIClient()
     configured_batch = batch_size or getattr(settings, "TRANSLATION_BATCH_SIZE", 6)
     step = max(1, int(configured_batch))
     parse_payload = parse_payload or _parse_translation_payload
 
-    records: list[dict] = []
     warnings: list[str] = []
     model = client.model
+    parsed_by_index: dict[int, dict] = {}
+    fallback = (
+        dict(empty_record)
+        if empty_record is not None
+        else {language: "" for language in languages}
+    )
 
-    for start in range(0, len(payloads), step):
-        batch = list(payloads[start : start + step])
-        result: ChatResult = client.complete(
-            system_prompt=system_prompt,
-            user_prompt=build_prompt(batch, languages),
-        )
+    queue = [list(payloads[start : start + step]) for start in range(0, len(payloads), step)]
+
+    while queue:
+        group = queue.pop(0)
+        local = [
+            {"index": local_index, **{k: v for k, v in item.items() if k != "index"}}
+            for local_index, item in enumerate(group)
+        ]
+        try:
+            result: ChatResult = client.complete(
+                system_prompt=system_prompt,
+                user_prompt=build_prompt(local, languages),
+            )
+            batch_records = parse_payload(result.content, len(local), languages)
+        except TranslationNotConfigured:
+            raise
+        except TranslationParseError as exc:
+            # Gemini and friends can truncate long JSON, so retry in halves.
+            if len(group) > 1:
+                middle = len(group) // 2
+                queue.insert(0, group[:middle])
+                queue.insert(1 if middle else 0, group[middle:])
+                warnings.append(f"{len(group)} element bo'laklarga bo'lindi: {exc}")
+                continue
+            warnings.append(f"{group[0].get('index')}-element tarjima qilinmadi: {exc}")
+            parsed_by_index[group[0].get("index", 0)] = dict(fallback)
+            continue
+
         model = result.model or model
-        batch_records = parse_payload(result.content, len(batch), languages)
-        for offset, parsed in enumerate(batch_records):
-            index = start + offset
-            record = {"index": index}
-            record.update(parsed)
+        for position, parsed in enumerate(batch_records):
+            original_index = group[position].get("index", position)
+            parsed_by_index[original_index] = parsed
             for language in languages:
-                if not _has_value(record.get(language)):
+                if not _has_value(parsed.get(language)):
                     warnings.append(
-                        f"{index}-element uchun '{language}' tarjimasi bo'sh qaytdi."
+                        f"{original_index}-element uchun '{language}' tarjimasi bo'sh qaytdi."
                     )
-            records.append(record)
 
+    records: list[dict] = []
+    for payload in payloads:
+        index = payload.get("index")
+        record = {"index": index}
+        record.update(parsed_by_index.get(index, dict(fallback)))
+        records.append(record)
     return records, model, warnings
 
 
@@ -346,10 +384,19 @@ def _build_professional_prompt(batch: Sequence[dict], languages: Sequence[str]) 
         "- ru.text: up to four Russian equivalents separated by commas, Cyrillic script.\n"
         "- ru.gender: m, f, n or c for the Russian noun, else ''.\n"
         "- uz.text: up to four Uzbek equivalents in the modern Latin script.\n"
+        "- ru.pos and uz.pos must use the same English labels as pos (noun, verb, "
+        "adjective, adverb, numeral, article, pronoun, preposition, conjunction, "
+        "interjection, determiner, phrase), not abbreviations in the target language.\n"
         "- Never repeat the English headword and never add explanations.\n"
         f"{_ITEMS_MARKER}\n"
         f"{json.dumps(batch, ensure_ascii=False)}"
     )
+
+
+def _professional_empty_record(languages: Sequence[str]) -> dict:
+    record: dict = {"pos": "", "ipa": "", "article": "", "plural": ""}
+    record.update({language: {"text": "", "pos": "", "gender": ""} for language in languages})
+    return record
 
 
 def _parse_professional_payload(
@@ -360,7 +407,7 @@ def _parse_professional_payload(
     if isinstance(items, dict):
         items = [items]
     if not isinstance(items, list):
-        raise TranslationProviderError("Tarjima javobi kutilgan JSON formatida emas.")
+        raise TranslationParseError("Tarjima javobi kutilgan JSON formatida emas.")
 
     parsed: dict[int, dict] = {}
     for position, item in enumerate(items):
@@ -390,8 +437,7 @@ def _parse_professional_payload(
                 record[language] = {"text": _clean_value(value), "pos": record["pos"], "gender": ""}
         parsed[index] = record
 
-    empty = {"pos": "", "ipa": "", "article": "", "plural": ""}
-    empty.update({language: {"text": "", "pos": "", "gender": ""} for language in languages})
+    empty = _professional_empty_record(languages)
     return [parsed.get(position, dict(empty)) for position in range(expected_count)]
 
 
@@ -445,7 +491,7 @@ def _loads_json(raw: str):
                 return json.loads(text[start : end + 1])
             except json.JSONDecodeError:
                 pass
-        raise TranslationProviderError("Tarjima xizmati noto'g'ri JSON qaytardi.")
+        raise TranslationParseError("Tarjima xizmati noto'g'ri JSON qaytardi.")
 
 
 def _split_block(block: str, max_chars: int) -> list[str]:

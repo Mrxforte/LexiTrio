@@ -14,6 +14,10 @@ class TranslationProviderError(Exception):
     """The translation provider failed or returned unusable data."""
 
 
+class TranslationParseError(TranslationProviderError):
+    """The provider answered, but not with the JSON we asked for."""
+
+
 class TranslationNotConfigured(TranslationProviderError):
     """No provider credentials are configured."""
 
@@ -35,6 +39,16 @@ def _provider_error_message(response: httpx.Response) -> str:
     return json.dumps(payload)[:300]
 
 
+def _retry_after_seconds(response: httpx.Response) -> float:
+    value = response.headers.get("retry-after")
+    if not value:
+        return 0.0
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        return 0.0
+
+
 class OpenAIClient:
     """Thin wrapper around `POST {base_url}/chat/completions` with retries."""
 
@@ -49,8 +63,20 @@ class OpenAIClient:
         self.timeout = float(configured_timeout)
         retries = max_retries if max_retries is not None else getattr(settings, "OPENAI_MAX_RETRIES", 2)
         self.max_retries = max(0, int(retries))
+        self.max_backoff = float(getattr(settings, "OPENAI_MAX_BACKOFF", 60))
+        self.min_interval = float(getattr(settings, "OPENAI_MIN_INTERVAL", 0) or 0)
+        self._last_call = 0.0
 
-    def complete(self, *, system_prompt: str, user_prompt: str, json_mode: bool = True) -> ChatResult:
+    def _pace(self) -> None:
+        """Keep a minimum gap between calls so free-tier quotas are respected."""
+        if self.min_interval <= 0:
+            return
+        elapsed = time.monotonic() - self._last_call
+        if elapsed < self.min_interval:
+            time.sleep(self.min_interval - elapsed)
+        self._last_call = time.monotonic()
+
+    def complete(self, *, system_prompt: str, user_prompt: str, json_mode: bool | None = None) -> ChatResult:
         if not self.api_key:
             raise TranslationNotConfigured(
                 "OPENAI_API_KEY sozlanmagan. Tarjima uchun backend/.env ga kalit qo'shing."
@@ -65,11 +91,15 @@ class OpenAIClient:
             "temperature": float(getattr(settings, "OPENAI_TEMPERATURE", 0.2)),
             "max_tokens": int(getattr(settings, "OPENAI_MAX_OUTPUT_TOKENS", 8192)),
         }
-        if json_mode:
+        wants_json = (
+            getattr(settings, "TRANSLATION_JSON_MODE", True) if json_mode is None else json_mode
+        )
+        if wants_json:
             payload["response_format"] = {"type": "json_object"}
 
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
+            self._pace()
             try:
                 with httpx.Client(timeout=self.timeout) as client:
                     response = client.post(
@@ -91,6 +121,10 @@ class OpenAIClient:
                     last_error = TranslationProviderError(
                         f"Tarjima xizmati band ({response.status_code})."
                     )
+                    retry_after = _retry_after_seconds(response)
+                    if retry_after:
+                        time.sleep(min(retry_after, self.max_backoff))
+                        continue
                 elif response.status_code >= 400:
                     raise TranslationProviderError(
                         f"OpenAI xatosi ({response.status_code}): {_provider_error_message(response)}"
@@ -99,7 +133,7 @@ class OpenAIClient:
                     return self._parse_response(response)
 
             if attempt < self.max_retries:
-                time.sleep(min(2**attempt, 8))
+                time.sleep(min(2**attempt, self.max_backoff))
 
         raise last_error or TranslationProviderError("Tarjima xizmati javob bermadi.")
 
