@@ -17,7 +17,7 @@ MAX_SENSES_PER_ENTRY = 3
 MAX_TRANSLATION_WORDS = 6
 
 _POS_MAP = {"n": "noun", "v": "verb", "a": "adjective", "s": "adjective", "r": "adverb"}
-_HEADWORD_RE = re.compile(r"^[a-zà-öø-ÿ][a-zà-öø-ÿ'\- ]{1,59}$", re.IGNORECASE)
+_HEADWORD_RE = re.compile(r"^[a-zà-öø-ÿ][a-zà-öø-ÿ'\- ]{0,59}$", re.IGNORECASE)
 _LANGUAGE_NAMES = {
     "Russian": "ru",
     "Uzbek": "uz",
@@ -410,7 +410,10 @@ def _kaikki_record(payload: dict) -> dict | None:
 
     senses = []
     for sense in (payload.get("senses") or [])[:MAX_SENSES_PER_ENTRY]:
-        gloss = str(sense.get("gloss") or "").strip()
+        candidates = sense.get("glosses") or []
+        if not candidates and sense.get("gloss"):
+            candidates = [sense["gloss"]]
+        gloss = str(candidates[0] if candidates else "").strip()
         if gloss:
             senses.append({"definition_en": gloss})
     if not senses:

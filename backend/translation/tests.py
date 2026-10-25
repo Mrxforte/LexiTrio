@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from rest_framework.test import APIClient, APITestCase
 
 from learning.models import DictionaryEntry, Translation
@@ -13,12 +13,26 @@ from learning.models import DictionaryEntry, Translation
 from .models import TranslationJob
 from .services.lexicon import file_records, import_records
 from .services.openai_client import ChatResult
+from .services.professional import (
+    POS_ADJECTIVE,
+    POS_ARTICLE,
+    POS_NOUN,
+    POS_NUMERAL,
+    POS_VERB,
+    context_note,
+    english_article,
+    normalize_pos,
+    primary_meaning_from_translations,
+)
+from .services.wiktionary import parse_payload
 from .services.translator import (
     TranslationInputError,
     split_text,
     translate_headwords,
     translate_items,
+    translate_professional,
 )
+from .services.backfill import backfill_entries
 
 User = get_user_model()
 
@@ -94,6 +108,191 @@ class TranslatorTests(APITestCase):
         self.assertIn("to obtain", client.calls[0])
         self.assertEqual(records[0]["headword"], "acquire")
         self.assertEqual(records[0]["ru"], "ru:acquire")
+
+    def test_translate_professional_returns_structured_grammar(self):
+        def builder(_prompt):
+            return json.dumps(
+                {
+                    "translations": [
+                        {
+                            "index": 0,
+                            "pos": "noun",
+                            "ipa": "/ˈwɜːd/",
+                            "article": "a",
+                            "plural": "words",
+                            "ru": {"text": "слово", "pos": "noun", "gender": "n"},
+                            "uz": {"text": "so'z", "pos": "noun"},
+                        }
+                    ]
+                }
+            )
+
+        records, _, warnings = translate_professional(
+            [{"headword": "word", "definition": "a unit of language"}],
+            client=FakeClient(builder),
+        )
+
+        self.assertEqual(warnings, [])
+        self.assertEqual(records[0]["pos"], "noun")
+        self.assertEqual(records[0]["ipa"], "/ˈwɜːd/")
+        self.assertEqual(records[0]["plural"], "words")
+        self.assertEqual(records[0]["ru"]["text"], "слово")
+        self.assertEqual(records[0]["ru"]["gender"], "n")
+
+    def test_professional_backfill_writes_grammar_fields(self):
+        entry = DictionaryEntry.objects.create(
+            headword="word",
+            headword_normalized="word",
+            language="en",
+            primary_meaning_en="a unit of language",
+        )
+
+        def builder(_prompt):
+            return json.dumps(
+                {
+                    "translations": [
+                        {
+                            "index": 0,
+                            "pos": "noun",
+                            "ipa": "/ˈwɜːd/",
+                            "article": "a",
+                            "plural": "words",
+                            "ru": {"text": "слово", "pos": "noun", "gender": "n"},
+                            "uz": {"text": "so'z", "pos": "noun"},
+                        }
+                    ]
+                }
+            )
+
+        summary = backfill_entries(
+            limit=1, professional=True, client=FakeClient(builder), entry_ids=[entry.id]
+        )
+
+        entry.refresh_from_db()
+        self.assertEqual(summary["translated"], 1)
+        self.assertEqual(entry.phonetic_ipa, "/ˈwɜːd/")
+        self.assertEqual(entry.part_of_speech, "noun")
+        self.assertEqual(entry.article, "a")
+        self.assertEqual(entry.plural_form, "words")
+        self.assertEqual(entry.primary_meaning_ru, "слово (сущ., с.р.)")
+        self.assertEqual(entry.primary_meaning_uz, "so'z (ot)")
+        translation = entry.translations.get(target_language="ru")
+        self.assertEqual(translation.gender, "n")
+        self.assertEqual(translation.context_note, "сущ., с.р.")
+
+
+class ProfessionalHelpersTests(SimpleTestCase):
+    def test_pos_normalization_covers_uzbek_dictionary_labels(self):
+        self.assertEqual(normalize_pos("num"), POS_NUMERAL)
+        self.assertEqual(normalize_pos("adj"), POS_ADJECTIVE)
+        self.assertEqual(normalize_pos("Article"), POS_ARTICLE)
+        self.assertEqual(normalize_pos("unknown"), "")
+
+    def test_article_is_derived_from_the_first_sound(self):
+        self.assertEqual(english_article("/ˈaʊə/", POS_NOUN), "an")
+        self.assertEqual(english_article("/ˌjuːnɪˈvɜːsəti/", POS_NOUN), "a")
+        self.assertEqual(english_article("/ˈwɜːd/", POS_VERB), "")
+
+    def test_context_note_uses_dictionary_abbreviations(self):
+        note = context_note("ru", pos=POS_NOUN, gender="f")
+        self.assertEqual(note, "сущ., ж.р.")
+        self.assertEqual(context_note("uz", pos=POS_NUMERAL), "son")
+
+    def test_primary_meaning_appends_the_note(self):
+        value = primary_meaning_from_translations(["случайность", "удача"], "сущ., ж.р.")
+
+        self.assertEqual(value, "случайность, удача (сущ., ж.р.)")
+
+
+class WiktionaryPayloadTests(SimpleTestCase):
+    def test_parse_payload_collects_professional_fields(self):
+        payload = {
+            "word": "whimsical",
+            "pos": "adj",
+            "sounds": [{"ipa": "/ˈwɪmzɪkəl/"}],
+            "forms": [
+                {"form": "more whimsical", "tags": ["comparative"]},
+                {"form": "most whimsical", "tags": ["superlative"]},
+            ],
+            "senses": [{"gloss": "determined by whim"}],
+            "translations": [
+                {"lang": "Russian", "word": "причудливый", "roman": "pričudlivyj"},
+                {"lang": "Uzbek", "word": "injiq"},
+            ],
+        }
+
+        entry = parse_payload(payload)
+
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.pos, POS_ADJECTIVE)
+        self.assertEqual(entry.ipa, "/ˈwɪmzɪkəl/")
+        self.assertEqual(entry.comparative, "more whimsical")
+        self.assertEqual(entry.translations["ru"][0]["word"], "причудливый")
+        self.assertEqual(entry.translations["uz"][0]["word"], "injiq")
+
+    def test_parse_payload_reads_gender_and_plural_tags(self):
+        payload = {
+            "word": "dictionary",
+            "pos": "noun",
+            "forms": [{"form": "dictionaries", "tags": ["plural"]}],
+            "senses": [{"gloss": "a reference book"}],
+            "translations": [
+                {"lang": "Russian", "word": "словарь", "tags": ["masculine"]},
+            ],
+        }
+
+        entry = parse_payload(payload)
+
+        self.assertEqual(entry.plural, "dictionaries")
+        self.assertEqual(entry.translations["ru"][0]["gender"], "m")
+
+    def test_parse_payload_ignores_entries_without_content(self):
+        self.assertIsNone(parse_payload({"word": "empty", "pos": "noun", "senses": []}))
+
+
+class FreedictParseTests(SimpleTestCase):
+    def _parse(self, xml: str):
+        import xml.etree.ElementTree as ET
+
+        from .services.freedict import parse_entry
+
+        return parse_entry(ET.fromstring(xml))
+
+    def test_parse_entry_reads_translation_pos_gender_and_ipa(self):
+        entry = self._parse(
+            """
+            <entry xmlns="http://www.tei-c.org/ns/1.0">
+              <form><orth>dictionary</orth><pron>/ˈdɪkʃənəri/</pron></form>
+              <gramGrp><pos>n</pos></gramGrp>
+              <sense>
+                <cit type="trans" xml:lang="ru"><quote>слова́рь</quote>
+                  <gramGrp><gen>masc</gen></gramGrp>
+                </cit>
+                <sense><def>a reference book</def></sense>
+              </sense>
+            </entry>
+            """
+        )
+
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.headword, "dictionary")
+        self.assertEqual(entry.pos, POS_NOUN)
+        self.assertEqual(entry.ipa, "/ˈdɪkʃənəri/")
+        self.assertEqual(entry.translations, ["словарь"])
+        self.assertEqual(entry.definitions, ["a reference book"])
+        self.assertEqual(entry.gender, "m")
+
+    def test_parse_entry_skips_entries_without_russian_translation(self):
+        entry = self._parse(
+            """
+            <entry xmlns="http://www.tei-c.org/ns/1.0">
+              <form><orth>untranslated</orth></form>
+              <sense><sense><def>something</def></sense></sense>
+            </entry>
+            """
+        )
+
+        self.assertIsNone(entry)
 
 
 class TextTranslationApiTests(APITestCase):

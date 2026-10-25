@@ -21,6 +21,10 @@ class DictionaryEntry(models.Model):
     primary_meaning_en = models.TextField(blank=True)
     primary_meaning_ru = models.TextField(blank=True)
     primary_meaning_uz = models.TextField(blank=True)
+    article = models.CharField(max_length=8, blank=True)
+    plural_form = models.CharField(max_length=200, blank=True)
+    comparative_form = models.CharField(max_length=200, blank=True)
+    superlative_form = models.CharField(max_length=200, blank=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
@@ -46,12 +50,24 @@ class WordMeaning(models.Model):
 
 
 class Translation(models.Model):
+    class Quality(models.TextChoices):
+        MACHINE = "machine", "Machine"
+        WIKTIONARY = "wiktionary", "Wiktionary"
+        REVIEWED = "reviewed", "Reviewed"
+
     entry = models.ForeignKey(DictionaryEntry, related_name="translations", on_delete=models.CASCADE)
     meaning_id = models.PositiveBigIntegerField(default=0)
     target_language = models.CharField(max_length=12, db_index=True)
     translation_text = models.CharField(max_length=300, db_index=True)
     transliteration = models.CharField(max_length=200, blank=True)
     context_note = models.TextField(blank=True)
+    part_of_speech = models.CharField(max_length=40, blank=True)
+    gender = models.CharField(max_length=8, blank=True)
+    number = models.CharField(max_length=16, blank=True)
+    article = models.CharField(max_length=8, blank=True)
+    quality = models.CharField(
+        max_length=16, choices=Quality.choices, default=Quality.MACHINE, db_index=True
+    )
 
 
 class ExampleSentence(models.Model):

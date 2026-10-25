@@ -28,6 +28,11 @@ class Command(BaseCommand):
             help="Mavjud tarjimalarni ham qayta yozish.",
         )
         parser.add_argument("--dry-run", action="store_true")
+        parser.add_argument(
+            "--professional",
+            action="store_true",
+            help="Lug'at sifati: transkripsiya, so'z turkumi, artikl, ko'plik/rod ham yoziladi.",
+        )
         parser.add_argument("--sleep", type=float, default=0.0)
 
     def handle(self, *args, **options):
@@ -56,6 +61,7 @@ class Command(BaseCommand):
                     limit=page_limit,
                     only_missing=only_missing,
                     dry_run=dry_run,
+                    professional=options["professional"],
                     cursor_id=cursor,
                     batch_size=batch_size,
                 )

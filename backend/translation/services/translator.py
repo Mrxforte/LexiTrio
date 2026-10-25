@@ -37,6 +37,16 @@ _HEADWORD_SYSTEM_PROMPT = (
     "with JSON only."
 )
 
+_PROFESSIONAL_SYSTEM_PROMPT = (
+    "You are a senior lexicographer producing camera-ready dictionary entries for an "
+    "English-Russian-Uzbek learner's dictionary. For every headword return exactly what a "
+    "printed dictionary shows: the IPA transcription, the part of speech, the English article "
+    "(a/an for countable nouns, empty otherwise), the plural or comparative/superlative forms, "
+    "and the best target-language equivalents with their own part of speech and, for Russian, "
+    "the grammatical gender. Use standard dictionary abbreviations, never add commentary, and "
+    "answer with JSON only."
+)
+
 _ITEMS_MARKER = "Items:"
 
 
@@ -193,6 +203,49 @@ def translate_headwords(
     return records, model, warnings
 
 
+def translate_professional(
+    entries: Sequence[dict],
+    targets: str | Sequence[str] | None = None,
+    client: OpenAIClient | None = None,
+    *,
+    batch_size: int | None = None,
+) -> tuple[list[dict], str, list[str]]:
+    """Produce dictionary-ready entries: transcription, POS, article, forms, senses.
+
+    Each input entry is ``{"headword": str, "definition": str}``. Each record
+    holds ``index``, ``headword``, ``pos``, ``ipa``, ``article``, ``plural``,
+    plus one object per target language with ``text``, ``pos``, ``gender``.
+    """
+    languages = normalize_targets(targets)
+    payloads = []
+    for index, entry in enumerate(entries):
+        headword = str(entry.get("headword", "")).strip()
+        if not headword:
+            continue
+        payloads.append(
+            {
+                "index": index,
+                "headword": headword,
+                "definition": normalize_text(str(entry.get("definition", ""))),
+            }
+        )
+    if not payloads:
+        return [], "", []
+
+    records, model, warnings = _translate_batches(
+        payloads,
+        languages,
+        client=client,
+        batch_size=batch_size,
+        system_prompt=_PROFESSIONAL_SYSTEM_PROMPT,
+        build_prompt=_build_professional_prompt,
+        parse_payload=_parse_professional_payload,
+    )
+    for record, payload in zip(records, payloads):
+        record["headword"] = payload["headword"]
+    return records, model, warnings
+
+
 def _translate_batches(
     payloads: Sequence[dict],
     languages: Sequence[str],
@@ -201,10 +254,12 @@ def _translate_batches(
     batch_size: int | None,
     system_prompt: str,
     build_prompt,
+    parse_payload=None,
 ) -> tuple[list[dict], str, list[str]]:
     client = client or OpenAIClient()
     configured_batch = batch_size or getattr(settings, "TRANSLATION_BATCH_SIZE", 6)
     step = max(1, int(configured_batch))
+    parse_payload = parse_payload or _parse_translation_payload
 
     records: list[dict] = []
     warnings: list[str] = []
@@ -217,20 +272,25 @@ def _translate_batches(
             user_prompt=build_prompt(batch, languages),
         )
         model = result.model or model
-        batch_records = _parse_translation_payload(result.content, len(batch), languages)
-        for offset, translations in enumerate(batch_records):
+        batch_records = parse_payload(result.content, len(batch), languages)
+        for offset, parsed in enumerate(batch_records):
             index = start + offset
             record = {"index": index}
+            record.update(parsed)
             for language in languages:
-                value = translations.get(language, "")
-                if not value:
+                if not _has_value(record.get(language)):
                     warnings.append(
                         f"{index}-element uchun '{language}' tarjimasi bo'sh qaytdi."
                     )
-                record[language] = value
             records.append(record)
 
     return records, model, warnings
+
+
+def _has_value(value) -> bool:
+    if isinstance(value, dict):
+        return bool(str(value.get("text", "")).strip())
+    return bool(str(value or "").strip())
 
 
 def _build_items_prompt(batch: Sequence[dict], languages: Sequence[str]) -> str:
@@ -264,6 +324,75 @@ def _build_headword_prompt(batch: Sequence[dict], languages: Sequence[str]) -> s
         f"{_ITEMS_MARKER}\n"
         f"{json.dumps(batch, ensure_ascii=False)}"
     )
+
+
+def _build_professional_prompt(batch: Sequence[dict], languages: Sequence[str]) -> str:
+    language_list = ", ".join(_LANGUAGE_LABELS[language] for language in languages)
+    shape = ",".join(
+        json.dumps(language) + ':{text:"...",pos:"...",gender:"..."}' for language in languages
+    )
+    return (
+        "Build one dictionary entry per item.\n"
+        f"Target languages: {language_list}.\n"
+        f'Reply exactly as {{"translations":[{{"index":0,"pos":"noun","ipa":"/.../",'
+        f'"article":"a","plural":"...",{shape}}}]}}.\n'
+        "Rules:\n"
+        "- index must match the input item; return one object per item, same order.\n"
+        "- pos: noun, verb, adjective, adverb, numeral, article, pronoun, preposition, "
+        "conjunction, interjection, determiner, phrase.\n"
+        "- ipa: the British IPA transcription in slashes; reuse the known one when it is given.\n"
+        "- article: 'a' or 'an' for countable nouns, '' otherwise.\n"
+        "- plural: plural form for nouns, comparative for adjectives, else ''.\n"
+        "- ru.text: up to four Russian equivalents separated by commas, Cyrillic script.\n"
+        "- ru.gender: m, f, n or c for the Russian noun, else ''.\n"
+        "- uz.text: up to four Uzbek equivalents in the modern Latin script.\n"
+        "- Never repeat the English headword and never add explanations.\n"
+        f"{_ITEMS_MARKER}\n"
+        f"{json.dumps(batch, ensure_ascii=False)}"
+    )
+
+
+def _parse_professional_payload(
+    content: str, expected_count: int, languages: Sequence[str]
+) -> list[dict]:
+    data = _loads_json(content)
+    items = data.get("translations") if isinstance(data, dict) else data
+    if isinstance(items, dict):
+        items = [items]
+    if not isinstance(items, list):
+        raise TranslationProviderError("Tarjima javobi kutilgan JSON formatida emas.")
+
+    parsed: dict[int, dict] = {}
+    for position, item in enumerate(items):
+        if not isinstance(item, dict):
+            continue
+        try:
+            index = int(item.get("index", position))
+        except (TypeError, ValueError):
+            index = position
+        if not 0 <= index < expected_count:
+            continue
+        record: dict = {
+            "pos": _clean_value(item.get("pos")),
+            "ipa": _clean_value(item.get("ipa")),
+            "article": _clean_value(item.get("article")),
+            "plural": _clean_value(item.get("plural")),
+        }
+        for language in languages:
+            value = item.get(language)
+            if isinstance(value, dict):
+                record[language] = {
+                    "text": _clean_value(value.get("text")),
+                    "pos": _clean_value(value.get("pos")) or record["pos"],
+                    "gender": _clean_value(value.get("gender")),
+                }
+            else:
+                record[language] = {"text": _clean_value(value), "pos": record["pos"], "gender": ""}
+        parsed[index] = record
+
+    empty = {"pos": "", "ipa": "", "article": "", "plural": ""}
+    empty.update({language: {"text": "", "pos": "", "gender": ""} for language in languages})
+    return [parsed.get(position, dict(empty)) for position in range(expected_count)]
 
 
 def _parse_translation_payload(

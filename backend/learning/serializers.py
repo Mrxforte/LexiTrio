@@ -53,7 +53,8 @@ class TranslationSerializer(CamelCaseFieldsSerializer):
     class Meta:
         model = Translation
         fields = ("id", "entryId", "meaning_id", "target_language", "translation_text",
-                  "transliteration", "context_note")
+                  "transliteration", "context_note", "part_of_speech", "gender",
+                  "number", "article", "quality")
 
 
 class ExampleSentenceSerializer(CamelCaseFieldsSerializer):

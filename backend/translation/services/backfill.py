@@ -9,7 +9,24 @@ from django.db.models import Q
 
 from learning.models import DictionaryEntry, Translation
 
-from .translator import normalize_targets, translate_headwords
+from .professional import (
+    context_note,
+    format_translation,
+    normalize_gender,
+    normalize_pos,
+)
+from .translator import normalize_targets, translate_headwords, translate_professional
+
+
+def format_professional_meaning(language: str, text: str, detail: dict) -> str:
+    """Render ``primary_meaning_<lang>`` the way a paper dictionary does."""
+    note = context_note(
+        language,
+        pos=normalize_pos(detail.get("pos")),
+        gender=normalize_gender(detail.get("gender")),
+    )
+    body = format_translation(text, note)
+    return f"{body} ({note})" if note and body else body
 
 
 def count_candidates(languages: Sequence[str], *, only_missing: bool = True) -> int:
@@ -22,6 +39,7 @@ def backfill_entries(
     limit: int = 20,
     only_missing: bool = True,
     dry_run: bool = False,
+    professional: bool = False,
     entry_ids: Sequence[int] | None = None,
     cursor_id: int = 0,
     client=None,
@@ -70,6 +88,7 @@ def backfill_entries(
         groups.setdefault(tuple(languages_for_entry), []).append(index)
 
     translated: dict[int, dict[str, str]] = {}
+    professional_data: dict[int, dict] = {}
     for group_languages, indexes in groups.items():
         payloads = [
             {
@@ -78,20 +97,42 @@ def backfill_entries(
             }
             for index in indexes
         ]
-        records, model, warnings = translate_headwords(
-            payloads,
-            list(group_languages),
-            client=client,
-            batch_size=batch_size,
-        )
+        if professional:
+            records, model, warnings = translate_professional(
+                payloads,
+                list(group_languages),
+                client=client,
+                batch_size=batch_size,
+            )
+        else:
+            records, model, warnings = translate_headwords(
+                payloads,
+                list(group_languages),
+                client=client,
+                batch_size=batch_size,
+            )
 
         summary["model"] = model or summary["model"]
         summary["warnings"].extend(warnings)
         for index, record in zip(indexes, records):
+            if professional:
+                values = {}
+                for language in group_languages:
+                    detail = record.get(language) or {}
+                    text = str(detail.get("text", "")).strip()
+                    if text:
+                        values[language] = format_professional_meaning(language, text, detail)
+                if values:
+                    translated[index] = values
+                    professional_data[index] = record
+                else:
+                    summary["failed"] += 1
+                continue
+
             values = {
-                language: record.get(language, "").strip()
+                language: str(record.get(language, "")).strip()
                 for language in group_languages
-                if record.get(language, "").strip()
+                if str(record.get(language, "")).strip()
             }
             if values:
                 translated[index] = values
@@ -120,20 +161,53 @@ def backfill_entries(
     for index in sorted(translated):
         entry = entries[index]
         changed_fields = []
+        if professional:
+            record = professional_data.get(index) or {}
+            pos = normalize_pos(record.get("pos")) or entry.part_of_speech
+            ipa = str(record.get("ipa", "")).strip()
+            article = str(record.get("article", "")).strip()
+            plural = str(record.get("plural", "")).strip()
+            if ipa and not entry.phonetic_ipa.strip():
+                entry.phonetic_ipa = ipa[:200]
+                changed_fields.append("phonetic_ipa")
+            if pos and pos != entry.part_of_speech:
+                entry.part_of_speech = pos[:40]
+                changed_fields.append("part_of_speech")
+            if article and not entry.article:
+                entry.article = article[:8]
+                changed_fields.append("article")
+            if plural and not (entry.plural_form or entry.comparative_form):
+                if pos == "adjective":
+                    entry.comparative_form = plural[:200]
+                    changed_fields.append("comparative_form")
+                else:
+                    entry.plural_form = plural[:200]
+                    changed_fields.append("plural_form")
+
         for language, value in translated[index].items():
             field_name = f"primary_meaning_{language}"
             if only_missing and getattr(entry, field_name).strip():
                 continue
             setattr(entry, field_name, value)
             changed_fields.append(field_name)
+            detail = (professional_data.get(index) or {}).get(language) or {}
             if not any(
                 item.target_language == language for item in entry.translations.all()
             ):
+                note = context_note(
+                    language,
+                    pos=normalize_pos(detail.get("pos")) or entry.part_of_speech,
+                    gender=normalize_gender(detail.get("gender")),
+                )
                 new_translations.append(
                     Translation(
                         entry=entry,
                         target_language=language,
                         translation_text=value[:max_length],
+                        context_note=note,
+                        part_of_speech=(normalize_pos(detail.get("pos")) or entry.part_of_speech)[:40],
+                        gender=normalize_gender(detail.get("gender"))[:8],
+                        quality=Translation.Quality.MACHINE,
                     )
                 )
         if changed_fields:

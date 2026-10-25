@@ -112,6 +112,43 @@ backend\.venv\Scripts\python.exe backend\manage.py import_kaikki path\to\kaikki.
 backend\.venv\Scripts\python.exe backend\manage.py import_lexicon path\to\words.csv
 ```
 
+### Professional dictionary data (transcription, POS, article, grammar)
+
+Both paths below write the fields a printed learner's dictionary shows:
+
+| Field | Where | Example |
+| --- | --- | --- |
+| `phonetic_ipa` | entry | `/ˈwɪmzɪkəl/` |
+| `part_of_speech` | entry | `noun`, `verb`, `adjective`, `numeral`, `article` |
+| `article` | entry | `a` / `an` (English countable nouns) |
+| `plural_form` | entry | `dictionaries` |
+| `comparative_form` / `superlative_form` | entry | `more whimsical` / `most whimsical` |
+| `translation_text` | translation | `словарь` |
+| `part_of_speech`, `gender`, `number`, `article` | translation | `noun`, `m`, `singular`, `-` |
+| `context_note` | translation | `сущ., м.р.` (shown next to the word in the app) |
+| `quality` | translation | `wiktionary` / `machine` / `reviewed` |
+
+**From Wiktionary (free, no API key):**
+
+```powershell
+# 534 MB dump; ~1.4M lines. Safe to re-run: existing values are kept unless --overwrite.
+curl.exe -L -o "$env:TEMP\en.jsonl.gz" https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz
+backend\.venv\Scripts\python.exe backend\manage.py enrich_from_wiktionary "$env:TEMP\en.jsonl.gz"
+```
+
+Wiktionary covers Russian and Uzbek translations, IPA, plural/comparative forms and
+gender tags for the words it documents.
+
+**From the model (needs `OPENAI_API_KEY`, fills the remaining words):**
+
+```powershell
+backend\.venv\Scripts\python.exe backend\manage.py translate_dictionary --languages ru,uz --professional --limit 0
+```
+
+`--professional` asks the model for `pos`, `ipa`, `article`, `plural` and per-language
+`text`/`pos`/`gender`, so entries written this way carry the same grammar fields. The
+command is resumable with `--start-id` and supports `--dry-run`.
+
 ### Translate the catalog
 
 ```powershell
