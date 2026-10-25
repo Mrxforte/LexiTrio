@@ -13,6 +13,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from django.utils import timezone
+
 from learning.models import DictionaryEntry, Translation
 
 from .lexicon import LexiconImportError, is_valid_headword, normalize_headword
@@ -229,9 +231,12 @@ def _apply_batch(
             updates.append(entry)
 
     if updates:
+        now = timezone.now()
+        for entry in updates:
+            entry.updated_at = now
         DictionaryEntry.objects.bulk_update(
             updates,
-            ["phonetic_ipa", "part_of_speech", "article", "primary_meaning_ru"],
+            ["phonetic_ipa", "part_of_speech", "article", "primary_meaning_ru", "updated_at"],
             batch_size=500,
         )
         stats.updated_entries += len(updates)

@@ -318,6 +318,9 @@ def _apply_batch(
             entry_updates.append(entry)
 
     if entry_updates:
+        now = timezone.now()
+        for entry in entry_updates:
+            entry.updated_at = now
         DictionaryEntry.objects.bulk_update(
             entry_updates,
             [
@@ -329,6 +332,7 @@ def _apply_batch(
                 "article",
                 "primary_meaning_ru",
                 "primary_meaning_uz",
+                "updated_at",
             ],
             batch_size=500,
         )
