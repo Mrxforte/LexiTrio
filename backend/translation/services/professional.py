@@ -7,6 +7,7 @@ sense notes next to every translation.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Sequence
 
 # Canonical English part-of-speech labels used across the catalog.
@@ -232,9 +233,23 @@ def context_note(
     return ", ".join(part for part in parts if part)
 
 
+_WIKI_LINK_RE = re.compile(r"\[\[([^\]|]*\|)?([^\]]*)\]\]")
+_TEMPLATE_RE = re.compile(r"\{\{[^{}]*\}\}")
+
+
+def clean_translation_text(value: str) -> str:
+    """Strip the wiki markup that sometimes leaks out of dictionary sources."""
+    text = str(value or "")
+    text = _WIKI_LINK_RE.sub(lambda match: match.group(2) or "", text)
+    text = _TEMPLATE_RE.sub("", text)
+    text = text.replace("'''", "").replace("''", "")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip(" ,;:-")
+
+
 def format_translation(value: str, note: str, *, max_length: int = 300) -> str:
     """Keep the machine-readable text clean; the note travels separately."""
-    text = " ".join(str(value or "").split())
+    text = clean_translation_text(value)
     if not text:
         return ""
     return text[:max_length]

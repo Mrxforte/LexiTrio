@@ -9,6 +9,7 @@ both multiplies throughput and spreads free-tier quotas.
 from __future__ import annotations
 
 import threading
+import time
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -59,12 +60,22 @@ def configured_providers() -> list[ProviderConfig]:
 
 
 class RotatingClient:
-    """Round-robin over providers so every one of them does useful work."""
+    """Round-robin over providers so every one of them does useful work.
 
-    def __init__(self, clients: list[OpenAIClient]):
+    A provider that fails is benched for a cooldown window, so a quota-exhausted
+    API does not slow down every single batch with its retries.
+    """
+
+    def __init__(self, clients: list[OpenAIClient], cooldown: float | None = None):
         self._clients = clients
         self._lock = threading.Lock()
         self._cursor = 0
+        self._cooldown = float(
+            getattr(settings, "TRANSLATION_PROVIDER_COOLDOWN", 300)
+            if cooldown is None
+            else cooldown
+        )
+        self._benched_until: dict[int, float] = {}
 
     @property
     def model(self) -> str:
@@ -74,26 +85,44 @@ class RotatingClient:
     def names(self) -> list[str]:
         return [client.model for client in self._clients]
 
-    def _order(self) -> list[OpenAIClient]:
+    def _order(self) -> list[tuple[int, OpenAIClient]]:
+        now = time.monotonic()
         with self._lock:
             start = self._cursor % len(self._clients)
             self._cursor += 1
-        return self._clients[start:] + self._clients[:start]
+            rotated = [
+                ((start + offset) % len(self._clients))
+                for offset in range(len(self._clients))
+            ]
+            ready = [i for i in rotated if self._benched_until.get(i, 0) <= now]
+            cooling = [i for i in rotated if self._benched_until.get(i, 0) > now]
+        return [(index, self._clients[index]) for index in ready + cooling]
+
+    def _bench(self, index: int) -> None:
+        with self._lock:
+            self._benched_until[index] = time.monotonic() + self._cooldown
+
+    def _release(self, index: int) -> None:
+        with self._lock:
+            self._benched_until.pop(index, None)
 
     def complete(
         self, *, system_prompt: str, user_prompt: str, json_mode: bool | None = None
     ) -> ChatResult:
         errors: list[str] = []
-        for client in self._order():
+        for index, client in self._order():
             try:
-                return client.complete(
+                result = client.complete(
                     system_prompt=system_prompt, user_prompt=user_prompt, json_mode=json_mode
                 )
             except TranslationNotConfigured:
                 continue
             except TranslationProviderError as exc:
+                self._bench(index)
                 errors.append(f"{client.model}: {exc}")
                 continue
+            self._release(index)
+            return result
         if errors:
             raise TranslationProviderError(
                 "Barcha tarjima provayderlari band: " + "; ".join(errors)

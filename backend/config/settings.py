@@ -190,6 +190,9 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 DEEPSEEK_MIN_INTERVAL = float(os.environ.get("DEEPSEEK_MIN_INTERVAL", "0"))
+TRANSLATION_PROVIDER_COOLDOWN = float(
+    os.environ.get("TRANSLATION_PROVIDER_COOLDOWN", "300")
+)
 OPENAI_TEMPERATURE = float(os.environ.get("OPENAI_TEMPERATURE", "0.2"))
 OPENAI_MAX_OUTPUT_TOKENS = int(os.environ.get("OPENAI_MAX_OUTPUT_TOKENS", "8192"))
 TRANSLATION_JSON_MODE = os.environ.get("TRANSLATION_JSON_MODE", "true").lower() == "true"

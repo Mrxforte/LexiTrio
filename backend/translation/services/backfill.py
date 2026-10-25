@@ -211,6 +211,8 @@ def backfill_entries(
                     )
                 )
         if changed_fields:
+            if "updated_at" not in changed_fields:
+                changed_fields.append("updated_at")
             entry.save(update_fields=changed_fields)
             changed_entries.append(entry)
 

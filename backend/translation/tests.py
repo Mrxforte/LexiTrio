@@ -21,6 +21,7 @@ from .services.professional import (
     POS_VERB,
     context_note,
     english_article,
+    format_translation,
     normalize_pos,
     primary_meaning_from_translations,
 )
@@ -204,6 +205,12 @@ class ProfessionalHelpersTests(SimpleTestCase):
         value = primary_meaning_from_translations(["случайность", "удача"], "сущ., ж.р.")
 
         self.assertEqual(value, "случайность, удача (сущ., ж.р.)")
+
+    def test_wiki_markup_is_stripped_from_translations(self):
+        self.assertEqual(
+            format_translation("серебро, [[серебреник]]и, {{l|ru|аргент}}", ""),
+            "серебро, серебреники",
+        )
 
 
 class WiktionaryPayloadTests(SimpleTestCase):
@@ -412,7 +419,7 @@ class TextTranslationApiTests(APITestCase):
         self.assertEqual(response.data["translations"]["uz"], "uz:hello world")
         self.assertEqual(response.data["segmentCount"], 1)
 
-    @override_settings(OPENAI_API_KEY="")
+    @override_settings(OPENAI_API_KEY="", DEEPSEEK_API_KEY="")
     def test_text_endpoint_reports_missing_api_key(self):
         response = self.client.post(
             "/api/v1/translation/text/", {"text": "hello"}, format="json"
