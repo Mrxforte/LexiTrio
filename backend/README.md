@@ -161,7 +161,10 @@ GET /api/v1/dictionary/sync/?afterId=0&limit=500
 
 - The first page returns `dictionary` metadata; continue while `hasMore` is
   true, passing the previous `nextAfterId`.
-- `limit` is capped at 500 (a page is roughly 0.5 MB).
+- `limit` is capped at 500 (a page is roughly 0.4 MB).
+- The endpoint has its own throttle scope (`dictionary_sync`, 600/minute), so a
+  full first sync of the 130k corpus finishes in a couple of minutes instead of
+  being limited to the shared anonymous rate.
 - Incremental updates: pass `since=<serverTime>` from the previous complete
   run. Only entries whose row or any of their meanings changed after that
   timestamp are returned. Rows carry `updatedAt`, which `auto_now` bumps when

@@ -110,6 +110,7 @@ REST_FRAMEWORK = {
         "user": "120/minute",
         "translation": "20/minute",
         "translation_admin": "60/minute",
+        "dictionary_sync": "600/minute",
     },
 }
 

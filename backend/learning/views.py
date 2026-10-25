@@ -8,6 +8,7 @@ from django.utils.dateparse import parse_datetime
 from rest_framework import filters, permissions, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .models import (
@@ -181,6 +182,9 @@ class DictionarySyncView(APIView):
     """
 
     permission_classes = [permissions.AllowAny]
+    # Bulk download; the shared anonymous rate would need minutes per corpus.
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "dictionary_sync"
 
     def get(self, request):
         limit = max(
