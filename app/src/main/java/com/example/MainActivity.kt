@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -60,6 +61,7 @@ import com.example.ui.screens.quiz.QuizResultScreen
 import com.example.ui.screens.quiz.QuizSetupScreen
 import com.example.ui.screens.settings.AppSettingsScreen
 import com.example.presentation.cloud.CloudSyncScreen
+import com.example.presentation.AppViewModel
 import com.example.ui.screens.settings.DataImportScreen
 import com.example.ui.screens.settings.VoiceSettingsScreen
 import com.example.ui.screens.topics.TopicDetailScreen
@@ -88,19 +90,25 @@ class MainActivity : ComponentActivity() {
         val userPreferencesRepository = UserPreferencesRepository(this)
         val importManager = DictionaryImportManager(this, database.dictionaryDao())
         ttsManager = TtsManager(this)
+        val appViewModel = ViewModelProvider(
+            this,
+            AppViewModel.Factory(
+                dictionaryRepository,
+                vocabularyRepository,
+                learningRepository,
+                userPreferencesRepository,
+                importManager
+            )
+        )[AppViewModel::class.java]
 
         setContent {
-            val preferences by userPreferencesRepository.preferences.collectAsState(initial = AppPreferences())
+            val preferences by appViewModel.preferences.collectAsState()
 
             LexiTrioTheme(
                 darkTheme = preferences.isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
             ) {
                 MainAppContent(
-                    dictionaryRepository = dictionaryRepository,
-                    vocabularyRepository = vocabularyRepository,
-                    learningRepository = learningRepository,
-                    userPreferencesRepository = userPreferencesRepository,
-                    importManager = importManager,
+                    viewModel = appViewModel,
                     ttsManager = ttsManager,
                     preferences = preferences
                 )
@@ -116,11 +124,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainAppContent(
-    dictionaryRepository: DictionaryRepository,
-    vocabularyRepository: VocabularyRepository,
-    learningRepository: LearningRepository,
-    userPreferencesRepository: UserPreferencesRepository,
-    importManager: DictionaryImportManager,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     preferences: AppPreferences
 ) {
@@ -196,9 +200,7 @@ fun MainAppContent(
             // Home
             composable(Screen.Home.route) {
                 HomeScreen(
-                    dictionaryRepository = dictionaryRepository,
-                    vocabularyRepository = vocabularyRepository,
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     preferences = preferences,
                     onNavigateToSearch = { q, lang ->
@@ -242,8 +244,7 @@ fun MainAppContent(
                 DictionarySearchScreen(
                     initialQuery = q,
                     initialLang = l,
-                    dictionaryRepository = dictionaryRepository,
-                    vocabularyRepository = vocabularyRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
@@ -261,8 +262,7 @@ fun MainAppContent(
                 val wordId = backStackEntry.arguments?.getLong("wordId") ?: 1L
                 WordDetailScreen(
                     wordId = wordId,
-                    dictionaryRepository = dictionaryRepository,
-                    vocabularyRepository = vocabularyRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() }
@@ -272,7 +272,7 @@ fun MainAppContent(
             // Vocabulary List
             composable(Screen.Vocabulary.route) {
                 VocabularyScreen(
-                    vocabularyRepository = vocabularyRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     onNavigateToFlashcards = { mode ->
                         navController.navigate(Screen.FlashcardStudy.createRoute(mode))
@@ -296,8 +296,7 @@ fun MainAppContent(
                 val mode = backStackEntry.arguments?.getString("mode") ?: "due"
                 FlashcardStudyScreen(
                     mode = mode,
-                    vocabularyRepository = vocabularyRepository,
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -306,7 +305,7 @@ fun MainAppContent(
             // Topics
             composable(Screen.Topics.route) {
                 TopicsScreen(
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToTopicDetail = { topicId ->
@@ -323,7 +322,7 @@ fun MainAppContent(
                 val topicId = backStackEntry.arguments?.getLong("topicId") ?: 1L
                 TopicDetailScreen(
                     topicId = topicId,
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
@@ -339,7 +338,7 @@ fun MainAppContent(
             // Conversations
             composable(Screen.Conversations.route) {
                 ConversationsScreen(
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToConversationDetail = { convId ->
@@ -356,7 +355,7 @@ fun MainAppContent(
                 val convId = backStackEntry.arguments?.getLong("convId") ?: 1L
                 ConversationDetailScreen(
                     convId = convId,
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() }
@@ -366,7 +365,7 @@ fun MainAppContent(
             // Grammar
             composable(Screen.Grammar.route) {
                 GrammarScreen(
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToGrammarDetail = { lessonId ->
@@ -383,7 +382,7 @@ fun MainAppContent(
                 val lessonId = backStackEntry.arguments?.getLong("lessonId") ?: 1L
                 GrammarDetailScreen(
                     lessonId = lessonId,
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -415,7 +414,7 @@ fun MainAppContent(
                     count = count,
                     category = category,
                     typeString = type,
-                    learningRepository = learningRepository,
+                    viewModel = viewModel,
                     ttsManager = ttsManager,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToResult = { correct, total, timeSec, xp ->
@@ -462,8 +461,7 @@ fun MainAppContent(
             // Progress Stats
             composable(Screen.ProgressStats.route) {
                 ProgressScreen(
-                    learningRepository = learningRepository,
-                    vocabularyRepository = vocabularyRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -473,7 +471,7 @@ fun MainAppContent(
             composable(Screen.VoiceSettings.route) {
                 VoiceSettingsScreen(
                     ttsManager = ttsManager,
-                    userPreferencesRepository = userPreferencesRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -482,8 +480,7 @@ fun MainAppContent(
             // Data Import
             composable(Screen.DataImport.route) {
                 DataImportScreen(
-                    importManager = importManager,
-                    dictionaryRepository = dictionaryRepository,
+                    viewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -491,7 +488,7 @@ fun MainAppContent(
             // App Settings
             composable(Screen.Settings.route) {
                 AppSettingsScreen(
-                    userPreferencesRepository = userPreferencesRepository,
+                    viewModel = viewModel,
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },

@@ -24,19 +24,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 import com.example.ui.components.ConversationCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationsScreen(
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     onNavigateToConversationDetail: (convId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val conversations by learningRepository.getAllConversations().collectAsState(initial = emptyList())
+    val conversations by viewModel.conversations.collectAsState()
 
     Scaffold(
         topBar = {

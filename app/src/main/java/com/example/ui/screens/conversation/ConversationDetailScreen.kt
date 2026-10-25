@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.ConversationEntity
 import com.example.data.model.ConversationTurnEntity
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.LanguageBadge
 
@@ -67,20 +67,20 @@ import com.example.ui.components.LanguageBadge
 @Composable
 fun ConversationDetailScreen(
     convId: Long,
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var conversation by remember { mutableStateOf<ConversationEntity?>(null) }
-    val turns by learningRepository.getConversationTurns(convId).collectAsState(initial = emptyList())
+    val turns by viewModel.getConversationTurns(convId).collectAsState(initial = emptyList())
 
     var showTranslations by remember { mutableStateOf(true) }
     var rolePlayMode by remember { mutableStateOf(false) }
 
     LaunchedEffect(convId) {
-        conversation = learningRepository.getConversationById(convId)
+        conversation = viewModel.getConversationById(convId)
     }
 
     Scaffold(

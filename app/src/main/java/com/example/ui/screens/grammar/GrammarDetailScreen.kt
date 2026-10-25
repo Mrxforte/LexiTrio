@@ -40,13 +40,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.GrammarLessonEntity
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GrammarDetailScreen(
     lessonId: Long,
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -54,7 +54,7 @@ fun GrammarDetailScreen(
     var lesson by remember { mutableStateOf<GrammarLessonEntity?>(null) }
 
     LaunchedEffect(lessonId) {
-        lesson = learningRepository.getGrammarLessonById(lessonId)
+        lesson = viewModel.getGrammarLessonById(lessonId)
     }
 
     Scaffold(

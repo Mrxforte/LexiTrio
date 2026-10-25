@@ -24,19 +24,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 import com.example.ui.components.GrammarLessonCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GrammarScreen(
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     onNavigateToGrammarDetail: (lessonId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val lessons by learningRepository.getAllGrammarLessons().collectAsState(initial = emptyList())
+    val lessons by viewModel.grammarLessons.collectAsState()
 
     Scaffold(
         topBar = {

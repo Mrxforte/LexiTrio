@@ -65,9 +65,7 @@ import com.example.data.model.DictionaryEntryEntity
 import com.example.data.model.Language
 import com.example.data.model.UserProgressEntity
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.DictionaryRepository
-import com.example.data.repository.LearningRepository
-import com.example.data.repository.VocabularyRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.DictionarySearchBar
 import com.example.ui.components.LanguageDirectionSelector
@@ -79,9 +77,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    dictionaryRepository: DictionaryRepository,
-    vocabularyRepository: VocabularyRepository,
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     preferences: AppPreferences,
     onNavigateToSearch: (query: String, lang: String) -> Unit,
@@ -104,16 +100,16 @@ fun HomeScreen(
     var sourceLanguage by remember { mutableStateOf<Language?>(preferences.searchSourceLanguage) }
     var targetLanguage by remember { mutableStateOf<Language?>(Language.UZBEK_LATIN) }
 
-    val totalWordsCount by dictionaryRepository.getEntryCountFlow().collectAsState(initial = 0)
-    val userProgress by learningRepository.getUserProgress().collectAsState(initial = null)
-    val dueCardsCount by vocabularyRepository.getDueWordsCount().collectAsState(initial = 0)
-    val recentSearches by dictionaryRepository.getRecentSearches().collectAsState(initial = emptyList())
-    val topics by learningRepository.getAllTopics().collectAsState(initial = emptyList())
+    val totalWordsCount by viewModel.entryCount.collectAsState()
+    val userProgress by viewModel.progress.collectAsState()
+    val dueCardsCount by viewModel.dueWordsCount.collectAsState()
+    val recentSearches by viewModel.recentSearches.collectAsState()
+    val topics by viewModel.topics.collectAsState()
 
     var wordOfTheDay by remember { mutableStateOf<DictionaryEntryEntity?>(null) }
 
     LaunchedEffect(Unit) {
-        val word = dictionaryRepository.getRandomWord()
+        val word = viewModel.getRandomWord()
         wordOfTheDay = word
     }
 
@@ -272,7 +268,7 @@ fun HomeScreen(
                         },
                         onSaveClick = {
                             coroutineScope.launch {
-                                vocabularyRepository.saveOrUpdateWord(word, isFavorite = true)
+                                viewModel.saveWord(word, isFavorite = true)
                                 snackbarHostState.showSnackbar("«${word.headword}» saqlanganlarga qo‘shildi")
                             }
                         }
@@ -386,7 +382,7 @@ fun HomeScreen(
                             }
                             TextButton(
                                 onClick = {
-                                    coroutineScope.launch { dictionaryRepository.clearSearchHistory() }
+                                    viewModel.clearSearchHistory()
                                 }
                             ) {
                                 Text("Tozalash", style = MaterialTheme.typography.labelSmall)

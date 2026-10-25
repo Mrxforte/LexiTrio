@@ -46,8 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.example.data.model.DictionaryEntryEntity
 import com.example.data.model.Language
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.DictionaryRepository
-import com.example.data.repository.VocabularyRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.DictionarySearchBar
 import com.example.ui.components.WordEntryCard
@@ -60,8 +59,7 @@ import kotlinx.coroutines.launch
 fun DictionarySearchScreen(
     initialQuery: String = "",
     initialLang: String = "",
-    dictionaryRepository: DictionaryRepository,
-    vocabularyRepository: VocabularyRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
@@ -81,7 +79,7 @@ fun DictionarySearchScreen(
     var isLoading by remember { mutableStateOf(false) }
     var searchJob by remember { mutableStateOf<Job?>(null) }
 
-    val savedWords by vocabularyRepository.getAllSavedWords().collectAsState(initial = emptyList())
+    val savedWords by viewModel.savedWords.collectAsState()
     val favoriteIds = remember(savedWords) {
         savedWords.filter { it.isFavorite }.map { it.entryId }.toSet()
     }
@@ -99,15 +97,15 @@ fun DictionarySearchScreen(
         searchJob = coroutineScope.launch {
             delay(250) // Debounce typing
             val list = if (isReverseSearch) {
-                dictionaryRepository.search(searchQuery, null, selectedPartOfSpeech)
+                viewModel.search(searchQuery, null, selectedPartOfSpeech)
             } else {
-                dictionaryRepository.search(searchQuery, selectedLanguage, selectedPartOfSpeech)
+                viewModel.search(searchQuery, selectedLanguage, selectedPartOfSpeech)
             }
             results = list
             isLoading = false
 
             if (searchQuery.isNotBlank()) {
-                dictionaryRepository.recordSearch(searchQuery, selectedLanguage?.code ?: "all")
+                viewModel.recordSearch(searchQuery, selectedLanguage?.code ?: "all")
             }
         }
     }
@@ -303,7 +301,7 @@ fun DictionarySearchScreen(
                                 isFavorite = favoriteIds.contains(entry.id),
                                 onFavoriteToggle = {
                                     coroutineScope.launch {
-                                        vocabularyRepository.saveOrUpdateWord(
+                                        viewModel.saveWord(
                                             entry = entry,
                                             isFavorite = !favoriteIds.contains(entry.id)
                                         )

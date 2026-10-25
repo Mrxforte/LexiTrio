@@ -13,35 +13,36 @@ import com.example.data.model.QuizType
 import com.example.data.model.TopicEntity
 import com.example.data.model.UserProgressEntity
 import kotlinx.coroutines.flow.Flow
+import com.example.domain.repository.LearningRepository as LearningRepositoryContract
 
 class LearningRepository(
     private val learningDao: LearningDao,
     private val conversationGrammarDao: ConversationGrammarDao,
     private val quizDao: QuizDao
-) {
+) : LearningRepositoryContract {
 
     // Topics
-    fun getAllTopics(): Flow<List<TopicEntity>> = learningDao.getAllTopics()
+    override fun getAllTopics(): Flow<List<TopicEntity>> = learningDao.getAllTopics()
 
-    suspend fun getTopicById(id: Long): TopicEntity? = learningDao.getTopicById(id)
+    override suspend fun getTopicById(id: Long): TopicEntity? = learningDao.getTopicById(id)
 
-    fun getWordsForTopic(topicId: Long): Flow<List<DictionaryEntryEntity>> = learningDao.getWordsForTopic(topicId)
+    override fun getWordsForTopic(topicId: Long): Flow<List<DictionaryEntryEntity>> = learningDao.getWordsForTopic(topicId)
 
     // Conversations
-    fun getAllConversations(): Flow<List<ConversationEntity>> = conversationGrammarDao.getAllConversations()
+    override fun getAllConversations(): Flow<List<ConversationEntity>> = conversationGrammarDao.getAllConversations()
 
-    suspend fun getConversationById(id: Long): ConversationEntity? = conversationGrammarDao.getConversationById(id)
+    override suspend fun getConversationById(id: Long): ConversationEntity? = conversationGrammarDao.getConversationById(id)
 
-    fun getConversationTurns(convId: Long): Flow<List<ConversationTurnEntity>> =
+    override fun getConversationTurns(convId: Long): Flow<List<ConversationTurnEntity>> =
         conversationGrammarDao.getConversationTurns(convId)
 
     // Grammar
-    fun getAllGrammarLessons(): Flow<List<GrammarLessonEntity>> = conversationGrammarDao.getAllGrammarLessons()
+    override fun getAllGrammarLessons(): Flow<List<GrammarLessonEntity>> = conversationGrammarDao.getAllGrammarLessons()
 
-    suspend fun getGrammarLessonById(id: Long): GrammarLessonEntity? = conversationGrammarDao.getGrammarLessonById(id)
+    override suspend fun getGrammarLessonById(id: Long): GrammarLessonEntity? = conversationGrammarDao.getGrammarLessonById(id)
 
     // Quiz
-    suspend fun getRandomQuiz(count: Int, type: QuizType? = null, category: String? = null): List<QuizQuestionEntity> {
+    override suspend fun getRandomQuiz(count: Int, type: QuizType?, category: String?): List<QuizQuestionEntity> {
         return when {
             type != null -> quizDao.getQuestionsByType(type, count)
             category != null && category != "All" -> quizDao.getQuestionsByCategory(category, count)
@@ -49,9 +50,9 @@ class LearningRepository(
         }
     }
 
-    fun getRecentAttempts(): Flow<List<QuizAttemptEntity>> = quizDao.getRecentAttempts()
+    override fun getRecentAttempts(): Flow<List<QuizAttemptEntity>> = quizDao.getRecentAttempts()
 
-    suspend fun saveQuizAttempt(
+    override suspend fun saveQuizAttempt(
         category: String,
         total: Int,
         correct: Int,
@@ -71,9 +72,9 @@ class LearningRepository(
     }
 
     // User Progress
-    fun getUserProgress(): Flow<UserProgressEntity?> = quizDao.getUserProgress()
+    override fun getUserProgress(): Flow<UserProgressEntity?> = quizDao.getUserProgress()
 
-    suspend fun addXpAndProgress(xpGain: Int, isQuiz: Boolean = false, wordsReviewedDelta: Int = 0) {
+    override suspend fun addXpAndProgress(xpGain: Int, isQuiz: Boolean, wordsReviewedDelta: Int) {
         val current = quizDao.getUserProgressOnce() ?: UserProgressEntity()
         val updated = current.copy(
             xp = current.xp + xpGain,

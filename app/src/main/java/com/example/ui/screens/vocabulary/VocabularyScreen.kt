@@ -65,7 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.LearningStatus
 import com.example.data.model.SavedWordEntity
-import com.example.data.repository.VocabularyRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.PartOfSpeechChip
 import kotlinx.coroutines.launch
@@ -73,7 +73,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VocabularyScreen(
-    vocabularyRepository: VocabularyRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     onNavigateToFlashcards: (mode: String) -> Unit,
     onNavigateToWordDetail: (wordId: Long) -> Unit,
@@ -85,11 +85,11 @@ fun VocabularyScreen(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Barchasi", "Takrorlash", "Qiyin", "Yod olingan", "To‘plamlar")
 
-    val allWords by vocabularyRepository.getAllSavedWords().collectAsState(initial = emptyList())
-    val dueWords by vocabularyRepository.getDueWords().collectAsState(initial = emptyList())
-    val difficultWords by vocabularyRepository.getWordsByStatus(LearningStatus.DIFFICULT).collectAsState(initial = emptyList())
-    val masteredWords by vocabularyRepository.getWordsByStatus(LearningStatus.MASTERED).collectAsState(initial = emptyList())
-    val collections by vocabularyRepository.getAllCollections().collectAsState(initial = emptyList())
+    val allWords by viewModel.savedWords.collectAsState()
+    val dueWords by viewModel.dueWords.collectAsState()
+    val difficultWords by viewModel.difficultWords.collectAsState()
+    val masteredWords by viewModel.masteredWords.collectAsState()
+    val collections by viewModel.collections.collectAsState()
 
     var showCreateCollectionModal by remember { mutableStateOf(false) }
     var newCollectionTitle by remember { mutableStateOf("") }
@@ -293,7 +293,7 @@ fun VocabularyScreen(
                             },
                             onFavoriteToggle = {
                                 coroutineScope.launch {
-                                    vocabularyRepository.toggleFavorite(word)
+                                    viewModel.toggleFavorite(word)
                                 }
                             }
                         )
@@ -336,9 +336,9 @@ fun VocabularyScreen(
                     onClick = {
                         if (newCollectionTitle.isNotBlank()) {
                             coroutineScope.launch {
-                                vocabularyRepository.createCollection(
-                                    title = newCollectionTitle,
-                                    description = newCollectionDesc
+                                viewModel.createCollection(
+                                    newCollectionTitle,
+                                    newCollectionDesc
                                 )
                                 showCreateCollectionModal = false
                                 newCollectionTitle = ""

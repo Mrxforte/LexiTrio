@@ -46,13 +46,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.model.Language
 import com.example.data.preferences.AppPreferences
-import com.example.data.preferences.UserPreferencesRepository
+import com.example.presentation.AppViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppSettingsScreen(
-    userPreferencesRepository: UserPreferencesRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     onNavigateToVoiceSettings: () -> Unit,
@@ -138,7 +138,7 @@ fun AppSettingsScreen(
                                         .fillMaxWidth()
                                         .clickable {
                                             coroutineScope.launch {
-                                                userPreferencesRepository.setAppLanguage(lang)
+                                                viewModel.setAppLanguage(lang)
                                             }
                                         }
                                 ) {
@@ -207,7 +207,7 @@ fun AppSettingsScreen(
                                     selected = isSelected,
                                     onClick = {
                                         coroutineScope.launch {
-                                            userPreferencesRepository.setDailyGoalWords(count)
+                                            viewModel.setDailyGoalWords(count)
                                         }
                                     },
                                     label = { Text("$count ta so‘z", fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },

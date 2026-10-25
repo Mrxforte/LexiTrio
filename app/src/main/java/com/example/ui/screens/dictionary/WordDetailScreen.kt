@@ -68,8 +68,7 @@ import com.example.data.model.FullDictionaryDetail
 import com.example.data.model.Language
 import com.example.data.model.LearningStatus
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.DictionaryRepository
-import com.example.data.repository.VocabularyRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.LanguageBadge
 import com.example.ui.components.PartOfSpeechChip
@@ -79,8 +78,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WordDetailScreen(
     wordId: Long,
-    dictionaryRepository: DictionaryRepository,
-    vocabularyRepository: VocabularyRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
@@ -97,7 +95,7 @@ fun WordDetailScreen(
     var userNotes by remember { mutableStateOf("") }
     var reportReason by remember { mutableStateOf("") }
 
-    val savedWords by vocabularyRepository.getAllSavedWords().collectAsState(initial = emptyList())
+    val savedWords by viewModel.savedWords.collectAsState()
     val currentSavedWord = remember(savedWords, wordId) {
         savedWords.find { it.entryId == wordId }
     }
@@ -105,7 +103,7 @@ fun WordDetailScreen(
 
     LaunchedEffect(wordId) {
         isLoading = true
-        detail = dictionaryRepository.getFullDetail(wordId)
+        detail = viewModel.getFullDetail(wordId)
         isLoading = false
 
         if (preferences.autoPlayAudio && detail != null) {
@@ -137,7 +135,7 @@ fun WordDetailScreen(
                         IconButton(
                             onClick = {
                                 coroutineScope.launch {
-                                    vocabularyRepository.saveOrUpdateWord(
+                                    viewModel.saveWord(
                                         entry = d.entry,
                                         isFavorite = !isFavorite
                                     )
@@ -522,7 +520,7 @@ fun WordDetailScreen(
                 Button(
                     onClick = {
                         coroutineScope.launch {
-                            vocabularyRepository.saveOrUpdateWord(
+                            viewModel.saveWord(
                                 entry = entry,
                                 notes = userNotes
                             )

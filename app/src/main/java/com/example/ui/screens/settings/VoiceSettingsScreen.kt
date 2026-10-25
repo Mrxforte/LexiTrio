@@ -54,7 +54,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.preferences.AppPreferences
-import com.example.data.preferences.UserPreferencesRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import kotlinx.coroutines.launch
 
@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun VoiceSettingsScreen(
     ttsManager: TtsManager,
-    userPreferencesRepository: UserPreferencesRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -144,7 +144,7 @@ fun VoiceSettingsScreen(
                                     onClick = {
                                         speechRate = rate
                                         ttsManager.setSpeechRate(rate)
-                                        coroutineScope.launch { userPreferencesRepository.setSpeechRate(rate) }
+                                        viewModel.setSpeechRate(rate)
                                     },
                                     label = { Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                                     colors = FilterChipDefaults.filterChipColors(
@@ -171,7 +171,7 @@ fun VoiceSettingsScreen(
                                 ttsManager.setSpeechRate(it)
                             },
                             onValueChangeFinished = {
-                                coroutineScope.launch { userPreferencesRepository.setSpeechRate(speechRate) }
+                                viewModel.setSpeechRate(speechRate)
                             },
                             valueRange = 0.5f..1.5f,
                             colors = SliderDefaults.colors(
@@ -209,7 +209,7 @@ fun VoiceSettingsScreen(
                                 ttsManager.setPitch(it)
                             },
                             onValueChangeFinished = {
-                                coroutineScope.launch { userPreferencesRepository.setSpeechPitch(pitch) }
+                                viewModel.setSpeechPitch(pitch)
                             },
                             valueRange = 0.6f..1.4f,
                             colors = SliderDefaults.colors(
@@ -256,7 +256,7 @@ fun VoiceSettingsScreen(
                             checked = autoPlay,
                             onCheckedChange = {
                                 autoPlay = it
-                                coroutineScope.launch { userPreferencesRepository.setAutoPlayAudio(it) }
+                                viewModel.setAutoPlayAudio(it)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = MaterialTheme.colorScheme.primary,
@@ -362,7 +362,7 @@ fun VoiceSettingsScreen(
                     Card(
                         onClick = {
                             ttsManager.setVoice(voice.id)
-                            coroutineScope.launch { userPreferencesRepository.setSelectedVoiceId(voice.id) }
+                            viewModel.setSelectedVoiceId(voice.id)
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(

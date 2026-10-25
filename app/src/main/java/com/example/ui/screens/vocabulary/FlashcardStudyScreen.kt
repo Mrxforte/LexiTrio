@@ -61,8 +61,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.LearningStatus
 import com.example.data.model.ReviewQuality
 import com.example.data.model.SavedWordEntity
-import com.example.data.repository.LearningRepository
-import com.example.data.repository.VocabularyRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.PartOfSpeechChip
 import kotlinx.coroutines.launch
@@ -71,17 +70,16 @@ import kotlinx.coroutines.launch
 @Composable
 fun FlashcardStudyScreen(
     mode: String,
-    vocabularyRepository: VocabularyRepository,
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    val allWords by vocabularyRepository.getAllSavedWords().collectAsState(initial = emptyList())
-    val dueWords by vocabularyRepository.getDueWords().collectAsState(initial = emptyList())
-    val difficultWords by vocabularyRepository.getWordsByStatus(LearningStatus.DIFFICULT).collectAsState(initial = emptyList())
+    val allWords by viewModel.savedWords.collectAsState()
+    val dueWords by viewModel.dueWords.collectAsState()
+    val difficultWords by viewModel.difficultWords.collectAsState()
 
     val studyDeck = remember(mode, allWords, dueWords, difficultWords) {
         when {
@@ -107,9 +105,9 @@ fun FlashcardStudyScreen(
     fun handleQualityRating(quality: ReviewQuality) {
         val card = currentCard ?: return
         coroutineScope.launch {
-            vocabularyRepository.processReview(card, quality)
+            viewModel.processReview(card, quality)
             sessionXp += if (quality.grade >= 3) 10 else 3
-            learningRepository.addXpAndProgress(
+            viewModel.addProgress(
                 xpGain = if (quality.grade >= 3) 10 else 3,
                 wordsReviewedDelta = 1
             )

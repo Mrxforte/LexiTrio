@@ -6,18 +6,19 @@ import com.example.data.model.FullDictionaryDetail
 import com.example.data.model.Language
 import com.example.data.model.SearchHistoryEntity
 import kotlinx.coroutines.flow.Flow
+import com.example.domain.repository.DictionaryRepository as DictionaryRepositoryContract
 
-class DictionaryRepository(private val dictionaryDao: DictionaryDao) {
+class DictionaryRepository(private val dictionaryDao: DictionaryDao) : DictionaryRepositoryContract {
 
-    fun getEntryCountFlow(): Flow<Int> = dictionaryDao.getEntryCountFlow()
+    override fun getEntryCountFlow(): Flow<Int> = dictionaryDao.getEntryCountFlow()
 
     suspend fun getEntryCount(): Int = dictionaryDao.getEntryCount()
 
-    suspend fun search(
+    override suspend fun search(
         query: String,
         sourceLanguage: Language?,
-        partOfSpeech: String? = null,
-        limit: Int = 60
+        partOfSpeech: String?,
+        limit: Int
     ): List<DictionaryEntryEntity> {
         val trimmed = query.trim()
         if (trimmed.isBlank()) return emptyList()
@@ -50,15 +51,15 @@ class DictionaryRepository(private val dictionaryDao: DictionaryDao) {
         return dictionaryDao.searchFiltered(normalized, langCode, partOfSpeech, limit)
     }
 
-    suspend fun getFullDetail(id: Long): FullDictionaryDetail? = dictionaryDao.getFullDictionaryDetail(id)
+    override suspend fun getFullDetail(id: Long): FullDictionaryDetail? = dictionaryDao.getFullDictionaryDetail(id)
 
-    suspend fun getRandomWord(): DictionaryEntryEntity? = dictionaryDao.getRandomWord()
+    override suspend fun getRandomWord(): DictionaryEntryEntity? = dictionaryDao.getRandomWord()
 
     fun getTopWords(): Flow<List<DictionaryEntryEntity>> = dictionaryDao.getTopWords(20)
 
-    fun getRecentSearches(): Flow<List<SearchHistoryEntity>> = dictionaryDao.getRecentSearches()
+    override fun getRecentSearches(): Flow<List<SearchHistoryEntity>> = dictionaryDao.getRecentSearches()
 
-    suspend fun recordSearch(query: String, language: String) {
+    override suspend fun recordSearch(query: String, language: String) {
         if (query.isNotBlank()) {
             dictionaryDao.insertSearchQuery(
                 SearchHistoryEntity(
@@ -72,5 +73,5 @@ class DictionaryRepository(private val dictionaryDao: DictionaryDao) {
 
     suspend fun deleteSearchItem(id: Long) = dictionaryDao.deleteSearchItem(id)
 
-    suspend fun clearSearchHistory() = dictionaryDao.clearSearchHistory()
+    override suspend fun clearSearchHistory() = dictionaryDao.clearSearchHistory()
 }

@@ -7,28 +7,29 @@ import com.example.data.model.ReviewQuality
 import com.example.data.model.SavedWordEntity
 import com.example.data.model.VocabularyCollectionEntity
 import kotlinx.coroutines.flow.Flow
+import com.example.domain.repository.VocabularyRepository as VocabularyRepositoryContract
 
-class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
+class VocabularyRepository(private val vocabularyDao: VocabularyDao) : VocabularyRepositoryContract {
 
-    fun getAllSavedWords(): Flow<List<SavedWordEntity>> = vocabularyDao.getAllSavedWords()
+    override fun getAllSavedWords(): Flow<List<SavedWordEntity>> = vocabularyDao.getAllSavedWords()
 
     fun getFavoriteWords(): Flow<List<SavedWordEntity>> = vocabularyDao.getFavoriteWords()
 
-    fun getWordsByStatus(status: LearningStatus): Flow<List<SavedWordEntity>> = vocabularyDao.getWordsByStatus(status)
+    override fun getWordsByStatus(status: LearningStatus): Flow<List<SavedWordEntity>> = vocabularyDao.getWordsByStatus(status)
 
-    fun getDueWords(): Flow<List<SavedWordEntity>> = vocabularyDao.getDueWords(System.currentTimeMillis())
+    override fun getDueWords(): Flow<List<SavedWordEntity>> = vocabularyDao.getDueWords(System.currentTimeMillis())
 
-    fun getDueWordsCount(): Flow<Int> = vocabularyDao.getDueWordsCount(System.currentTimeMillis())
+    override fun getDueWordsCount(): Flow<Int> = vocabularyDao.getDueWordsCount(System.currentTimeMillis())
 
-    fun getAllCollections(): Flow<List<VocabularyCollectionEntity>> = vocabularyDao.getAllCollections()
+    override fun getAllCollections(): Flow<List<VocabularyCollectionEntity>> = vocabularyDao.getAllCollections()
 
     suspend fun getSavedWordByEntryId(entryId: Long): SavedWordEntity? = vocabularyDao.getSavedWordByEntryId(entryId)
 
-    suspend fun saveOrUpdateWord(
+    override suspend fun saveOrUpdateWord(
         entry: DictionaryEntryEntity,
-        collectionId: Long = 1,
-        notes: String = "",
-        isFavorite: Boolean = false
+        collectionId: Long,
+        notes: String,
+        isFavorite: Boolean
     ): Long {
         val existing = vocabularyDao.getSavedWordByEntryId(entry.id)
         if (existing != null) {
@@ -63,7 +64,7 @@ class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
         return vocabularyDao.insertSavedWord(newWord)
     }
 
-    suspend fun toggleFavorite(savedWord: SavedWordEntity) {
+    override suspend fun toggleFavorite(savedWord: SavedWordEntity) {
         vocabularyDao.setFavorite(
             savedWord.id,
             !savedWord.isFavorite,
@@ -71,7 +72,7 @@ class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
         )
     }
 
-    suspend fun processReview(savedWord: SavedWordEntity, quality: ReviewQuality): SavedWordEntity {
+    override suspend fun processReview(savedWord: SavedWordEntity, quality: ReviewQuality): SavedWordEntity {
         val updated = savedWord.calculateNextReview(quality)
         vocabularyDao.updateSavedWord(updated)
         return updated
@@ -79,7 +80,7 @@ class VocabularyRepository(private val vocabularyDao: VocabularyDao) {
 
     suspend fun deleteSavedWord(id: Long) = vocabularyDao.deleteSavedWordAndRecord(id)
 
-    suspend fun createCollection(title: String, description: String, icon: String = "folder"): Long {
+    override suspend fun createCollection(title: String, description: String, icon: String): Long {
         return vocabularyDao.insertCollection(
             VocabularyCollectionEntity(
                 title = title,

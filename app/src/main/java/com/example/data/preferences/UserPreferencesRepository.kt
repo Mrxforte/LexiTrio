@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.data.model.Language
+import com.example.domain.repository.PreferenceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -28,7 +29,7 @@ data class AppPreferences(
     val lastUpdatedTimestamp: Long = 0L
 )
 
-class UserPreferencesRepository(private val context: Context) {
+class UserPreferencesRepository(private val context: Context) : PreferenceRepository {
 
     private object Keys {
         val APP_LANGUAGE = stringPreferencesKey("app_language")
@@ -42,7 +43,7 @@ class UserPreferencesRepository(private val context: Context) {
         val LAST_UPDATED_TIMESTAMP = longPreferencesKey("preferences_last_updated_timestamp")
     }
 
-    val preferences: Flow<AppPreferences> = context.dataStore.data.map { prefs ->
+    override val preferences: Flow<AppPreferences> = context.dataStore.data.map { prefs ->
         val langCode = prefs[Keys.APP_LANGUAGE] ?: Language.UZBEK_LATIN.code
         val searchLangCode = prefs[Keys.SEARCH_SOURCE_LANG] ?: Language.ENGLISH.code
         val darkModeStr = prefs[Keys.DARK_MODE]
@@ -64,56 +65,56 @@ class UserPreferencesRepository(private val context: Context) {
         )
     }
 
-    suspend fun setAppLanguage(language: Language) {
+    override suspend fun setAppLanguage(language: Language) {
         context.dataStore.edit { prefs ->
             prefs[Keys.APP_LANGUAGE] = language.code
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setSearchSourceLanguage(language: Language) {
+    override suspend fun setSearchSourceLanguage(language: Language) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SEARCH_SOURCE_LANG] = language.code
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setSpeechRate(rate: Float) {
+    override suspend fun setSpeechRate(rate: Float) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SPEECH_RATE] = rate
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setSpeechPitch(pitch: Float) {
+    override suspend fun setSpeechPitch(pitch: Float) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SPEECH_PITCH] = pitch
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setSelectedVoiceId(voiceId: String) {
+    override suspend fun setSelectedVoiceId(voiceId: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SELECTED_VOICE_ID] = voiceId
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setAutoPlayAudio(enabled: Boolean) {
+    override suspend fun setAutoPlayAudio(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.AUTO_PLAY_AUDIO] = enabled
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setDailyGoalWords(goal: Int) {
+    override suspend fun setDailyGoalWords(goal: Int) {
         context.dataStore.edit { prefs ->
             prefs[Keys.DAILY_GOAL_WORDS] = goal
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
 
-    suspend fun setDarkMode(darkMode: Boolean?) {
+    override suspend fun setDarkMode(darkMode: Boolean?) {
         context.dataStore.edit { prefs ->
             if (darkMode == null) {
                 prefs.remove(Keys.DARK_MODE)

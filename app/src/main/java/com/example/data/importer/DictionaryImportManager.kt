@@ -7,6 +7,8 @@ import com.example.data.model.DictionaryEntryEntity
 import com.example.data.model.Language
 import com.example.data.model.TranslationEntity
 import com.example.data.model.WordMeaningEntity
+import com.example.domain.model.ImportProgress
+import com.example.domain.repository.DictionaryImportRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,22 +20,16 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.zip.ZipInputStream
 
-data class ImportProgress(
-    val processedCount: Int = 0,
-    val insertedCount: Int = 0,
-    val skippedCount: Int = 0,
-    val isRunning: Boolean = false,
-    val stageMessage: String = "",
-    val error: String? = null
-)
-
 class DictionaryImportManager(
     private val context: Context,
     private val dictionaryDao: DictionaryDao
-) {
+) : DictionaryImportRepository {
 
     private val _progress = MutableStateFlow(ImportProgress())
-    val progress: Flow<ImportProgress> = _progress.asStateFlow()
+    override val progress: Flow<ImportProgress> = _progress.asStateFlow()
+
+    override suspend fun importFromUri(uri: Uri): Result<Int> =
+        importFromUri(uri, null, uri.lastPathSegment)
 
     suspend fun importFromUri(uri: Uri, mimeType: String?, fileName: String?): Result<Int> = withContext(Dispatchers.IO) {
         _progress.value = ImportProgress(isRunning = true, stageMessage = "Fayl tahlil qilinmoqda...")
@@ -293,7 +289,7 @@ class DictionaryImportManager(
         return count
     }
 
-    fun getSampleJsonlTemplate(): String {
+    override fun getSampleJsonlTemplate(): String {
         return """
             {"headword":"perseverance","language":"en","pos":"noun","ipa":"/ˌpɜːsɪˈvɪərəns/","cefr":"B2","def_en":"persistence in doing something despite difficulty","def_ru":"настойчивость, упорство","def_uz":"qat’iyatlilik, sabot, tirishqoqlik"}
             {"headword":"созидать","language":"ru","pos":"verb","ipa":"/səzʲɪˈdatʲ/","cefr":"B2","def_en":"to create, construct","def_ru":"творить, создавать нечто ценное","def_uz":"bunyod etmoq, yaratmoq"}

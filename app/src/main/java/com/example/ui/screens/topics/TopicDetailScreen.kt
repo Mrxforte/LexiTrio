@@ -51,7 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.model.TopicEntity
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.PartOfSpeechChip
 
@@ -59,7 +59,7 @@ import com.example.ui.components.PartOfSpeechChip
 @Composable
 fun TopicDetailScreen(
     topicId: Long,
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
@@ -68,10 +68,10 @@ fun TopicDetailScreen(
     modifier: Modifier = Modifier
 ) {
     var topic by remember { mutableStateOf<TopicEntity?>(null) }
-    val words by learningRepository.getWordsForTopic(topicId).collectAsState(initial = emptyList())
+    val words by viewModel.getWordsForTopic(topicId).collectAsState(initial = emptyList())
 
     LaunchedEffect(topicId) {
-        topic = learningRepository.getTopicById(topicId)
+        topic = viewModel.getTopicById(topicId)
     }
 
     Scaffold(

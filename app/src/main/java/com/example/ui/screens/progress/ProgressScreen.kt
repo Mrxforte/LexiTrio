@@ -53,23 +53,21 @@ import com.example.data.model.Language
 import com.example.data.model.LearningStatus
 import com.example.data.model.UserProgressEntity
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
-import com.example.data.repository.VocabularyRepository
+import com.example.presentation.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressScreen(
-    learningRepository: LearningRepository,
-    vocabularyRepository: VocabularyRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val progress by learningRepository.getUserProgress().collectAsState(initial = null)
-    val allSavedWords by vocabularyRepository.getAllSavedWords().collectAsState(initial = emptyList())
-    val masteredWords by vocabularyRepository.getWordsByStatus(LearningStatus.MASTERED).collectAsState(initial = emptyList())
-    val dueWords by vocabularyRepository.getDueWords().collectAsState(initial = emptyList())
-    val recentQuizAttempts by learningRepository.getRecentAttempts().collectAsState(initial = emptyList())
+    val progress by viewModel.progress.collectAsState()
+    val allSavedWords by viewModel.savedWords.collectAsState()
+    val masteredWords by viewModel.masteredWords.collectAsState()
+    val dueWords by viewModel.dueWords.collectAsState()
+    val recentQuizAttempts by viewModel.quizAttempts.collectAsState()
 
     val userProg = progress ?: UserProgressEntity()
 

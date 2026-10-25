@@ -25,19 +25,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.preferences.AppPreferences
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 import com.example.ui.components.TopicCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicsScreen(
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     onNavigateToTopicDetail: (topicId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val topics by learningRepository.getAllTopics().collectAsState(initial = emptyList())
+    val topics by viewModel.topics.collectAsState()
 
     Scaffold(
         topBar = {

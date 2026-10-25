@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.QuizQuestionEntity
 import com.example.data.model.QuizType
-import com.example.data.repository.LearningRepository
+import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -69,7 +69,7 @@ fun QuizActiveScreen(
     count: Int,
     category: String,
     typeString: String,
-    learningRepository: LearningRepository,
+    viewModel: AppViewModel,
     ttsManager: TtsManager,
     onNavigateBack: () -> Unit,
     onNavigateToResult: (correct: Int, total: Int, timeSec: Int, xp: Int) -> Unit,
@@ -91,7 +91,7 @@ fun QuizActiveScreen(
             try { QuizType.valueOf(typeString) } catch (_: Exception) { null }
         } else null
 
-        val list = learningRepository.getRandomQuiz(count, quizType, category)
+        val list = viewModel.getRandomQuiz(count, quizType, category)
         questions = list
         isLoading = false
         startTime = System.currentTimeMillis()
@@ -118,7 +118,7 @@ fun QuizActiveScreen(
             val elapsedSec = ((System.currentTimeMillis() - startTime) / 1000).toInt()
             val xpEarned = correctCount * 15
             coroutineScope.launch {
-                learningRepository.saveQuizAttempt(
+                viewModel.saveQuizAttempt(
                     category = category,
                     total = questions.size,
                     correct = correctCount,

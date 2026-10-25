@@ -64,15 +64,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.importer.DictionaryImportManager
-import com.example.data.repository.DictionaryRepository
+import com.example.presentation.AppViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataImportScreen(
-    importManager: DictionaryImportManager,
-    dictionaryRepository: DictionaryRepository,
+    viewModel: AppViewModel,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -80,8 +78,8 @@ fun DataImportScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current
 
-    val totalWordsCount by dictionaryRepository.getEntryCountFlow().collectAsState(initial = 0)
-    val importProgress by importManager.progress.collectAsState(initial = com.example.data.importer.ImportProgress())
+    val totalWordsCount by viewModel.entryCount.collectAsState()
+    val importProgress by viewModel.importProgress.collectAsState()
 
     // SAF Document Picker
     val docPickerLauncher = rememberLauncherForActivityResult(
@@ -89,7 +87,7 @@ fun DataImportScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             coroutineScope.launch {
-                importManager.importFromUri(uri, null, uri.lastPathSegment)
+                viewModel.importFromUri(uri)
             }
         }
     }
@@ -304,7 +302,7 @@ fun DataImportScreen(
                             )
                             IconButton(
                                 onClick = {
-                                    val template = importManager.getSampleJsonlTemplate()
+                                    val template = viewModel.sampleJsonlTemplate()
                                     clipboardManager.setText(AnnotatedString(template))
                                     coroutineScope.launch {
                                         snackbarHostState.showSnackbar("Namuna clipboardga nusxalandi")
@@ -328,7 +326,7 @@ fun DataImportScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = importManager.getSampleJsonlTemplate(),
+                                text = viewModel.sampleJsonlTemplate(),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 11.sp,
