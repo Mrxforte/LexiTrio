@@ -15,6 +15,7 @@ from .openai_client import (
     TranslationParseError,
     TranslationProviderError,
 )
+from .providers import build_translation_client
 from .text_extraction import normalize_text
 
 SUPPORTED_TARGETS = ("ru", "uz")
@@ -264,7 +265,7 @@ def _translate_batches(
     parse_payload=None,
     empty_record: dict | None = None,
 ) -> tuple[list[dict], str, list[str]]:
-    client = client or OpenAIClient()
+    client = client or build_translation_client()
     configured_batch = batch_size or getattr(settings, "TRANSLATION_BATCH_SIZE", 6)
     step = max(1, int(configured_batch))
     parse_payload = parse_payload or _parse_translation_payload

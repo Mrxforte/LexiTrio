@@ -27,7 +27,9 @@ without it the project uses SQLite for local development.
 - `POST /api/v1/auth/register/` — `{ "email": "...", "password": "..." }`
 - `POST /api/v1/auth/login/` — returns an API token
 - `POST /api/v1/auth/logout/` — revokes the current token
-- `GET /api/v1/dictionary/entries/?q=...&language=en`
+- `GET /api/v1/dictionary/search/?q=...&source=en&target=uz&page=1&pageSize=20` —
+  ranked search (see [Dictionary search](#dictionary-search))
+- `GET /api/v1/dictionary/entries/?q=...&language=en` — same ranking, entry payload
 - `GET /api/v1/catalog/` — learning content snapshot plus dictionary metadata
 - `GET /api/v1/dictionary/sync/?afterId=0&limit=500[&since=ISO8601]` — paged,
   resumable dictionary export used by the Android offline cache
@@ -49,6 +51,182 @@ Send `Authorization: Token <token>` for `/sync/`. The sync endpoint is
 idempotent for client-generated UUIDs and scopes all user data to the
 authenticated account. Content endpoints are read-only and public.
 
+### Pagination
+
+Catalog list endpoints return `{ "count", "next", "previous", "results" }` with
+`page` and `pageSize` query parameters (default 50, max 500). Before this
+change they returned every row at once, which for `/dictionary/entries/` meant
+streaming 130k records; clients that expected a bare array must read
+`results`.
+
+### Dictionary search
+
+`GET /api/v1/dictionary/search/` is served from a SQLite FTS5 index and keeps
+response sizes bounded:
+
+| Parameter | Meaning |
+| --- | --- |
+| `q` | required free text; matches headwords, primary meanings, alternative spellings and translations |
+| `source` | entry language (`en`, `ru`, `uz`, `uz-cyrl`) |
+| `target` | only entries that have a translation in this language |
+| `pos` | part of speech |
+| `level` | CEFR level |
+| `partial` | `false` disables the substring fallback |
+| `page`, `pageSize` | pagination, `pageSize` capped at `DICTIONARY_SEARCH_MAX_PAGE_SIZE` |
+
+Results are ranked: exact headword, headword prefix, token matches in meanings
+and translations (bm25), then substring matches. Because a total count would
+force a full scan, the response reports `hasMore` plus `next`/`previous`
+instead of `count`:
+
+```json
+{
+  "query": "apple",
+  "sourceLanguage": null,
+  "targetLanguage": "uz",
+  "page": 1,
+  "pageSize": 20,
+  "hasMore": true,
+  "next": "https://host/api/v1/dictionary/search/?q=apple&page=2",
+  "previous": null,
+  "backend": "fts5",
+  "tookMs": 1.8,
+  "results": [
+    {
+      "id": 2461,
+      "word": "apple",
+      "sourceLanguage": "en",
+      "partOfSpeech": "noun",
+      "phoneticIpa": "/ˈæpəl/",
+      "cefrLevel": "B2",
+      "frequencyRank": 476,
+      "article": "an",
+      "pluralForm": "apples",
+      "primaryMeaningRu": "яблоко (сущ.)",
+      "primaryMeaningUz": "olma (ot)",
+      "translations": [
+        {
+          "id": 311,
+          "text": "olma",
+          "targetLanguage": "uz",
+          "partOfSpeech": "noun",
+          "quality": "wiktionary"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Ranked search returns at most 1000 candidates per query; narrower queries
+(`source`, `target`, `pos`, `level`) are the way to page deeper.
+
+`backend` reports which engine answered: `fts5` for the index,
+`orm` for the portable fallback used on PostgreSQL or before the index is
+built.
+
+### Search index maintenance
+
+The index (`dictionary_search`) is created by migration
+`learning.0008_dictionary_search_index` and kept in sync by triggers on
+`learning_dictionaryentry` and `learning_translation`, so admin edits,
+imports and translation jobs are searchable immediately.
+
+```powershell
+# rebuild or verify (safe to re-run at any time)
+backend\.venv\Scripts\python.exe backend\manage.py rebuild_search_index
+backend\.venv\Scripts\python.exe backend\manage.py rebuild_search_index --check
+
+# data report: duplicate headwords, untranslated rows, orphan rows, index drift
+backend\.venv\Scripts\python.exe backend\manage.py check_dictionary_integrity
+
+# measured latency of the FTS5 path versus the ORM fallback
+backend\.venv\Scripts\python.exe backend\manage.py benchmark_dictionary --repeat 5
+```
+
+Measured on the bundled 130,777-entry / 85,232-translation database
+(Windows, SQLite 3.45.3, page size 20, median of 5 runs):
+
+| Query | Kind | FTS5 | ORM fallback (previous behaviour) |
+| --- | --- | --- | --- |
+| `apple` | exact word | 0.89 ms | 201.94 ms |
+| `app` | prefix | 3.98 ms | 181.56 ms |
+| `olma` | Uzbek translation | 13.02 ms | 196.12 ms |
+| `яблоко` | Russian word | 13.83 ms | 179.44 ms |
+| `pple` | substring | 2.57 ms | 353.27 ms |
+| `look after` | multi word | 16.72 ms | 219.15 ms |
+
+End-to-end HTTP timings for the same database: a cache miss (`?q=apple` with
+the version stamp caching disabled) takes ~25 ms including Django
+serialization; a warm response is served from the cache in under 1 ms, and a
+conditional request returns `304` with an empty body in ~0.7 ms. A cache miss
+runs 13 SQL queries, of which 9 are the version stamp; with the stamp cached
+that drops to 4.
+
+### Caching
+
+- Search responses carry `ETag` and `Cache-Control: public, max-age=<version TTL>`.
+  Send `If-None-Match` to receive `304`.
+- Rendered responses are cached in Django's cache for
+  `DICTIONARY_SEARCH_CACHE_TTL` seconds (default 300, `0` disables).
+- The cache key contains a dictionary version stamp built from row counts and
+  the newest `updated_at` of entries, meanings and translations. Saving or
+  deleting any of those rows invalidates the stamp through signals, so an
+  administrative update is visible on the next request instead of after the
+  cache window.
+- `REDIS_URL` switches the cache to Redis (requires the `redis` package);
+  without it the process-local cache is used.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DICTIONARY_SEARCH_DEFAULT_PAGE_SIZE` | `20` | default page size for `/dictionary/search/` |
+| `DICTIONARY_SEARCH_MAX_PAGE_SIZE` | `100` | hard cap for `pageSize` |
+| `DICTIONARY_SEARCH_CACHE_TTL` | `300` | seconds a rendered search response stays cached |
+| `DICTIONARY_VERSION_CACHE_TTL` | `5` | seconds the version stamp stays cached |
+| `DICTIONARY_SEARCH_PARTIAL_ROWS` | `200` | cap on rows the substring fallback may add |
+| `DICTIONARY_SEARCH_TRANSLATIONS_PER_RESULT` | `6` | translations serialized per hit |
+| `SQLITE_BUSY_TIMEOUT` | `20` | seconds SQLite waits for a write lock |
+
+### SQLite settings
+
+The SQLite connection enables `journal_mode=WAL`, `synchronous=NORMAL`,
+`temp_store=MEMORY`, a 64 MB page cache, a 256 MB mmap window, a busy timeout
+and `IMMEDIATE` transactions (so a read-then-write transaction cannot deadlock
+against a concurrent writer). Foreign key enforcement stays on. These settings
+are applied per connection through `init_command` and do not modify data.
+
+### Schema changes in this release
+
+| Migration | Change | Reversible |
+| --- | --- | --- |
+| `learning.0007_translation_updated_at` | adds `Translation.updated_at` and the `(entry_id, target_language)` index, used for cache invalidation and language filtering | yes |
+| `learning.0008_dictionary_search_index` | creates the FTS5 table, its triggers and populates the index; skipped automatically when FTS5 or SQLite is unavailable | yes (drops table and triggers) |
+
+Both are additive: no existing row, column or index is dropped.
+
+```powershell
+# 1. back up first
+Copy-Item backend\db.sqlite3 "backend\db.sqlite3.backup-$(Get-Date -Format yyyyMMdd-HHmmss)"
+# 2. apply
+backend\.venv\Scripts\python.exe backend\manage.py migrate
+# 3. verify
+backend\.venv\Scripts\python.exe backend\manage.py rebuild_search_index --check
+backend\.venv\Scripts\python.exe backend\manage.py check_dictionary_integrity
+```
+
+Rolling back the search index alone:
+`backend\.venv\Scripts\python.exe backend\manage.py migrate learning 0007`.
+
+### Tests
+
+```powershell
+backend\.venv\Scripts\python.exe backend\manage.py test
+```
+
+`learning/test_search.py` covers ranking, language filters, pagination
+boundaries, the trigger-driven index synchronisation, ETag/`304` behaviour,
+the query budget, and the ORM fallback.
+
 Catalog records are managed through Django admin or imported using the
 `import_catalog` management command. The seed JSON mirrors the app's bundled
 offline learning corpus; user learning data is never part of that fixture.
@@ -61,6 +239,31 @@ routes user actions through domain use cases and repository contracts. Data
 implementations own Room, DataStore, file import, and Retrofit access. Room
 remains authoritative for local learning data; catalog refresh and account sync
 are additive, so core study flows remain available offline.
+
+### Dictionary search screen
+
+Search is local (Room), so it does not depend on the backend being reachable.
+
+- `AppViewModel.searchState` exposes one immutable `DictionarySearchUiState`
+  (`filters`, `isLoading`, `results`, `hasSearched`, `errorMessage`).
+- Filter changes are debounced (300 ms), de-duplicated and fed into
+  `flatMapLatest`, so a new keystroke cancels the previous query instead of
+  queueing it.
+- The screen no longer runs the debounce inside `LaunchedEffect`; it only
+  forwards text and chip changes, which keeps state across configuration
+  changes and removes search work from the composable.
+- Loading, empty, error and success states are rendered from that state; the
+  error state offers a retry that re-runs the same query.
+- Search history is written on explicit submit (keyboard search action) and
+  skips a repeat of the last query, instead of recording every debounced
+  keystroke.
+- The "word of the day" lookup no longer sorts the whole table
+  (`ORDER BY RANDOM()`); it picks a random id and reads the first row at or
+  after it.
+
+These changes are compile-verified by the project's Gradle build/Android
+Studio; the sandbox used for this pass had no Android SDK, so only the backend
+test suite was executed here.
 
 ## Android development URL
 
@@ -88,6 +291,14 @@ endpoints additionally require a staff account
 | `TRANSLATION_MAX_SEGMENT_CHARS` | `2000` | Chunk size sent to the model. |
 | `TRANSLATION_MAX_SEGMENTS` | `40` | Maximum chunks per request. |
 | `TRANSLATION_BATCH_SIZE` | `6` | Items per model call. |
+| `TRANSLATION_CONCURRENCY` | `1` | Parallel model calls; raise it on a billed key. |
+| `DEEPSEEK_API_KEY` | empty | Optional second provider; runs in parallel with the first. |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | DeepSeek endpoint. |
+| `DEEPSEEK_MODEL` | `deepseek-chat` | DeepSeek model. |
+
+When two providers are configured the client round-robins between them, so both
+quotas are used and a rate-limited provider fails over to the other. Check
+`GET /api/v1/translation/status/` to see the active providers.
 
 ### Seed the 100 000 word English lexicon
 

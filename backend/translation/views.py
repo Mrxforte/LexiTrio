@@ -18,10 +18,10 @@ from .serializers import (
 )
 from .services.backfill import backfill_entries
 from .services.openai_client import (
-    OpenAIClient,
     TranslationNotConfigured,
     TranslationProviderError,
 )
+from .services.providers import build_translation_client, configured_providers
 from .services.text_extraction import (
     SUPPORTED_EXTENSIONS,
     DocumentError,
@@ -52,9 +52,19 @@ class TranslationStatusView(TranslationAPIView):
         entries = DictionaryEntry.objects.filter(language="en")
         return Response(
             {
-                "provider": "openai",
-                "configured": bool(settings.OPENAI_API_KEY),
-                "model": settings.OPENAI_MODEL,
+                "provider": "+".join(
+                    provider.name for provider in configured_providers()
+                )
+                or "none",
+                "configured": bool(settings.OPENAI_API_KEY or settings.DEEPSEEK_API_KEY),
+                "model": "+".join(
+                    provider.model for provider in configured_providers()
+                )
+                or settings.OPENAI_MODEL,
+                "providers": [
+                    {"name": provider.name, "model": provider.model}
+                    for provider in configured_providers()
+                ],
                 "targetLanguages": list(SUPPORTED_TARGETS),
                 "defaultTargets": list(DEFAULT_TARGETS),
                 "supportedExtensions": list(SUPPORTED_EXTENSIONS),
@@ -175,7 +185,7 @@ class TranslationJobCancelView(TranslationAPIView):
 
 def _translate_text(text: str, targets) -> dict:
     try:
-        return translate_text(text, targets=targets, client=OpenAIClient())
+        return translate_text(text, targets=targets, client=build_translation_client())
     except TranslationInputError as exc:
         raise ValidationError({"text": str(exc)}) from exc
     except TranslationNotConfigured as exc:
@@ -186,7 +196,7 @@ def _translate_text(text: str, targets) -> dict:
 
 def _run_backfill(payload: dict) -> dict:
     try:
-        return backfill_entries(**payload, client=OpenAIClient())
+        return backfill_entries(**payload, client=build_translation_client())
     except TranslationInputError as exc:
         raise ValidationError({"languages": str(exc)}) from exc
     except TranslationNotConfigured as exc:

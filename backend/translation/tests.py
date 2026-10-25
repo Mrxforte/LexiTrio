@@ -25,6 +25,8 @@ from .services.professional import (
     primary_meaning_from_translations,
 )
 from .services.wiktionary import parse_payload
+from .services.openai_client import ChatResult, TranslationProviderError
+from .services.providers import RotatingClient, configured_providers
 from .services.translator import (
     TranslationInputError,
     split_text,
@@ -295,6 +297,58 @@ class FreedictParseTests(SimpleTestCase):
         self.assertIsNone(entry)
 
 
+class ProviderRotationTests(SimpleTestCase):
+    def test_configured_providers_detects_gemini_and_deepseek(self):
+        with override_settings(
+            OPENAI_API_KEY="g-key",
+            OPENAI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai",
+            OPENAI_MODEL="gemini-3.5-flash-lite",
+            DEEPSEEK_API_KEY="d-key",
+            DEEPSEEK_BASE_URL="https://api.deepseek.com/v1",
+            DEEPSEEK_MODEL="deepseek-chat",
+        ):
+            providers = configured_providers()
+
+        self.assertEqual([provider.name for provider in providers], ["gemini", "deepseek"])
+        self.assertEqual(providers[1].model, "deepseek-chat")
+
+    def test_deepseek_is_skipped_without_a_key(self):
+        with override_settings(OPENAI_API_KEY="g-key", DEEPSEEK_API_KEY=""):
+            providers = configured_providers()
+
+        self.assertEqual([provider.name for provider in providers], ["gemini"])
+
+    def test_rotation_falls_back_when_a_provider_is_down(self):
+        class Failing:
+            model = "down"
+
+            def complete(self, **_kwargs):
+                raise TranslationProviderError("429")
+
+        class Working:
+            model = "ok"
+
+            def complete(self, **_kwargs):
+                return ChatResult(content="{}", model="ok")
+
+        client = RotatingClient([Failing(), Working()])
+        result = client.complete(system_prompt="s", user_prompt="u")
+
+        self.assertEqual(result.model, "ok")
+
+    def test_rotation_raises_when_every_provider_fails(self):
+        class Failing:
+            model = "down"
+
+            def complete(self, **_kwargs):
+                raise TranslationProviderError("429")
+
+        client = RotatingClient([Failing(), Failing()])
+
+        with self.assertRaises(TranslationProviderError):
+            client.complete(system_prompt="s", user_prompt="u")
+
+
 class BatchResilienceTests(APITestCase):
     def _single_item_builder(self, bad_marker: str):
         def builder(user_prompt: str) -> str:
@@ -346,7 +400,7 @@ class TextTranslationApiTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_text_endpoint_translates_into_russian_and_uzbek(self):
-        with patch("translation.views.OpenAIClient", return_value=FakeClient()):
+        with patch("translation.views.build_translation_client", return_value=FakeClient()):
             response = self.client.post(
                 "/api/v1/translation/text/",
                 {"text": "hello world", "targets": ["ru", "uz"]},
@@ -386,7 +440,7 @@ class TextTranslationApiTests(APITestCase):
             "dictionary.txt", b"acquire - to obtain\nresilience - to recover", "text/plain"
         )
 
-        with patch("translation.views.OpenAIClient", return_value=FakeClient()):
+        with patch("translation.views.build_translation_client", return_value=FakeClient()):
             response = self.client.post(
                 "/api/v1/translation/document/", {"file": upload}, format="multipart"
             )
@@ -448,7 +502,7 @@ class BackfillApiTests(APITestCase):
     def test_backfill_updates_entries_and_creates_translations(self):
         self.client.force_authenticate(user=self.staff)
 
-        with patch("translation.views.OpenAIClient", return_value=FakeClient()):
+        with patch("translation.views.build_translation_client", return_value=FakeClient()):
             response = self.client.post(
                 "/api/v1/translation/backfill/", {"limit": 10}, format="json"
             )
@@ -468,7 +522,7 @@ class BackfillApiTests(APITestCase):
     def test_backfill_dry_run_does_not_write(self):
         self.client.force_authenticate(user=self.staff)
 
-        with patch("translation.views.OpenAIClient", return_value=FakeClient()):
+        with patch("translation.views.build_translation_client", return_value=FakeClient()):
             response = self.client.post(
                 "/api/v1/translation/backfill/", {"limit": 10, "dryRun": True}, format="json"
             )

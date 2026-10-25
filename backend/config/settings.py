@@ -184,6 +184,12 @@ OPENAI_MAX_RETRIES = int(os.environ.get("OPENAI_MAX_RETRIES", "2"))
 OPENAI_MAX_BACKOFF = float(os.environ.get("OPENAI_MAX_BACKOFF", "60"))
 OPENAI_MIN_INTERVAL = float(os.environ.get("OPENAI_MIN_INTERVAL", "0"))
 TRANSLATION_CONCURRENCY = int(os.environ.get("TRANSLATION_CONCURRENCY", "1"))
+
+# Additional OpenAI-compatible providers run in parallel with the first one.
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_MIN_INTERVAL = float(os.environ.get("DEEPSEEK_MIN_INTERVAL", "0"))
 OPENAI_TEMPERATURE = float(os.environ.get("OPENAI_TEMPERATURE", "0.2"))
 OPENAI_MAX_OUTPUT_TOKENS = int(os.environ.get("OPENAI_MAX_OUTPUT_TOKENS", "8192"))
 TRANSLATION_JSON_MODE = os.environ.get("TRANSLATION_JSON_MODE", "true").lower() == "true"
