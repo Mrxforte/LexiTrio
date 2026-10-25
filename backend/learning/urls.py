@@ -7,6 +7,7 @@ from .views import (
     ConversationTurnViewSet,
     ConversationViewSet,
     DictionaryEntryViewSet,
+    DictionarySyncView,
     ExampleSentenceViewSet,
     GrammarLessonViewSet,
     QuizQuestionViewSet,
@@ -35,3 +36,6 @@ router.register("quiz-questions", QuizQuestionViewSet)
 
 urlpatterns = router.urls
 urlpatterns.insert(0, path("catalog/", CatalogSnapshotView.as_view(), name="catalog"))
+urlpatterns.insert(
+    1, path("dictionary/sync/", DictionarySyncView.as_view(), name="dictionary-sync")
+)

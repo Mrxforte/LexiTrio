@@ -28,7 +28,9 @@ without it the project uses SQLite for local development.
 - `POST /api/v1/auth/login/` — returns an API token
 - `POST /api/v1/auth/logout/` — revokes the current token
 - `GET /api/v1/dictionary/entries/?q=...&language=en`
-- `GET /api/v1/catalog/` — the bundled learning catalog snapshot
+- `GET /api/v1/catalog/` — learning content snapshot plus dictionary metadata
+- `GET /api/v1/dictionary/sync/?afterId=0&limit=500[&since=ISO8601]` — paged,
+  resumable dictionary export used by the Android offline cache
 - `GET /api/v1/dictionary/{meanings,translations,examples,synonyms,forms,collocations}/`
 - `GET /api/v1/{topics,topic-words,conversations,conversation-turns,grammar-lessons,quiz-questions}/`
 - `GET|POST /api/v1/sync/` — authenticated user collections, saved words,
@@ -50,6 +52,15 @@ authenticated account. Content endpoints are read-only and public.
 Catalog records are managed through Django admin or imported using the
 `import_catalog` management command. The seed JSON mirrors the app's bundled
 offline learning corpus; user learning data is never part of that fixture.
+
+## Android architecture
+
+All navigation screens receive a lifecycle-aware `AppViewModel`, not data
+repositories. The presentation layer exposes Room-backed `StateFlow` state and
+routes user actions through domain use cases and repository contracts. Data
+implementations own Room, DataStore, file import, and Retrofit access. Room
+remains authoritative for local learning data; catalog refresh and account sync
+are additive, so core study flows remain available offline.
 
 ## Android development URL
 
@@ -124,3 +135,40 @@ backend\.venv\Scripts\python.exe backend\manage.py run_translation_jobs --watch
 
 Job progress is available from `GET /api/v1/translation/jobs/<id>/`
 (`processed`, `translated`, `failed`, `progress`, `lastError`).
+
+## Offline dictionary sync
+
+`GET /api/v1/catalog/` returns the small learning corpus (topics,
+conversations, grammar, quizzes) plus `dictionary` metadata. The dictionary
+itself is streamed page by page:
+
+```
+GET /api/v1/dictionary/sync/?afterId=0&limit=500
+{
+  "entries": [...],
+  "meanings": [...],
+  "translations": [...],
+  "examples": [...],
+  "synonyms": [...],
+  "forms": [...],
+  "collocations": [...],
+  "nextAfterId": 800,
+  "hasMore": true,
+  "serverTime": "2026-10-25T09:00:00+00:00",
+  "dictionary": {"entries": 130777, "maxEntryId": 130790, "missingRussian": 0, "missingUzbek": 0}
+}
+```
+
+- The first page returns `dictionary` metadata; continue while `hasMore` is
+  true, passing the previous `nextAfterId`.
+- `limit` is capped at 500 (a page is roughly 0.5 MB).
+- Incremental updates: pass `since=<serverTime>` from the previous complete
+  run. Only entries whose row or any of their meanings changed after that
+  timestamp are returned. Rows carry `updatedAt`, which `auto_now` bumps when
+  `translate_dictionary` (or admin editing) saves a change.
+- Clients should store `nextAfterId` after every page so an interrupted first
+  sync resumes instead of restarting.
+
+The Android client (`CloudRepositoryImpl`) does exactly this: one transaction
+per page, cursor persisted in `SyncStateStore`, and a progress callback feeding
+the cloud sync screen.

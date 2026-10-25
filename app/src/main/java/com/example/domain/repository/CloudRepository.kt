@@ -13,5 +13,5 @@ interface CloudRepository {
 
     suspend fun signOut()
 
-    suspend fun synchronize(): SyncSummary
+    suspend fun synchronize(onProgress: (synced: Int, total: Int) -> Unit = { _, _ -> }): SyncSummary
 }

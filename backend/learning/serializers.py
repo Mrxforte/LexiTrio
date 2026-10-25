@@ -42,7 +42,7 @@ class WordMeaningSerializer(CamelCaseFieldsSerializer):
     class Meta:
         model = WordMeaning
         fields = ("id", "entryId", "sense_number", "definition_en", "definition_ru",
-                  "definition_uz", "register", "grammar_notes")
+                  "definition_uz", "register", "grammar_notes", "updated_at")
 
 
 class TranslationSerializer(CamelCaseFieldsSerializer):

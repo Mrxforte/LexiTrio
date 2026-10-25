@@ -45,7 +45,7 @@ class CloudSyncViewModel(private val repository: CloudRepository) : ViewModel() 
         }
         launchAction {
             if (createAccount) registerAccount(email, password) else signInAccount(email, password)
-            val result = synchronizeData()
+            val result = synchronizeData(progressReporter)
             _state.update {
                 it.copy(
                     message = "Kirish muvaffaqiyatli. ${result.savedWords} ta so‘z sinxronlandi.",
@@ -57,7 +57,7 @@ class CloudSyncViewModel(private val repository: CloudRepository) : ViewModel() 
 
     fun synchronize() {
         launchAction {
-            val result = synchronizeData()
+            val result = synchronizeData(progressReporter)
             _state.update {
                 it.copy(
                     message = "Sinxronlash tugadi: ${result.savedWords} ta so‘z, " +
@@ -72,6 +72,12 @@ class CloudSyncViewModel(private val repository: CloudRepository) : ViewModel() 
         launchAction {
             repository.signOut()
             _state.update { it.copy(message = "Hisobdan chiqildi.", summary = null) }
+        }
+    }
+
+    private val progressReporter: (Int, Int) -> Unit = { synced, total ->
+        if (total > 0) {
+            _state.update { it.copy(message = "Lug‘at yuklanmoqda: $synced / $total") }
         }
     }
 

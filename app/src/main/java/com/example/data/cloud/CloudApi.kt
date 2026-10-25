@@ -23,6 +23,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 internal interface CloudApi {
     @POST("auth/register/")
@@ -37,6 +38,13 @@ internal interface CloudApi {
     @GET("catalog/")
     suspend fun getCatalog(): CatalogSnapshot
 
+    @GET("dictionary/sync/")
+    suspend fun syncDictionary(
+        @Query("afterId") afterId: Long,
+        @Query("limit") limit: Int,
+        @Query("since") since: String? = null
+    ): DictionarySyncPage
+
     @POST("sync/")
     suspend fun synchronize(
         @Header("Authorization") authorization: String,
@@ -49,19 +57,36 @@ internal data class CredentialsRequest(val email: String, val password: String)
 internal data class AuthResponse(val token: String, val email: String)
 
 internal data class CatalogSnapshot(
-    val dictionaryEntries: List<DictionaryEntryEntity>,
-    val wordMeanings: List<WordMeaningEntity>,
-    val translations: List<TranslationEntity>,
-    val examples: List<ExampleSentenceEntity>,
-    val synonyms: List<SynonymAntonymEntity>,
-    val wordForms: List<WordFormEntity>,
-    val collocations: List<CollocationEntity>,
-    val topics: List<TopicEntity>,
-    val topicWords: List<TopicWordCrossRef>,
-    val conversations: List<ConversationEntity>,
-    val conversationTurns: List<ConversationTurnEntity>,
-    val grammarLessons: List<GrammarLessonEntity>,
-    val quizQuestions: List<QuizQuestionEntity>
+    val version: String? = null,
+    val serverTime: String? = null,
+    val dictionary: DictionaryMeta = DictionaryMeta(),
+    val topics: List<TopicEntity> = emptyList(),
+    val topicWords: List<TopicWordCrossRef> = emptyList(),
+    val conversations: List<ConversationEntity> = emptyList(),
+    val conversationTurns: List<ConversationTurnEntity> = emptyList(),
+    val grammarLessons: List<GrammarLessonEntity> = emptyList(),
+    val quizQuestions: List<QuizQuestionEntity> = emptyList()
+)
+
+internal data class DictionaryMeta(
+    val entries: Int = 0,
+    val maxEntryId: Long = 0,
+    val missingRussian: Int = 0,
+    val missingUzbek: Int = 0
+)
+
+internal data class DictionarySyncPage(
+    val entries: List<DictionaryEntryEntity> = emptyList(),
+    val meanings: List<WordMeaningEntity> = emptyList(),
+    val translations: List<TranslationEntity> = emptyList(),
+    val examples: List<ExampleSentenceEntity> = emptyList(),
+    val synonyms: List<SynonymAntonymEntity> = emptyList(),
+    val forms: List<WordFormEntity> = emptyList(),
+    val collocations: List<CollocationEntity> = emptyList(),
+    val nextAfterId: Long = 0,
+    val hasMore: Boolean = false,
+    val serverTime: String? = null,
+    val dictionary: DictionaryMeta? = null
 )
 
 internal data class SyncRequest(

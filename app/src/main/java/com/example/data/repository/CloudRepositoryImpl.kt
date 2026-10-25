@@ -10,7 +10,9 @@ import com.example.data.cloud.CloudDeletion
 import com.example.data.cloud.CloudProgress
 import com.example.data.cloud.CloudQuizAttempt
 import com.example.data.cloud.CloudSavedWord
+import com.example.data.cloud.DictionarySyncPage
 import com.example.data.cloud.SessionStore
+import com.example.data.cloud.SyncStateStore
 import com.example.data.database.LexiTrioDatabase
 import com.example.data.model.LearningStatus
 import com.example.data.model.SavedWordEntity
@@ -28,6 +30,7 @@ class CloudRepositoryImpl internal constructor(
     private val api: CloudApi = CloudApiFactory.create()
 ) : CloudRepository {
     private val sessionStore = SessionStore(context.applicationContext)
+    private val syncStateStore = SyncStateStore(context.applicationContext)
     private val preferencesRepository = UserPreferencesRepository(context.applicationContext)
     private val vocabularyDao = database.vocabularyDao()
     private val quizDao = database.quizDao()
@@ -51,21 +54,12 @@ class CloudRepositoryImpl internal constructor(
         }
     }
 
-    override suspend fun synchronize(): SyncSummary {
+    override suspend fun synchronize(onProgress: (synced: Int, total: Int) -> Unit): SyncSummary {
         val session = sessionStore.current()
             ?: throw IllegalStateException("Avval email va parol bilan tizimga kiring.")
 
         val catalog = api.getCatalog()
         database.withTransaction {
-            val dictionaryDao = database.dictionaryDao()
-            dictionaryDao.insertEntries(catalog.dictionaryEntries)
-            dictionaryDao.insertMeanings(catalog.wordMeanings)
-            dictionaryDao.insertTranslations(catalog.translations)
-            dictionaryDao.insertExamples(catalog.examples)
-            dictionaryDao.insertSynonyms(catalog.synonyms)
-            dictionaryDao.insertForms(catalog.wordForms)
-            dictionaryDao.insertCollocations(catalog.collocations)
-
             val learningDao = database.learningDao()
             learningDao.insertTopics(catalog.topics)
             learningDao.insertTopicWordCrossRefs(catalog.topicWords)
@@ -77,6 +71,7 @@ class CloudRepositoryImpl internal constructor(
 
             quizDao.insertQuestions(catalog.quizQuestions)
         }
+        syncDictionary(catalog.dictionary.entries, onProgress)
 
         val collections = vocabularyDao.getAllCollectionsOnce()
         val collectionsById = collections.associateBy { it.id }
@@ -125,8 +120,49 @@ class CloudRepositoryImpl internal constructor(
         return SyncSummary(
             savedWords = snapshot.savedWords.count { !it.isDeleted },
             quizAttempts = snapshot.quizAttempts.size,
-            catalogEntries = catalog.dictionaryEntries.size
+            catalogEntries = catalog.dictionary.entries
         )
+    }
+
+    private suspend fun syncDictionary(
+        total: Int,
+        onProgress: (synced: Int, total: Int) -> Unit
+    ) {
+        val incrementalSince = syncStateStore.lastSyncAt
+        var afterId = if (incrementalSince == null) syncStateStore.dictionaryCursor else 0L
+        var synced = 0
+        var serverTime: String? = null
+
+        while (true) {
+            val page = api.syncDictionary(
+                afterId = afterId,
+                limit = DICTIONARY_PAGE_SIZE,
+                since = incrementalSince
+            )
+            if (page.entries.isNotEmpty()) {
+                database.withTransaction { insertDictionaryPage(page) }
+                synced += page.entries.size
+                if (incrementalSince == null) {
+                    syncStateStore.saveDictionaryCursor(page.nextAfterId)
+                }
+            }
+            page.serverTime?.let { serverTime = it }
+            onProgress(minOf(synced, total), total)
+            if (!page.hasMore || page.entries.isEmpty()) break
+            afterId = page.nextAfterId
+        }
+        syncStateStore.saveLastSyncAt(serverTime)
+    }
+
+    private suspend fun insertDictionaryPage(page: DictionarySyncPage) {
+        val dictionaryDao = database.dictionaryDao()
+        dictionaryDao.insertEntries(page.entries)
+        dictionaryDao.insertMeanings(page.meanings)
+        dictionaryDao.insertTranslations(page.translations)
+        dictionaryDao.insertExamples(page.examples)
+        dictionaryDao.insertSynonyms(page.synonyms)
+        dictionaryDao.insertForms(page.forms)
+        dictionaryDao.insertCollocations(page.collocations)
     }
 
     private suspend fun saveSession(response: AuthResponse) {
@@ -252,4 +288,8 @@ class CloudRepositoryImpl internal constructor(
         lapsesCount = lapsesCount,
         updatedAt = updatedAt
     )
+
+    private companion object {
+        const val DICTIONARY_PAGE_SIZE = 500
+    }
 }

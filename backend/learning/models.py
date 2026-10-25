@@ -21,6 +21,7 @@ class DictionaryEntry(models.Model):
     primary_meaning_en = models.TextField(blank=True)
     primary_meaning_ru = models.TextField(blank=True)
     primary_meaning_uz = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         ordering = ["-frequency_rank", "headword"]
@@ -38,6 +39,7 @@ class WordMeaning(models.Model):
     definition_uz = models.TextField(blank=True)
     register = models.CharField(max_length=40, default="general")
     grammar_notes = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         ordering = ["sense_number", "id"]
