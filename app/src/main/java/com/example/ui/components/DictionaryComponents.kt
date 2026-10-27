@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Clear
@@ -39,6 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.DictionaryEntryEntity
@@ -87,6 +91,8 @@ fun DictionarySearchBar(
             }
         },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSearch() }),
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -196,12 +202,52 @@ fun LanguageDirectionSelector(
 }
 
 @Composable
+fun PronunciationButton(
+    text: String,
+    language: String,
+    onSpeak: (text: String, language: String) -> Unit,
+    isPlaying: Boolean = false,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    contentId: String = "",
+    size: Dp = 32.dp,
+    iconSize: Dp = 16.dp
+) {
+    if (text.isBlank()) return
+
+    IconButton(
+        onClick = { onSpeak(text, language) },
+        enabled = enabled,
+        modifier = modifier
+            .size(size)
+            .background(
+                if (isPlaying) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                CircleShape
+            )
+            .testTag("pronunciation_btn_${contentId.ifBlank { text.take(12) }}")
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+            contentDescription = "Pronounce $text in $language",
+            tint = if (isPlaying) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(iconSize)
+        )
+    }
+}
+
+@Composable
 fun WordEntryCard(
     entry: DictionaryEntryEntity,
     onClick: () -> Unit,
     onAudioClick: (rateMultiplier: Float) -> Unit,
+    searchQuery: String = "",
+    isPlaying: Boolean = false,
     isFavorite: Boolean = false,
     onFavoriteToggle: () -> Unit = {},
+    onSpeakText: ((text: String, language: String) -> Unit)? = null,
+    activeSpeakingText: String? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -226,11 +272,13 @@ fun WordEntryCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
+                    HighlightedSearchText(
                         text = entry.headword,
+                        query = searchQuery,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        highlightColor = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     PartOfSpeechChip(partOfSpeech = entry.partOfSpeech)
@@ -241,13 +289,16 @@ fun WordEntryCard(
                         onClick = { onAudioClick(1.0f) },
                         modifier = Modifier
                             .size(36.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f), CircleShape)
+                            .background(
+                                if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                                CircleShape
+                            )
                             .testTag("audio_button_${entry.id}")
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = "Pronounce word",
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = if (isPlaying) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -285,39 +336,89 @@ fun WordEntryCard(
             // Primary translations preview
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (entry.primaryMeaningUz.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         LanguageBadge(lang = "uz", text = "UZ")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
+                        HighlightedSearchText(
                             text = entry.primaryMeaningUz,
+                            query = searchQuery,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            textColor = MaterialTheme.colorScheme.onSurface,
+                            highlightColor = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f)
                         )
+                        if (onSpeakText != null) {
+                            PronunciationButton(
+                                text = entry.primaryMeaningUz,
+                                language = "uz",
+                                onSpeak = onSpeakText,
+                                isPlaying = activeSpeakingText == entry.primaryMeaningUz,
+                                size = 28.dp,
+                                iconSize = 14.dp,
+                                contentId = "card_uz_${entry.id}"
+                            )
+                        }
                     }
                 }
 
                 if (entry.primaryMeaningRu.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         LanguageBadge(lang = "ru", text = "RU")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
+                        HighlightedSearchText(
                             text = entry.primaryMeaningRu,
+                            query = searchQuery,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fontWeight = FontWeight.Normal,
+                            textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            highlightColor = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f)
                         )
+                        if (onSpeakText != null) {
+                            PronunciationButton(
+                                text = entry.primaryMeaningRu,
+                                language = "ru",
+                                onSpeak = onSpeakText,
+                                isPlaying = activeSpeakingText == entry.primaryMeaningRu,
+                                size = 28.dp,
+                                iconSize = 14.dp,
+                                contentId = "card_ru_${entry.id}"
+                            )
+                        }
                     }
                 }
 
                 if (entry.language != "en" && entry.primaryMeaningEn.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         LanguageBadge(lang = "en", text = "EN")
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = entry.primaryMeaningEn,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
                         )
+                        if (onSpeakText != null) {
+                            PronunciationButton(
+                                text = entry.primaryMeaningEn,
+                                language = "en",
+                                onSpeak = onSpeakText,
+                                isPlaying = activeSpeakingText == entry.primaryMeaningEn,
+                                size = 28.dp,
+                                iconSize = 14.dp,
+                                contentId = "card_en_${entry.id}"
+                            )
+                        }
                     }
                 }
             }

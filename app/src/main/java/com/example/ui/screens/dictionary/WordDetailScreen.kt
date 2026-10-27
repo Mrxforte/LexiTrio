@@ -72,6 +72,7 @@ import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.LanguageBadge
 import com.example.ui.components.PartOfSpeechChip
+import com.example.ui.components.PronunciationButton
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -267,17 +268,26 @@ fun WordDetailScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Audio Playback Controls: Normal & Slow Speed
+                            // Audio Playback Controls: Normal & Slow Speed + Stop
+                            val playbackState by ttsManager.playbackState.collectAsState()
+                            val isThisWordPlaying = playbackState.isPlaying && playbackState.currentText.equals(entry.headword, ignoreCase = true)
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Button(
-                                    onClick = { ttsManager.speak(entry.headword, entry.language, 1.0f) },
+                                    onClick = {
+                                        if (isThisWordPlaying && !playbackState.isSlowRate) {
+                                            ttsManager.stop()
+                                        } else {
+                                            ttsManager.speak(entry.headword, entry.language, 1.0f)
+                                        }
+                                    },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                        containerColor = if (isThisWordPlaying && !playbackState.isSlowRate) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                        contentColor = if (isThisWordPlaying && !playbackState.isSlowRate) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
                                     ),
                                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                                     modifier = Modifier
@@ -285,16 +295,25 @@ fun WordDetailScreen(
                                         .testTag("pronounce_normal_button")
                                 ) {
                                     Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                        imageVector = if (isThisWordPlaying && !playbackState.isSlowRate) Icons.Default.Flag else Icons.AutoMirrored.Filled.VolumeUp,
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Talaffuz (1.0x)", fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        if (isThisWordPlaying && !playbackState.isSlowRate) "To‘xtatish" else "Talaffuz (1.0x)",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
 
                                 OutlinedButton(
-                                    onClick = { ttsManager.speak(entry.headword, entry.language, 0.65f) },
+                                    onClick = {
+                                        if (isThisWordPlaying && playbackState.isSlowRate) {
+                                            ttsManager.stop()
+                                        } else {
+                                            ttsManager.speak(entry.headword, entry.language, 0.65f)
+                                        }
+                                    },
                                     shape = RoundedCornerShape(12.dp),
                                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
                                     colors = ButtonDefaults.outlinedButtonColors(
@@ -310,7 +329,10 @@ fun WordDetailScreen(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Sekin (0.65x)", fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        if (isThisWordPlaying && playbackState.isSlowRate) "To‘xtatish" else "Sekin (0.65x)",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
                             }
                         }
@@ -348,26 +370,62 @@ fun WordDetailScreen(
                         ) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (entry.primaryMeaningUz.isNotBlank()) {
-                                    Text(
-                                        text = "🇺🇿 ${entry.primaryMeaningUz}",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "🇺🇿 ${entry.primaryMeaningUz}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        PronunciationButton(
+                                            text = entry.primaryMeaningUz,
+                                            language = "uz",
+                                            onSpeak = { text, lang -> ttsManager.speak(text, lang) },
+                                            size = 32.dp
+                                        )
+                                    }
                                 }
                                 if (entry.primaryMeaningRu.isNotBlank()) {
-                                    Text(
-                                        text = "🇷🇺 ${entry.primaryMeaningRu}",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "🇷🇺 ${entry.primaryMeaningRu}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        PronunciationButton(
+                                            text = entry.primaryMeaningRu,
+                                            language = "ru",
+                                            onSpeak = { text, lang -> ttsManager.speak(text, lang) },
+                                            size = 32.dp
+                                        )
+                                    }
                                 }
                                 if (entry.primaryMeaningEn.isNotBlank()) {
-                                    Text(
-                                        text = "🇬🇧 ${entry.primaryMeaningEn}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "🇬🇧 ${entry.primaryMeaningEn}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        PronunciationButton(
+                                            text = entry.primaryMeaningEn,
+                                            language = "en",
+                                            onSpeak = { text, lang -> ttsManager.speak(text, lang) },
+                                            size = 32.dp
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -648,12 +706,25 @@ fun SenseCard(
 
             // English definition
             if (sense.definitionEn.isNotBlank()) {
-                Text(
-                    text = sense.definitionEn,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = sense.definitionEn,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    PronunciationButton(
+                        text = sense.definitionEn,
+                        language = "en",
+                        onSpeak = { text, lang -> onAudioPlay(text, lang) },
+                        size = 32.dp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -661,7 +732,9 @@ fun SenseCard(
             // Direct Translations
             translations.forEach { t ->
                 Row(
-                    modifier = Modifier.padding(vertical = 3.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     LanguageBadge(lang = t.targetLanguage, text = t.targetLanguage.uppercase())
@@ -670,7 +743,8 @@ fun SenseCard(
                         text = t.translationText,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
                     )
                     if (t.contextNote.isNotBlank()) {
                         Text(
@@ -679,6 +753,13 @@ fun SenseCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    PronunciationButton(
+                        text = t.translationText,
+                        language = t.targetLanguage,
+                        onSpeak = { text, lang -> onAudioPlay(text, lang) },
+                        size = 28.dp,
+                        iconSize = 14.dp
+                    )
                 }
             }
 
@@ -719,33 +800,56 @@ fun SenseCard(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.weight(1f)
                                 )
-                                IconButton(
-                                    onClick = { onAudioPlay(eg.sentenceEn, "en") },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                                        contentDescription = "Pronounce example sentence",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                PronunciationButton(
+                                    text = eg.sentenceEn,
+                                    language = "en",
+                                    onSpeak = { text, lang -> onAudioPlay(text, lang) },
+                                    size = 32.dp
+                                )
                             }
                             if (eg.sentenceUz.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "🇺🇿 ${eg.sentenceUz}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "🇺🇿 ${eg.sentenceUz}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    PronunciationButton(
+                                        text = eg.sentenceUz,
+                                        language = "uz",
+                                        onSpeak = { text, lang -> onAudioPlay(text, lang) },
+                                        size = 28.dp,
+                                        iconSize = 14.dp
+                                    )
+                                }
                             }
                             if (eg.sentenceRu.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "🇷🇺 ${eg.sentenceRu}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "🇷🇺 ${eg.sentenceRu}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    PronunciationButton(
+                                        text = eg.sentenceRu,
+                                        language = "ru",
+                                        onSpeak = { text, lang -> onAudioPlay(text, lang) },
+                                        size = 28.dp,
+                                        iconSize = 14.dp
+                                    )
+                                }
                             }
                         }
                     }

@@ -10,6 +10,11 @@ import com.example.data.model.LearningStatus
 import com.example.data.model.ReviewQuality
 import com.example.data.model.SavedWordEntity
 import com.example.data.model.QuizType
+import com.example.data.tts.TtsEngineType
+import com.example.data.repository.CurriculumRepository
+import com.example.domain.model.DictionarySearchFilters
+import com.example.domain.model.DictionarySearchUiState
+import com.example.domain.model.ImportProgress
 import com.example.domain.repository.DictionaryImportRepository
 import com.example.domain.repository.DictionaryRepository
 import com.example.domain.repository.LearningRepository
@@ -21,17 +26,35 @@ import com.example.domain.usecase.RecordQuizAttemptUseCase
 import com.example.domain.usecase.SaveWordUseCase
 import com.example.domain.usecase.SearchDictionaryUseCase
 import com.example.domain.usecase.UpdateLearningProgressUseCase
-import com.example.domain.model.ImportProgress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private const val SEARCH_DEBOUNCE_MILLIS = 200L
+private const val SEARCH_ERROR_MESSAGE = "Qidiruvda xatolik yuz berdi. Qayta urinib ko'ring."
 
 class AppViewModel(
     private val dictionary: DictionaryRepository,
     private val vocabulary: VocabularyRepository,
     private val learning: LearningRepository,
     private val preferencesRepository: PreferenceRepository,
-    private val dictionaryImport: DictionaryImportRepository
+    private val dictionaryImport: DictionaryImportRepository,
+    private val curriculum: CurriculumRepository? = null
 ) : ViewModel() {
     private val searchDictionary = SearchDictionaryUseCase(dictionary)
     private val saveWordUseCase = SaveWordUseCase(vocabulary)
@@ -87,12 +110,112 @@ class AppViewModel(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), ImportProgress()
     )
 
+    private val searchFilters = MutableStateFlow(DictionarySearchFilters())
+    private val searchRefreshTicket = MutableStateFlow(0L)
+    private val _searchState = MutableStateFlow(DictionarySearchUiState())
+
+    /** Debounced, cancellable dictionary search state for the search screen. */
+    val searchState: StateFlow<DictionarySearchUiState> = _searchState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            searchFilters.collect { filters -> _searchState.update { it.copy(filters = filters) } }
+        }
+        observeSearch()
+    }
+
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    private fun observeSearch() {
+        viewModelScope.launch {
+            combine(searchFilters, searchRefreshTicket) { filters, ticket -> filters to ticket }
+                .debounce(SEARCH_DEBOUNCE_MILLIS)
+                .distinctUntilChanged()
+                // A newer query cancels the previous one instead of queueing it.
+                .flatMapLatest { (filters, _) -> searchFlow(filters) }
+                .catch { error ->
+                    _searchState.update {
+                        it.copy(
+                            isLoading = false,
+                            hasSearched = true,
+                            errorMessage = error.message ?: SEARCH_ERROR_MESSAGE
+                        )
+                    }
+                }
+                .collect { outcome ->
+                    _searchState.update {
+                        it.copy(
+                            isLoading = outcome.isLoading,
+                            results = if (outcome.isLoading) it.results else outcome.results,
+                            hasSearched = outcome.hasSearched,
+                            errorMessage = outcome.errorMessage
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun searchFlow(filters: DictionarySearchFilters): Flow<SearchOutcome> = flow {
+        if (!filters.isActive) {
+            emit(SearchOutcome())
+            return@flow
+        }
+        emit(SearchOutcome(isLoading = true))
+        val sourceLanguage = if (filters.reverseTranslation) null else filters.language
+        val rows = searchDictionary(filters.query, sourceLanguage, filters.partOfSpeech)
+        emit(SearchOutcome(hasSearched = true, results = rows))
+    }.flowOn(Dispatchers.IO)
+
+    private class SearchOutcome(
+        val isLoading: Boolean = false,
+        val results: List<DictionaryEntryEntity> = emptyList(),
+        val hasSearched: Boolean = false,
+        val errorMessage: String? = null
+    )
+
+    fun setSearchQuery(query: String) {
+        searchFilters.update { it.copy(query = query) }
+    }
+
+    /**
+     * Applies navigation arguments once. Re-applying after a configuration
+     * change would overwrite filters the user has since changed.
+     */
+    fun applyInitialSearch(query: String, language: Language?) {
+        if (query.isBlank() && language == null) return
+        searchFilters.update { it.copy(query = query, language = language ?: it.language) }
+    }
+
+    fun setSearchLanguage(language: Language?) {
+        searchFilters.update { it.copy(language = if (it.language == language) null else language) }
+    }
+
+    fun setSearchPartOfSpeech(partOfSpeech: String?) {
+        searchFilters.update {
+            it.copy(partOfSpeech = if (it.partOfSpeech == partOfSpeech) null else partOfSpeech)
+        }
+    }
+
+    fun setReverseTranslation(enabled: Boolean) {
+        searchFilters.update { it.copy(reverseTranslation = enabled) }
+    }
+
+    /** Re-runs the current query, e.g. after a failed local database read. */
+    fun retrySearch() {
+        searchRefreshTicket.update { it + 1 }
+    }
+
+    /** Stores an explicit search (keyboard submit) in the history list. */
+    fun recordCurrentSearch() {
+        val filters = searchFilters.value
+        if (!filters.isActive) return
+        recordSearch(filters.query, filters.historyLanguage)
+    }
+
     suspend fun search(query: String, language: Language?, partOfSpeech: String?): List<DictionaryEntryEntity> =
         searchDictionary(query, language, partOfSpeech)
 
     fun recordSearch(query: String, language: String) =
         viewModelScope.launch { dictionary.recordSearch(query, language) }
-
     fun clearSearchHistory() = viewModelScope.launch { dictionary.clearSearchHistory() }
     suspend fun getRandomWord(): DictionaryEntryEntity? = dictionary.getRandomWord()
     suspend fun getFullDetail(id: Long) = dictionary.getFullDetail(id)
@@ -147,6 +270,8 @@ class AppViewModel(
         viewModelScope.launch { preferencesRepository.setSpeechPitch(pitch) }
     fun setSelectedVoiceId(id: String) =
         viewModelScope.launch { preferencesRepository.setSelectedVoiceId(id) }
+    fun setTtsEngineType(type: TtsEngineType) =
+        viewModelScope.launch { preferencesRepository.setTtsEngineType(type) }
     fun setAutoPlayAudio(enabled: Boolean) =
         viewModelScope.launch { preferencesRepository.setAutoPlayAudio(enabled) }
     fun setDailyGoalWords(goal: Int) =
@@ -154,12 +279,48 @@ class AppViewModel(
     fun setDarkMode(enabled: Boolean?) =
         viewModelScope.launch { preferencesRepository.setDarkMode(enabled) }
 
+    // Curriculum Methods
+    fun getCurriculumTopics(language: String, level: String) =
+        curriculum?.getTopicsByLevel(language, level) ?: flow { emit(emptyList()) }
+
+    suspend fun getCurriculumTopicById(id: Long) =
+        curriculum?.getTopicById(id)
+
+    suspend fun getCurriculumLessonForTopic(topicId: Long) =
+        curriculum?.getLessonForTopic(topicId)
+
+    suspend fun getCurriculumTablesForLesson(lessonId: Long) =
+        curriculum?.getTablesForLesson(lessonId) ?: emptyList()
+
+    fun getCurriculumExercisesForTopic(topicId: Long) =
+        curriculum?.getExercisesForTopic(topicId) ?: flow { emit(emptyList()) }
+
+    suspend fun recordCurriculumMistake(exerciseId: Long, questionType: String, userAnswer: String, correctAnswer: String) {
+        curriculum?.recordMistake(exerciseId, questionType, userAnswer, correctAnswer)
+    }
+
+    suspend fun getCurriculumTopicCount(language: String) =
+        curriculum?.getTopicCount(language) ?: 0
+
+    suspend fun getCurriculumExerciseCount(language: String) =
+        curriculum?.getExerciseCount(language) ?: 0
+
+    suspend fun getCurriculumTestQuestionCount(language: String) =
+        curriculum?.getTestQuestionCount(language) ?: 0
+
+    suspend fun getCurriculumCoverageReport() =
+        curriculum?.getCoverageReport()
+
+    suspend fun generateCurriculumQuiz(language: String, level: String, topicId: Long?, count: Int) =
+        curriculum?.generateQuiz(language, level, topicId, count) ?: emptyList()
+
     class Factory(
         private val dictionary: DictionaryRepository,
         private val vocabulary: VocabularyRepository,
         private val learning: LearningRepository,
         private val preferences: PreferenceRepository,
-        private val importManager: DictionaryImportRepository
+        private val importManager: DictionaryImportRepository,
+        private val curriculum: CurriculumRepository? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -171,7 +332,8 @@ class AppViewModel(
                 vocabulary,
                 learning,
                 preferences,
-                importManager
+                importManager,
+                curriculum
             ) as T
         }
     }

@@ -23,6 +23,12 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -40,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -66,7 +73,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-if os.environ.get("DATABASE_URL", "").startswith("postgres"):
+if os.environ.get("DATABASE_URL", "").startswith(("postgres", "postgresql")):
     import urllib.parse
 
     database_url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
@@ -78,7 +85,8 @@ if os.environ.get("DATABASE_URL", "").startswith("postgres"):
             "PASSWORD": database_url.password or "",
             "HOST": database_url.hostname or "",
             "PORT": database_url.port or 5432,
-            "CONN_MAX_AGE": 60,
+            "CONN_MAX_AGE": int(os.environ.get("DJANGO_CONN_MAX_AGE", "60")),
+            "CONN_HEALTH_CHECKS": True,
         }
     }
 else:
@@ -89,19 +97,6 @@ else:
             "OPTIONS": {
                 # Wait instead of failing once a writer holds the lock.
                 "timeout": float(os.environ.get("SQLITE_BUSY_TIMEOUT", "20")),
-                # Take the write lock up front so a read-then-write transaction
-                # cannot deadlock against a concurrent writer.
-                "transaction_mode": "IMMEDIATE",
-                "init_command": (
-                    # Readers never block writers and writers never block readers.
-                    "PRAGMA journal_mode = WAL;"
-                    # WAL + NORMAL survives application crashes and loses no
-                    # committed transaction; full fsync per commit is not needed.
-                    "PRAGMA synchronous = NORMAL;"
-                    "PRAGMA temp_store = MEMORY;"
-                    "PRAGMA cache_size = -65536;"
-                    "PRAGMA mmap_size = 268435456;"
-                ),
             },
         }
     }
@@ -117,6 +112,16 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
@@ -151,13 +156,29 @@ CACHES = {
     }
 }
 if os.environ.get("REDIS_URL"):
-    # Shared cache for multi-process deployments; requires the `redis` package.
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": os.environ["REDIS_URL"],
+            "OPTIONS": {
+                "CLIENT_CLASS": "django.core.cache.backends.redis.RedisCache",
+            },
         }
     }
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get(
+    "CELERY_BROKER_URL", os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+)
+CELERY_RESULT_BACKEND = os.environ.get(
+    "CELERY_RESULT_BACKEND", os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
 
 DICTIONARY_SEARCH_DEFAULT_PAGE_SIZE = int(
     os.environ.get("DICTIONARY_SEARCH_DEFAULT_PAGE_SIZE", "20")

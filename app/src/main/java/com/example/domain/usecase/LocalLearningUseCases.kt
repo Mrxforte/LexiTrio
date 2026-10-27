@@ -10,8 +10,8 @@ import com.example.domain.repository.LearningRepository
 import com.example.domain.repository.VocabularyRepository
 
 class SearchDictionaryUseCase(private val repository: DictionaryRepository) {
-    suspend operator fun invoke(query: String, language: Language?, partOfSpeech: String?) =
-        repository.search(query, language, partOfSpeech)
+    suspend operator fun invoke(query: String, language: Language?, partOfSpeech: String?, limit: Int = 100) =
+        repository.search(query, language, partOfSpeech, limit)
 }
 
 class SaveWordUseCase(private val repository: VocabularyRepository) {

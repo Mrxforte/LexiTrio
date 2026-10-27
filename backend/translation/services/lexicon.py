@@ -18,6 +18,7 @@ MAX_TRANSLATION_WORDS = 6
 
 _POS_MAP = {"n": "noun", "v": "verb", "a": "adjective", "s": "adjective", "r": "adverb"}
 _HEADWORD_RE = re.compile(r"^[a-zà-öø-ÿ][a-zà-öø-ÿ'\- ]{0,59}$", re.IGNORECASE)
+_LANGUAGE_CODE_RE = re.compile(r"^[a-z]{2,3}(-[a-z]{2,4})?$")
 _LANGUAGE_NAMES = {
     "Russian": "ru",
     "Uzbek": "uz",
@@ -67,6 +68,8 @@ class ImportStats:
     seen: int = 0
     created: int = 0
     skipped: int = 0
+    invalid: int = 0
+    duplicate: int = 0
     meanings: int = 0
     translations: int = 0
 
@@ -75,6 +78,8 @@ class ImportStats:
             "seen": self.seen,
             "created": self.created,
             "skipped": self.skipped,
+            "invalid": self.invalid,
+            "duplicate": self.duplicate,
             "meanings": self.meanings,
             "translations": self.translations,
         }
@@ -142,10 +147,12 @@ def import_records(
             headword, allow_multiword=allow_multiword, max_words=max_words
         ):
             stats.skipped += 1
+            stats.invalid += 1
             continue
         normalized = normalize_headword(headword)
         if normalized in seen:
             stats.skipped += 1
+            stats.duplicate += 1
             continue
         seen.add(normalized)
         record["headword_normalized"] = normalized
@@ -543,10 +550,20 @@ def _generic_record(row) -> dict | None:
                 break
 
     headword = record.get("headword")
-    if not headword or not is_valid_headword(headword):
+    if headword is None:
         return None
+    # Invalid headwords are kept so the importer can report them instead of
+    # dropping rows without a trace.
 
     definition = record.get("primary_meaning_en", "")
+    translations = _row_translations(lowered.get("translations"))
+    for language, value in (
+        ("ru", record.get("primary_meaning_ru")),
+        ("uz", record.get("primary_meaning_uz")),
+    ):
+        if value and value not in translations.get(language, []):
+            translations.setdefault(language, []).append(value)
+
     return {
         "headword": headword,
         "part_of_speech": record.get("part_of_speech", "noun"),
@@ -557,16 +574,34 @@ def _generic_record(row) -> dict | None:
         "primary_meaning_ru": record.get("primary_meaning_ru", ""),
         "primary_meaning_uz": record.get("primary_meaning_uz", ""),
         "senses": [{"definition_en": definition}] if definition else [],
-        "translations": {
-            language: [value]
-            for language, value in (
-                ("ru", record.get("primary_meaning_ru")),
-                ("uz", record.get("primary_meaning_uz")),
-            )
-            if value
-        },
+        "translations": translations,
         "source": record.get("source", "LexiTrio file import"),
     }
+
+
+def _row_translations(value) -> dict[str, list[str]]:
+    """Read a ``{"ru": ["слово"], "uz": "so'z"}`` or a list of translations."""
+    result: dict[str, list[str]] = {}
+    if isinstance(value, dict):
+        items = list(value.items())
+    elif isinstance(value, list):
+        items = [
+            (item.get("language") or item.get("lang"), item.get("text") or item.get("word"))
+            for item in value
+            if isinstance(item, dict)
+        ]
+    else:
+        return result
+
+    for language, words in items:
+        code = str(language or "").strip().lower().replace("_", "-")
+        if not _LANGUAGE_CODE_RE.match(code):
+            continue
+        candidates = words if isinstance(words, (list, tuple)) else [words]
+        cleaned = [str(word).strip() for word in candidates if str(word).strip()]
+        if cleaned:
+            result.setdefault(code, []).extend(cleaned)
+    return result
 
 
 def _open_text(path: str | Path) -> io.TextIOBase:

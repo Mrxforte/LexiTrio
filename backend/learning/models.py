@@ -29,7 +29,10 @@ class DictionaryEntry(models.Model):
 
     class Meta:
         ordering = ["-frequency_rank", "headword"]
-        indexes = [models.Index(fields=["headword_normalized", "language"])]
+        indexes = [
+            models.Index(fields=["headword_normalized", "language"]),
+            models.Index(fields=["language", "-frequency_rank", "headword"], name="dict_lang_freq_headword_idx"),
+        ]
 
     def __str__(self):
         return f"{self.headword} ({self.language})"
@@ -68,6 +71,17 @@ class Translation(models.Model):
     quality = models.CharField(
         max_length=16, choices=Quality.choices, default=Quality.MACHINE, db_index=True
     )
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["entry_id", "target_language"], name="translation_entry_target_idx"
+            ),
+            models.Index(
+                fields=["target_language", "translation_text"], name="trans_target_text_idx"
+            ),
+        ]
 
 
 class ExampleSentence(models.Model):
@@ -284,3 +298,245 @@ class UserPreferences(models.Model):
     daily_goal_words = models.PositiveSmallIntegerField(default=10)
     dark_mode = models.BooleanField(null=True, blank=True)
     updated_at_ms = models.PositiveBigIntegerField(default=0)
+
+
+class CurriculumCourse(models.Model):
+    code = models.CharField(max_length=40, unique=True)
+    title_en = models.CharField(max_length=200)
+    title_ru = models.CharField(max_length=200, blank=True)
+    title_uz = models.CharField(max_length=200, blank=True)
+    language = models.CharField(max_length=12, db_index=True)  # "en" or "ru"
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.title_en} ({self.language})"
+
+
+class CurriculumLevel(models.Model):
+    course = models.ForeignKey(CurriculumCourse, related_name="levels", on_delete=models.CASCADE)
+    code = models.CharField(max_length=20, db_index=True)  # A1, A2, B1, B2, C1, C2
+    order = models.PositiveSmallIntegerField(default=1)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.course.code} - {self.code}"
+
+
+class CurriculumUnit(models.Model):
+    level = models.ForeignKey(CurriculumLevel, related_name="units", on_delete=models.CASCADE)
+    order = models.PositiveSmallIntegerField(default=1)
+    title_en = models.CharField(max_length=200)
+    title_ru = models.CharField(max_length=200, blank=True)
+    title_uz = models.CharField(max_length=200, blank=True)
+    summary = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["order"]
+
+
+class CurriculumTopic(models.Model):
+    unit = models.ForeignKey(CurriculumUnit, related_name="topics", null=True, blank=True, on_delete=models.SET_NULL)
+    topic_code = models.CharField(max_length=100, unique=True)
+    language = models.CharField(max_length=12, db_index=True)  # "en" or "ru"
+    title_en = models.CharField(max_length=200)
+    title_ru = models.CharField(max_length=200, blank=True)
+    title_uz = models.CharField(max_length=200, blank=True)
+    category = models.CharField(max_length=80, db_index=True)  # Grammar, Vocabulary, etc.
+    cefr_level = models.CharField(max_length=12, default="A1", db_index=True)
+    estimated_minutes = models.PositiveSmallIntegerField(default=15)
+    order = models.PositiveIntegerField(default=1)
+    icon_name = models.CharField(max_length=60, default="book")
+    summary_en = models.TextField(blank=True)
+    summary_ru = models.TextField(blank=True)
+    summary_uz = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+
+class LessonContent(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        REVIEW = "review", "Review"
+        APPROVED = "approved", "Approved"
+        PUBLISHED = "published", "Published"
+        REJECTED = "rejected", "Rejected"
+
+    topic = models.OneToOneField(CurriculumTopic, related_name="lesson_content", on_delete=models.CASCADE)
+    simple_explanation_en = models.TextField()
+    simple_explanation_ru = models.TextField(blank=True)
+    simple_explanation_uz = models.TextField(blank=True)
+    real_life_analogy_en = models.TextField(blank=True)
+    real_life_analogy_ru = models.TextField(blank=True)
+    real_life_analogy_uz = models.TextField(blank=True)
+    main_rule_en = models.TextField()
+    main_rule_ru = models.TextField(blank=True)
+    main_rule_uz = models.TextField(blank=True)
+    positive_examples_json = models.TextField(default="[]")
+    negative_examples_json = models.TextField(default="[]")
+    question_forms_json = models.TextField(default="[]")
+    exceptions_json = models.TextField(default="[]")
+    common_mistakes_json = models.TextField(default="[]")
+    recap_en = models.TextField(blank=True)
+    recap_ru = models.TextField(blank=True)
+    recap_uz = models.TextField(blank=True)
+    review_recommendation_en = models.TextField(blank=True)
+    review_recommendation_ru = models.TextField(blank=True)
+    publication_status = models.CharField(max_length=16, choices=Status.choices, default=Status.PUBLISHED, db_index=True)
+
+
+class GrammarTable(models.Model):
+    class TableType(models.TextChoices):
+        RULE = "RULE", "Rule"
+        WORD_FORM = "WORD_FORM", "Word Form"
+        VERB_CONJUGATION = "VERB_CONJUGATION", "Verb Conjugation"
+        TENSE_COMPARISON = "TENSE_COMPARISON", "Tense Comparison"
+        SENTENCE_STRUCTURE = "SENTENCE_STRUCTURE", "Sentence Structure"
+
+    lesson = models.ForeignKey(LessonContent, related_name="grammar_tables", on_delete=models.CASCADE)
+    title_en = models.CharField(max_length=200)
+    title_ru = models.CharField(max_length=200, blank=True)
+    title_uz = models.CharField(max_length=200, blank=True)
+    table_type = models.CharField(max_length=40, choices=TableType.choices, default=TableType.RULE)
+    headers_json = models.TextField(default="[]")  # e.g. ["Subject", "Verb (Be)", "Example"]
+    rows_json = models.TextField(default="[]")     # e.g. [["I", "am", "I am a student."], ...]
+
+
+class CurriculumExercise(models.Model):
+    class Type(models.TextChoices):
+        MULTIPLE_CHOICE = "MULTIPLE_CHOICE", "Multiple Choice"
+        FILL_IN_BLANK = "FILL_IN_BLANK", "Fill in Blank"
+        TYPE_MISSING_WORD = "TYPE_MISSING_WORD", "Type Missing Word"
+        SENTENCE_ORDERING = "SENTENCE_ORDERING", "Sentence Ordering"
+        WORD_MATCHING = "WORD_MATCHING", "Word Matching"
+        ERROR_IDENTIFICATION = "ERROR_IDENTIFICATION", "Error Identification"
+        ERROR_CORRECTION = "ERROR_CORRECTION", "Error Correction"
+        TRANSLATION = "TRANSLATION", "Translation"
+        AFFIRMATIVE_TO_NEGATIVE = "AFFIRMATIVE_TO_NEGATIVE", "Affirmative to Negative"
+        SENTENCE_TO_QUESTION = "SENTENCE_TO_QUESTION", "Sentence to Question"
+        CONJUGATION = "CONJUGATION", "Conjugation"
+        SHORT_ANSWER = "SHORT_ANSWER", "Short Answer"
+        LISTENING = "LISTENING", "Listening"
+        CONTEXTUAL_VOCAB = "CONTEXTUAL_VOCAB", "Contextual Vocab"
+        MIXED_REVIEW = "MIXED_REVIEW", "Mixed Review"
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        REVIEW = "review", "Review"
+        APPROVED = "approved", "Approved"
+        PUBLISHED = "published", "Published"
+        REJECTED = "rejected", "Rejected"
+
+    topic = models.ForeignKey(CurriculumTopic, related_name="exercises", null=True, blank=True, on_delete=models.CASCADE)
+    language = models.CharField(max_length=12, db_index=True)  # "en" or "ru"
+    cefr_level = models.CharField(max_length=12, default="A1", db_index=True)
+    skill_category = models.CharField(max_length=80, default="Grammar", db_index=True)
+    difficulty = models.CharField(max_length=12, default="Medium")
+    exercise_type = models.CharField(max_length=40, choices=Type.choices, default=Type.MULTIPLE_CHOICE, db_index=True)
+    prompt_en = models.TextField()
+    prompt_ru = models.TextField(blank=True)
+    prompt_uz = models.TextField(blank=True)
+    instructions = models.TextField(blank=True)
+    audio_text = models.TextField(blank=True)
+    options_json = models.TextField(default="[]")
+    correct_answer = models.CharField(max_length=500)
+    accepted_variants_json = models.TextField(default="[]")
+    explanation_en = models.TextField(blank=True)
+    explanation_ru = models.TextField(blank=True)
+    explanation_uz = models.TextField(blank=True)
+    hint_en = models.TextField(blank=True)
+    hint_ru = models.TextField(blank=True)
+    hint_uz = models.TextField(blank=True)
+    related_rule = models.CharField(max_length=200, blank=True)
+    tags = models.CharField(max_length=200, blank=True)
+    validation_status = models.CharField(max_length=20, default="valid", db_index=True)
+    publication_status = models.CharField(max_length=16, choices=Status.choices, default=Status.PUBLISHED, db_index=True)
+
+
+class TestBankQuestion(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        REVIEW = "review", "Review"
+        APPROVED = "approved", "Approved"
+        PUBLISHED = "published", "Published"
+        REJECTED = "rejected", "Rejected"
+
+    topic = models.ForeignKey(CurriculumTopic, related_name="test_questions", null=True, blank=True, on_delete=models.CASCADE)
+    language = models.CharField(max_length=12, db_index=True)  # "en" or "ru"
+    cefr_level = models.CharField(max_length=12, default="A1", db_index=True)
+    question_type = models.CharField(max_length=40, default="MULTIPLE_CHOICE", db_index=True)
+    prompt_en = models.TextField()
+    prompt_ru = models.TextField(blank=True)
+    prompt_uz = models.TextField(blank=True)
+    options_json = models.TextField(default="[]")
+    correct_answer = models.CharField(max_length=500)
+    accepted_variants_json = models.TextField(default="[]")
+    explanation_en = models.TextField(blank=True)
+    explanation_ru = models.TextField(blank=True)
+    explanation_uz = models.TextField(blank=True)
+    difficulty = models.CharField(max_length=12, default="Medium")
+    validation_status = models.CharField(max_length=20, default="valid", db_index=True)
+    publication_status = models.CharField(max_length=16, choices=Status.choices, default=Status.PUBLISHED, db_index=True)
+
+
+class ContentBatch(models.Model):
+    class Status(models.TextChoices):
+        INIT = "init", "Initialized"
+        IN_PROGRESS = "in_progress", "In Progress"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    batch_code = models.CharField(max_length=100, unique=True)
+    target_language = models.CharField(max_length=12)
+    content_type = models.CharField(max_length=40)  # EXERCISE, TEST_QUESTION, TOPIC, LESSON
+    requested_count = models.IntegerField(default=0)
+    generated_count = models.IntegerField(default=0)
+    validated_count = models.IntegerField(default=0)
+    approved_count = models.IntegerField(default=0)
+    rejected_count = models.IntegerField(default=0)
+    duplicate_count = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.INIT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ContentValidationReport(models.Model):
+    batch = models.ForeignKey(ContentBatch, related_name="validation_reports", null=True, blank=True, on_delete=models.CASCADE)
+    checked_at = models.DateTimeField(auto_now_add=True)
+    total_items = models.IntegerField(default=0)
+    valid_items = models.IntegerField(default=0)
+    invalid_items = models.IntegerField(default=0)
+    duplicate_items = models.IntegerField(default=0)
+    error_details_json = models.TextField(default="[]")
+
+
+class UserTopicProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="topic_progresses", on_delete=models.CASCADE)
+    topic = models.ForeignKey(CurriculumTopic, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, default="NOT_STARTED")  # NOT_STARTED, IN_PROGRESS, COMPLETED, MASTERED
+    completed_exercises = models.IntegerField(default=0)
+    total_exercises = models.IntegerField(default=0)
+    quiz_score = models.IntegerField(default=0)
+    time_spent_sec = models.IntegerField(default=0)
+    updated_at_ms = models.BigIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "topic"], name="unique_user_topic_progress")
+        ]
+
+
+class MistakeRecord(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="mistake_records", on_delete=models.CASCADE)
+    exercise_id = models.BigIntegerField(db_index=True)
+    question_type = models.CharField(max_length=40, default="EXERCISE")
+    user_answer = models.CharField(max_length=500)
+    correct_answer = models.CharField(max_length=500)
+    times_failed = models.IntegerField(default=1)
+    is_mastered = models.BooleanField(default=False)
+    updated_at_ms = models.BigIntegerField(default=0)
+

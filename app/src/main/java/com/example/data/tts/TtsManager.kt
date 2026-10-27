@@ -1,160 +1,95 @@
 package com.example.data.tts
 
 import android.content.Context
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
-import android.speech.tts.Voice
-import com.example.data.model.Language
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.data.preferences.UserPreferencesRepository
+import com.example.domain.usecase.SpeakDictionaryWordUseCase
+import com.example.domain.usecase.StopSpeechUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import java.util.Locale
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.io.File
 
-data class TtsVoiceInfo(
-    val id: String,
-    val name: String,
-    val locale: Locale,
-    val requiresNetwork: Boolean = false,
-    val quality: String = "Normal",
-    val latency: String = "Normal"
-)
+class TtsManager(
+    private val context: Context,
+    val repository: TtsRepository = TtsRepositoryImpl(
+        context = context,
+        preferencesRepository = UserPreferencesRepository(context)
+    )
+) {
+    private val scope = CoroutineScope(Dispatchers.Main + Job())
 
-class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
+    val speakUseCase = SpeakDictionaryWordUseCase(repository)
+    val stopUseCase = StopSpeechUseCase(repository)
 
-    private var tts: TextToSpeech? = null
-    private var isInitialized = false
+    val playbackState: StateFlow<TtsPlaybackState> = repository.playbackState
 
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+    val isPlaying: StateFlow<Boolean> = repository.playbackState
+        .map { it.isPlaying }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5_000), false)
 
-    private val _availableVoices = MutableStateFlow<List<TtsVoiceInfo>>(emptyList())
-    val availableVoices: StateFlow<List<TtsVoiceInfo>> = _availableVoices.asStateFlow()
-
-    private val _currentSpeechRate = MutableStateFlow(1.0f)
-    val currentSpeechRate: StateFlow<Float> = _currentSpeechRate.asStateFlow()
-
-    private val _currentPitch = MutableStateFlow(1.0f)
-    val currentPitch: StateFlow<Float> = _currentPitch.asStateFlow()
+    val availableVoices: StateFlow<List<TtsVoiceInfo>> = repository.availableVoices
+    val currentSpeechRate: StateFlow<Float> = repository.speechRate
+    val currentPitch: StateFlow<Float> = repository.speechPitch
+    val selectedEngineType: StateFlow<TtsEngineType> = repository.selectedEngineType
+    val modelDownloadStates: StateFlow<Map<String, ModelDownloadState>> = repository.modelDownloadStates
+    val cacheSizeBytes: StateFlow<Long> = repository.cacheSizeBytes
 
     init {
-        tts = TextToSpeech(context.applicationContext, this)
-    }
-
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            isInitialized = true
-            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    _isPlaying.value = true
-                }
-
-                override fun onDone(utteranceId: String?) {
-                    _isPlaying.value = false
-                }
-
-                @Deprecated("Deprecated in Java")
-                override fun onError(utteranceId: String?) {
-                    _isPlaying.value = false
-                }
-            })
-            loadAvailableVoices()
-        }
-    }
-
-    private fun loadAvailableVoices() {
-        tts?.let { engine ->
-            val list = mutableListOf<TtsVoiceInfo>()
-            try {
-                val voices: Set<Voice>? = engine.voices
-                voices?.forEach { v ->
-                    val isNet = v.isNetworkConnectionRequired
-                    val qual = if (v.quality >= Voice.QUALITY_VERY_HIGH) "Very High" else if (v.quality >= Voice.QUALITY_HIGH) "High" else "Standard"
-                    list.add(
-                        TtsVoiceInfo(
-                            id = v.name,
-                            name = v.name.substringAfterLast("-", v.name),
-                            locale = v.locale,
-                            requiresNetwork = isNet,
-                            quality = qual
-                        )
-                    )
-                }
-            } catch (_: Exception) {
-                // Ignore voice retrieval exceptions on older engines
-            }
-            _availableVoices.value = list
+        scope.launch {
+            repository.initialize()
         }
     }
 
     fun setSpeechRate(rate: Float) {
-        val clamped = rate.coerceIn(0.5f, 2.0f)
-        _currentSpeechRate.value = clamped
-        tts?.setSpeechRate(clamped)
+        repository.setSpeechRate(rate)
     }
 
     fun setPitch(pitch: Float) {
-        val clamped = pitch.coerceIn(0.5f, 2.0f)
-        _currentPitch.value = clamped
-        tts?.setPitch(clamped)
+        repository.setSpeechPitch(pitch)
+    }
+
+    fun setEngineType(engineType: TtsEngineType) {
+        repository.setEngineType(engineType)
     }
 
     fun setVoice(voiceId: String) {
-        tts?.let { engine ->
-            try {
-                val match = engine.voices?.find { it.name == voiceId }
-                if (match != null) {
-                    engine.voice = match
-                }
-            } catch (_: Exception) {
-                // Fallback
-            }
-        }
+        repository.setSelectedVoiceId(voiceId)
     }
 
     fun speak(text: String, languageCode: String, rateMultiplier: Float = 1.0f) {
-        if (!isInitialized || text.isBlank()) return
-        tts?.let { engine ->
-            stop()
+        speakUseCase(text, languageCode, rateMultiplier)
+    }
 
-            val lang = Language.fromCode(languageCode)
-            val locale = when (lang) {
-                Language.ENGLISH -> Locale.US
-                Language.RUSSIAN -> Locale("ru", "RU")
-                Language.UZBEK_LATIN, Language.UZBEK_CYRILLIC -> {
-                    // Check if Uzbek is supported by installed TTS engine
-                    val uzLocale = Locale("uz", "UZ")
-                    val isUzSupported = engine.isLanguageAvailable(uzLocale) >= TextToSpeech.LANG_AVAILABLE
-                    if (isUzSupported) uzLocale else Locale("tr", "TR") // Turkish shares strong phonetic similarity for Latin Uzbek
-                }
-            }
-
-            val result = engine.setLanguage(locale)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                // Fallback to default
-                engine.setLanguage(Locale.US)
-            }
-
-            val finalRate = (_currentSpeechRate.value * rateMultiplier).coerceIn(0.5f, 2.0f)
-            engine.setSpeechRate(finalRate)
-            engine.setPitch(_currentPitch.value)
-
-            val utteranceId = "utterance_${System.currentTimeMillis()}"
-            engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
-        }
+    fun speak(text: String, languageCode: String, rateMultiplier: Float, voiceId: String?) {
+        speakUseCase(text, languageCode, rateMultiplier, voiceId)
     }
 
     fun stop() {
-        if (isInitialized) {
-            tts?.stop()
-            _isPlaying.value = false
-        }
+        stopUseCase()
+    }
+
+    suspend fun downloadModel(modelId: String): Result<File> {
+        return repository.downloadVoiceModel(modelId)
+    }
+
+    fun cancelDownload(modelId: String) {
+        repository.cancelModelDownload(modelId)
+    }
+
+    fun deleteModel(modelId: String): Boolean {
+        return repository.deleteVoiceModel(modelId)
+    }
+
+    fun clearCache() {
+        repository.clearAudioCache()
     }
 
     fun shutdown() {
-        try {
-            stop()
-            tts?.shutdown()
-            tts = null
-        } catch (_: Exception) {}
+        repository.shutdown()
     }
 }

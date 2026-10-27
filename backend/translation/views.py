@@ -79,6 +79,16 @@ class TranslationStatusView(TranslationAPIView):
                     "totalEntries": entries.count(),
                     "missingRussian": entries.filter(primary_meaning_ru="").count(),
                     "missingUzbek": entries.filter(primary_meaning_uz="").count(),
+                    "missingPhoneticIpa": entries.filter(phonetic_ipa="").count(),
+                    "missingArticleForNouns": entries.filter(
+                        part_of_speech="noun", article=""
+                    ).count(),
+                    "missingPluralForNouns": entries.filter(
+                        part_of_speech="noun", plural_form=""
+                    ).count(),
+                    "missingComparativeForAdjectives": entries.filter(
+                        part_of_speech="adjective", comparative_form=""
+                    ).count(),
                 },
             }
         )
@@ -88,10 +98,13 @@ class TextTranslateView(TranslationAPIView):
     def post(self, request):
         serializer = TextTranslationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = _translate_text(
-            serializer.validated_data["text"], serializer.validated_data["targets"]
-        )
-        return Response(result)
+        try:
+            result = _translate_text(
+                serializer.validated_data["text"], serializer.validated_data["targets"]
+            )
+            return Response(result)
+        except TranslationServiceUnavailable as exc:
+            return Response({"detail": exc.detail}, status=exc.status_code)
 
 
 class DocumentTranslateView(TranslationAPIView):

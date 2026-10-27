@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.data.model.Language
+import com.example.data.tts.TtsEngineType
 import com.example.domain.repository.PreferenceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,6 +24,7 @@ data class AppPreferences(
     val speechRate: Float = 1.0f,
     val speechPitch: Float = 1.0f,
     val selectedVoiceId: String = "",
+    val ttsEngineType: TtsEngineType = TtsEngineType.AUTO,
     val autoPlayAudio: Boolean = false,
     val dailyGoalWords: Int = 10,
     val isDarkMode: Boolean? = null,
@@ -37,6 +39,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
         val SPEECH_RATE = floatPreferencesKey("speech_rate")
         val SPEECH_PITCH = floatPreferencesKey("speech_pitch")
         val SELECTED_VOICE_ID = stringPreferencesKey("selected_voice_id")
+        val TTS_ENGINE_TYPE = stringPreferencesKey("tts_engine_type")
         val AUTO_PLAY_AUDIO = booleanPreferencesKey("auto_play_audio")
         val DAILY_GOAL_WORDS = intPreferencesKey("daily_goal_words")
         val DARK_MODE = stringPreferencesKey("dark_mode")
@@ -47,6 +50,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
         val langCode = prefs[Keys.APP_LANGUAGE] ?: Language.UZBEK_LATIN.code
         val searchLangCode = prefs[Keys.SEARCH_SOURCE_LANG] ?: Language.ENGLISH.code
         val darkModeStr = prefs[Keys.DARK_MODE]
+        val engineStr = prefs[Keys.TTS_ENGINE_TYPE]
 
         AppPreferences(
             appLanguage = Language.fromCode(langCode),
@@ -54,6 +58,9 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
             speechRate = prefs[Keys.SPEECH_RATE] ?: 1.0f,
             speechPitch = prefs[Keys.SPEECH_PITCH] ?: 1.0f,
             selectedVoiceId = prefs[Keys.SELECTED_VOICE_ID] ?: "",
+            ttsEngineType = try {
+                if (engineStr != null) TtsEngineType.valueOf(engineStr) else TtsEngineType.AUTO
+            } catch (_: Exception) { TtsEngineType.AUTO },
             autoPlayAudio = prefs[Keys.AUTO_PLAY_AUDIO] ?: false,
             dailyGoalWords = prefs[Keys.DAILY_GOAL_WORDS] ?: 10,
             isDarkMode = when (darkModeStr) {
@@ -96,6 +103,13 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
     override suspend fun setSelectedVoiceId(voiceId: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SELECTED_VOICE_ID] = voiceId
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
+        }
+    }
+
+    override suspend fun setTtsEngineType(engineType: TtsEngineType) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.TTS_ENGINE_TYPE] = engineType.name
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }

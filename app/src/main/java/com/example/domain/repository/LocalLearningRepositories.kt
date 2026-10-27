@@ -2,6 +2,7 @@ package com.example.domain.repository
 
 import com.example.data.model.*
 import com.example.data.preferences.AppPreferences
+import com.example.data.tts.TtsEngineType
 import com.example.domain.model.ImportProgress
 import kotlinx.coroutines.flow.Flow
 
@@ -50,6 +51,7 @@ interface PreferenceRepository {
     suspend fun setSpeechRate(rate: Float)
     suspend fun setSpeechPitch(pitch: Float)
     suspend fun setSelectedVoiceId(voiceId: String)
+    suspend fun setTtsEngineType(engineType: TtsEngineType)
     suspend fun setAutoPlayAudio(enabled: Boolean)
     suspend fun setDailyGoalWords(goal: Int)
     suspend fun setDarkMode(darkMode: Boolean?)

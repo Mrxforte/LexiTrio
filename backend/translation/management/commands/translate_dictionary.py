@@ -40,6 +40,18 @@ class Command(BaseCommand):
             help="Lug'at sifati: transkripsiya, so'z turkumi, artikl, ko'plik/rod ham yoziladi.",
         )
         parser.add_argument("--sleep", type=float, default=0.0)
+        parser.add_argument(
+            "--retry-wait",
+            type=float,
+            default=60.0,
+            help="Barcha provayder band bo'lsa, shu soniya kutib sahifani qayta urinadi.",
+        )
+        parser.add_argument(
+            "--max-retries",
+            type=int,
+            default=0,
+            help="Ketma-ket xatolarga necha marta chidash (0 = cheksiz).",
+        )
 
     def handle(self, *args, **options):
         try:
@@ -58,6 +70,9 @@ class Command(BaseCommand):
         page_size = options["page_size"] or max(50, int(effective_batch) * concurrency * 2)
         dry_run = options["dry_run"]
         pause = max(0.0, options["sleep"])
+        retry_wait = max(0.0, options["retry_wait"])
+        max_retries = max(0, options["max_retries"])
+        retries = 0
 
         totals = {"processed": 0, "translated": 0, "failed": 0, "warnings": 0}
         if dry_run:
@@ -66,15 +81,31 @@ class Command(BaseCommand):
         try:
             while True:
                 page_limit = min(page_size, remaining) if remaining else page_size
-                summary = backfill_entries(
-                    languages=languages,
-                    limit=page_limit,
-                    only_missing=only_missing,
-                    dry_run=dry_run,
-                    professional=options["professional"],
-                    cursor_id=cursor,
-                    batch_size=batch_size,
-                )
+                try:
+                    summary = backfill_entries(
+                        languages=languages,
+                        limit=page_limit,
+                        only_missing=only_missing,
+                        dry_run=dry_run,
+                        professional=options["professional"],
+                        cursor_id=cursor,
+                        batch_size=batch_size,
+                    )
+                except TranslationNotConfigured:
+                    raise
+                except TranslationProviderError as exc:
+                    # Quota/timeout bursts are normal when several providers are
+                    # in use, so keep the run alive instead of dropping the job.
+                    retries += 1
+                    if max_retries and retries > max_retries:
+                        raise CommandError(f"Tarjima xatosi: {exc}") from exc
+                    self.stderr.write(
+                        f"  provayder band ({exc}); {retry_wait:.0f}s kutib qayta urinamiz."
+                    )
+                    if retry_wait:
+                        time.sleep(retry_wait)
+                    continue
+                retries = 0
                 if not summary["processed"]:
                     break
 

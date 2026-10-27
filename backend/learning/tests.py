@@ -46,8 +46,23 @@ class CatalogApiTests(APITestCase):
         response = self.client.get("/api/v1/dictionary/entries/?q=book&language=en")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["language"], "en")
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["language"], "en")
+
+    def test_dictionary_entry_list_is_paged(self):
+        for index in range(3):
+            DictionaryEntry.objects.create(
+                headword=f"word{index}",
+                headword_normalized=f"word{index}",
+                language="en",
+            )
+
+        response = self.client.get("/api/v1/dictionary/entries/?pageSize=2")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertIsNotNone(response.data["next"])
 
 
 class DictionarySyncApiTests(APITestCase):

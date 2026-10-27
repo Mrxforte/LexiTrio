@@ -9,6 +9,9 @@ plugins {
 }
 
 val releaseApiBaseUrl = providers.gradleProperty("LEXITRIO_API_BASE_URL").orElse("").get()
+val debugApiBaseUrl = providers.gradleProperty("lexitrio.debugApiBaseUrl")
+  .orElse("http://10.0.2.2:8000/api/v1/")
+  .get()
 
 android {
   namespace = "com.example"
@@ -55,7 +58,7 @@ android {
       // Do not remove or modify this signingConfig assignment. It is necessary for Android apps in
       // AI Studio.
       signingConfig = signingConfigs.getByName("debugConfig")
-      buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/v1/\"")
+      buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
     }
     release {
       buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl}\"")
@@ -127,6 +130,8 @@ dependencies {
   // implementation(libs.googleid)
   implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.firebase.appcheck.debug)
+  implementation(libs.onnxruntime.android)
+  implementation(libs.androidx.graphics.path)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)

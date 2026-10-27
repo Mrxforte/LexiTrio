@@ -30,12 +30,19 @@ class ProviderConfig:
     model: str
 
 
+_DISABLED_KEY_VALUES = {"", "none", "null", "disabled", "off"}
+
+
+def _is_enabled_key(value: str) -> bool:
+    return str(value or "").strip().lower() not in _DISABLED_KEY_VALUES
+
+
 def configured_providers() -> list[ProviderConfig]:
     """Return every provider that has an API key, in configuration order."""
     providers: list[ProviderConfig] = []
 
     primary_key = (getattr(settings, "OPENAI_API_KEY", "") or "").strip()
-    if primary_key:
+    if _is_enabled_key(primary_key):
         providers.append(
             ProviderConfig(
                 name="gemini" if "googleapis.com" in settings.OPENAI_BASE_URL else "openai",
@@ -46,7 +53,7 @@ def configured_providers() -> list[ProviderConfig]:
         )
 
     deepseek_key = (getattr(settings, "DEEPSEEK_API_KEY", "") or "").strip()
-    if deepseek_key:
+    if _is_enabled_key(deepseek_key):
         providers.append(
             ProviderConfig(
                 name="deepseek",
@@ -96,7 +103,10 @@ class RotatingClient:
             ]
             ready = [i for i in rotated if self._benched_until.get(i, 0) <= now]
             cooling = [i for i in rotated if self._benched_until.get(i, 0) > now]
-        return [(index, self._clients[index]) for index in ready + cooling]
+        # Only fall back to benched providers when nothing else is available:
+        # retrying a quota-exhausted API costs a full timeout per batch.
+        ordered = ready or cooling
+        return [(index, self._clients[index]) for index in ordered]
 
     def _bench(self, index: int) -> None:
         with self._lock:

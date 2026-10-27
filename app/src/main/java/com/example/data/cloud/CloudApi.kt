@@ -45,6 +45,18 @@ internal interface CloudApi {
         @Query("since") since: String? = null
     ): DictionarySyncPage
 
+    @GET("dictionary/search/")
+    suspend fun searchDictionary(
+        @Query("q") query: String,
+        @Query("source") sourceLanguage: String? = null,
+        @Query("target") targetLanguage: String? = null,
+        @Query("pos") partOfSpeech: String? = null,
+        @Query("level") cefrLevel: String? = null,
+        @Query("partial") matchPartial: Boolean? = null,
+        @Query("page") page: Int? = null,
+        @Query("pageSize") pageSize: Int? = null
+    ): DictionarySearchResponseDto
+
     @POST("sync/")
     suspend fun synchronize(
         @Header("Authorization") authorization: String,
@@ -233,3 +245,64 @@ internal data class CloudPreferences(
         )
     }
 }
+
+internal data class DictionarySearchResponseDto(
+    val query: String = "",
+    val sourceLanguage: String? = null,
+    val targetLanguage: String? = null,
+    val partOfSpeech: String? = null,
+    val page: Int = 1,
+    val pageSize: Int = 50,
+    val hasMore: Boolean = false,
+    val next: String? = null,
+    val previous: String? = null,
+    val backend: String = "fts5",
+    val tookMs: Double = 0.0,
+    val results: List<DictionarySearchResultDto> = emptyList()
+)
+
+internal data class DictionarySearchResultDto(
+    val id: Long = 0,
+    val headword: String = "",
+    val headwordNormalized: String = "",
+    val word: String = "",
+    val language: String = "en",
+    val sourceLanguage: String? = null,
+    val partOfSpeech: String = "noun",
+    val phoneticIpa: String? = null,
+    val cefrLevel: String? = null,
+    val frequencyRank: Int = 0,
+    val article: String? = null,
+    val pluralForm: String? = null,
+    val primaryMeaningEn: String? = null,
+    val primaryMeaningRu: String? = null,
+    val primaryMeaningUz: String? = null,
+    val translations: List<TranslationDto>? = null
+) {
+    fun toEntity(): DictionaryEntryEntity {
+        val hWord = headword.ifBlank { word }
+        val lang = language.ifBlank { sourceLanguage ?: "en" }
+        return DictionaryEntryEntity(
+            id = id,
+            headword = hWord,
+            headwordNormalized = headwordNormalized.ifBlank { Language.normalizeText(hWord) },
+            language = lang,
+            phoneticIpa = phoneticIpa ?: "",
+            partOfSpeech = partOfSpeech.ifBlank { "noun" },
+            cefrLevel = cefrLevel ?: "B1",
+            frequencyRank = frequencyRank,
+            primaryMeaningEn = primaryMeaningEn ?: "",
+            primaryMeaningRu = primaryMeaningRu ?: "",
+            primaryMeaningUz = primaryMeaningUz ?: ""
+        )
+    }
+}
+
+internal data class TranslationDto(
+    val id: Long = 0,
+    val targetLanguage: String = "",
+    val text: String = "",
+    val translationText: String? = null,
+    val partOfSpeech: String? = null,
+    val contextNote: String? = null
+)

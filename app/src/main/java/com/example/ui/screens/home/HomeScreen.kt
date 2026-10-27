@@ -88,6 +88,7 @@ fun HomeScreen(
     onNavigateToGrammar: () -> Unit,
     onNavigateToQuiz: () -> Unit,
     onNavigateToFlashcards: (mode: String) -> Unit,
+    onNavigateToCurriculum: () -> Unit = {},
     onNavigateToVoiceSettings: () -> Unit,
     onNavigateToDataImport: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -335,18 +336,18 @@ fun HomeScreen(
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         QuickActionCard(
-                            title = "Test & Quiz",
-                            subtitle = "7 ta rejim",
-                            icon = Icons.Default.Quiz,
-                            iconContainerColor = Color(0xFFFEE2E2),
-                            iconColor = Color(0xFFDC2626),
-                            onClick = onNavigateToQuiz,
+                            title = "Kurrikulum",
+                            subtitle = "EN A1-C2 & RU A1-B2",
+                            icon = Icons.Default.School,
+                            iconContainerColor = Color(0xFFE0F2FE),
+                            iconColor = Color(0xFF0284C7),
+                            onClick = onNavigateToCurriculum,
                             modifier = Modifier.weight(1f)
                         )
                         QuickActionCard(
                             title = "Mavzular",
                             subtitle = "30+ to‘plam",
-                            icon = Icons.Default.School,
+                            icon = Icons.Default.Book,
                             iconContainerColor = Color(0xFFCFFAFE),
                             iconColor = Color(0xFF0891B2),
                             onClick = onNavigateToTopics,

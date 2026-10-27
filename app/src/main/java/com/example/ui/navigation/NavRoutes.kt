@@ -1,10 +1,12 @@
 package com.example.ui.navigation
 
+import android.net.Uri
+
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Dictionary : Screen("dictionary?query={query}&lang={lang}") {
         fun createRoute(query: String = "", lang: String = ""): String =
-            "dictionary?query=$query&lang=$lang"
+            "dictionary?query=${Uri.encode(query)}&lang=${Uri.encode(lang)}"
     }
     data object WordDetail : Screen("word_detail/{wordId}") {
         fun createRoute(wordId: Long): String = "word_detail/$wordId"
@@ -39,4 +41,14 @@ sealed class Screen(val route: String) {
     data object DataImport : Screen("data_import")
     data object Settings : Screen("settings")
     data object CloudSync : Screen("cloud_sync")
+
+    // Enterprise Curriculum routes
+    data object Curriculum : Screen("curriculum")
+    data object CurriculumLessonDetail : Screen("curriculum_lesson/{topicId}") {
+        fun createRoute(topicId: Long): String = "curriculum_lesson/$topicId"
+    }
+    data object CurriculumExercises : Screen("curriculum_exercises/{topicId}") {
+        fun createRoute(topicId: Long): String = "curriculum_exercises/$topicId"
+    }
+    data object ContentDashboard : Screen("content_dashboard")
 }

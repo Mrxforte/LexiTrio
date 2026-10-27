@@ -325,6 +325,12 @@ class ProviderRotationTests(SimpleTestCase):
 
         self.assertEqual([provider.name for provider in providers], ["gemini"])
 
+    def test_provider_can_be_disabled_with_sentinel_value(self):
+        with override_settings(OPENAI_API_KEY="g-key", DEEPSEEK_API_KEY="disabled"):
+            providers = configured_providers()
+
+        self.assertEqual([provider.name for provider in providers], ["gemini"])
+
     def test_rotation_falls_back_when_a_provider_is_down(self):
         class Failing:
             model = "down"
@@ -548,6 +554,10 @@ class BackfillApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["dictionary"]["totalEntries"], 1)
         self.assertEqual(response.data["dictionary"]["missingRussian"], 1)
+        self.assertEqual(response.data["dictionary"]["missingPhoneticIpa"], 1)
+        self.assertEqual(response.data["dictionary"]["missingArticleForNouns"], 1)
+        self.assertEqual(response.data["dictionary"]["missingPluralForNouns"], 1)
+        self.assertEqual(response.data["dictionary"]["missingComparativeForAdjectives"], 0)
         self.assertIn("uz", response.data["targetLanguages"])
 
 
