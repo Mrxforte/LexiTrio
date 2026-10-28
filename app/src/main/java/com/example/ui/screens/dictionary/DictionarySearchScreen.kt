@@ -69,7 +69,7 @@ fun DictionarySearchScreen(
     val filters = searchState.filters
 
     // The text field owns the caret; the ViewModel owns the debounced search.
-    var searchQuery by rememberSaveable { mutableStateOf(initialQuery) }
+    var searchQuery by rememberSaveable { mutableStateOf(if (initialQuery == "{query}") "" else initialQuery) }
 
     val direction = DictionaryDirection.from(preferences.searchSourceLanguage, preferences.searchTargetLanguage)
     LaunchedEffect(direction) {

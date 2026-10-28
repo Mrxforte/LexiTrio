@@ -356,8 +356,8 @@ fun MainAppContent(
             ) { backStackEntry ->
                 val rawQ = backStackEntry.arguments?.getString("query") ?: ""
                 val rawL = backStackEntry.arguments?.getString("lang") ?: ""
-                val q = Uri.decode(rawQ)
-                val l = Uri.decode(rawL)
+                val q = if (rawQ == "{query}") "" else Uri.decode(rawQ)
+                val l = if (rawL == "{lang}") "" else Uri.decode(rawL)
                 DictionarySearchScreen(
                     initialQuery = q,
                     initialLang = l,
