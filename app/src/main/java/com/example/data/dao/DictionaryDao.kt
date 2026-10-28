@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.example.data.model.CollocationEntity
 import com.example.data.model.DictionaryEntryEntity
 import com.example.data.model.ExampleSentenceEntity
@@ -18,6 +19,29 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DictionaryDao {
+
+    @Query("""
+        SELECT d.* FROM dictionary_entries d
+        WHERE (
+            ((d.language = :source OR (:source = 'uz' AND d.language = 'uz-cyrl'))
+              AND (d.id IN (SELECT rowid FROM dictionary_fts WHERE dictionary_fts MATCH :headwordMatch)
+                   OR d.id IN (SELECT rowid FROM dictionary_fts WHERE dictionary_fts MATCH :spellingsMatch)))
+            OR d.id IN (SELECT rowid FROM dictionary_fts WHERE dictionary_fts MATCH :meaningMatch)
+        )
+        AND (d.language = :target OR (:target = 'uz' AND d.language = 'uz-cyrl')
+             OR (:target = 'en' AND d.primaryMeaningEn != '')
+             OR (:target = 'ru' AND d.primaryMeaningRu != '')
+             OR (:target = 'uz' AND d.primaryMeaningUz != ''))
+        ORDER BY CASE WHEN (d.language = :source OR (:source = 'uz' AND d.language = 'uz-cyrl'))
+                           AND d.headwordNormalized >= :query AND d.headwordNormalized < :upperBound
+                      THEN 0 ELSE 1 END,
+                 d.headwordNormalized ASC, d.id ASC
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun searchDirected(
+        headwordMatch: String, spellingsMatch: String, meaningMatch: String, source: String, target: String,
+        query: String, upperBound: String, limit: Int, offset: Int
+    ): List<DictionaryEntryEntity>
 
     @Query("SELECT COUNT(*) FROM dictionary_entries")
     fun getEntryCountFlow(): Flow<Int>
@@ -141,6 +165,83 @@ interface DictionaryDao {
         limit: Int = 100
     ): List<DictionaryEntryEntity>
 
+    /**
+     * Headword exact/prefix matches via an index range scan (no `%x%` table
+     * scan), in alphabetical order: `s` lists sa…, sb…, … page by page, and the
+     * exact word sorts first because it is the shortest string in the range.
+     * [upperBound] is the query followed by U+FFFF. The language filter is
+     * strict here: searching in Uzbek lists Uzbek words first, not English
+     * words that merely have an Uzbek translation (those come from the FTS arm).
+     */
+    @Query("""
+        SELECT * FROM dictionary_entries
+        WHERE headwordNormalized >= :query AND headwordNormalized < :upperBound
+          AND (:lang IS NULL
+               OR language = :lang
+               OR (:lang = 'uz' AND language = 'uz-cyrl'))
+          AND (:pos IS NULL OR partOfSpeech = :pos)
+        ORDER BY headwordNormalized ASC, id ASC
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun searchHeadwordPrefix(
+        query: String,
+        upperBound: String,
+        lang: String?,
+        pos: String?,
+        limit: Int,
+        offset: Int
+    ): List<DictionaryEntryEntity>
+
+    @Query("""
+        SELECT COUNT(*) FROM dictionary_entries
+        WHERE headwordNormalized >= :query AND headwordNormalized < :upperBound
+          AND (:lang IS NULL
+               OR language = :lang
+               OR (:lang = 'uz' AND language = 'uz-cyrl'))
+          AND (:pos IS NULL OR partOfSpeech = :pos)
+    """)
+    suspend fun countHeadwordPrefix(
+        query: String,
+        upperBound: String,
+        lang: String?,
+        pos: String?
+    ): Int
+
+    /**
+     * Word-level matches in headwords, meanings and spellings through FTS4.
+     * Rows already listed by [searchHeadwordPrefix] for the same arguments are
+     * left out so the two lists can be paged one after the other.
+     */
+    @Query("""
+        SELECT d.* FROM dictionary_fts
+        JOIN dictionary_entries AS d ON d.id = dictionary_fts.rowid
+        WHERE dictionary_fts MATCH :match
+          AND (:lang IS NULL
+               OR d.language = :lang
+               OR (:lang = 'uz' AND (d.language = 'uz-cyrl' OR d.primaryMeaningUz != ''))
+               OR (:lang = 'ru' AND d.primaryMeaningRu != '')
+               OR (:lang = 'en' AND d.primaryMeaningEn != ''))
+          AND (:pos IS NULL OR d.partOfSpeech = :pos)
+          AND NOT (d.headwordNormalized >= :query AND d.headwordNormalized < :upperBound
+                   AND (:lang IS NULL
+                        OR d.language = :lang
+                        OR (:lang = 'uz' AND d.language = 'uz-cyrl')))
+        ORDER BY d.frequencyRank DESC, d.headword ASC
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun searchFullText(
+        match: String,
+        query: String,
+        upperBound: String,
+        lang: String?,
+        pos: String?,
+        limit: Int,
+        offset: Int
+    ): List<DictionaryEntryEntity>
+
+    @Query("INSERT INTO dictionary_fts(dictionary_fts) VALUES('rebuild')")
+    suspend fun rebuildFullTextIndex()
+
     @Transaction
     @Query("SELECT * FROM dictionary_entries WHERE id = :id LIMIT 1")
     suspend fun getFullDictionaryDetail(id: Long): FullDictionaryDetail?
@@ -154,17 +255,65 @@ interface DictionaryDao {
     @Query("SELECT MAX(id) FROM dictionary_entries")
     suspend fun getMaxEntryId(): Long?
 
-    @Query("SELECT * FROM dictionary_entries WHERE id >= :id ORDER BY id ASC LIMIT 1")
-    suspend fun getFirstEntryFrom(id: Long): DictionaryEntryEntity?
+    @Query("""
+        SELECT * FROM dictionary_entries
+        WHERE id >= :id
+          AND TRIM(CASE
+              WHEN language = :source OR (:source = 'uz' AND language = 'uz-cyrl') THEN headword
+              WHEN :source = 'en' THEN primaryMeaningEn
+              WHEN :source = 'ru' THEN primaryMeaningRu
+              WHEN :source = 'uz' THEN primaryMeaningUz
+              ELSE '' END) != ''
+          AND TRIM(CASE
+              WHEN language = :target OR (:target = 'uz' AND language = 'uz-cyrl') THEN headword
+              WHEN :target = 'en' THEN primaryMeaningEn
+              WHEN :target = 'ru' THEN primaryMeaningRu
+              WHEN :target = 'uz' THEN primaryMeaningUz
+              ELSE '' END) != ''
+        ORDER BY id ASC LIMIT 1
+    """)
+    suspend fun getFirstEntryForDirection(id: Long, source: String, target: String): DictionaryEntryEntity?
 
     @Query("SELECT * FROM dictionary_entries ORDER BY frequencyRank DESC LIMIT :limit")
     fun getTopWords(limit: Int = 20): Flow<List<DictionaryEntryEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // Upsert (not REPLACE): replacing a row deletes it without firing the FTS
+    // sync triggers and would cascade-delete its meanings and translations.
+    @Upsert
     suspend fun insertEntries(entries: List<DictionaryEntryEntity>): List<Long>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertEntry(entry: DictionaryEntryEntity): Long
+
+    /** Caches search hits fetched from the server without touching richer local rows. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertEntriesIfAbsent(entries: List<DictionaryEntryEntity>): List<Long>
+
+    // Lazily loaded content, removed per word when it is evicted or refreshed.
+    @Query("DELETE FROM translations WHERE entryId IN (:entryIds)")
+    suspend fun deleteTranslationsFor(entryIds: List<Long>)
+
+    @Query("DELETE FROM example_sentences WHERE entryId IN (:entryIds)")
+    suspend fun deleteExamplesFor(entryIds: List<Long>)
+
+    @Query("DELETE FROM word_forms WHERE entryId IN (:entryIds)")
+    suspend fun deleteFormsFor(entryIds: List<Long>)
+
+    @Query("DELETE FROM collocations WHERE entryId IN (:entryIds)")
+    suspend fun deleteCollocationsFor(entryIds: List<Long>)
+
+    @Query("DELETE FROM synonyms_antonyms WHERE meaningId IN (SELECT id FROM word_meanings WHERE entryId IN (:entryIds))")
+    suspend fun deleteSynonymsFor(entryIds: List<Long>)
+
+    @Query("DELETE FROM word_meanings WHERE entryId IN (:entryIds)")
+    suspend fun deleteMeaningsFor(entryIds: List<Long>)
+
+    /**
+     * Applies server-side deletions. A word the user saved is kept: it is user
+     * data, and the server removing it must not silently empty their list.
+     */
+    @Query("DELETE FROM dictionary_entries WHERE id IN (:ids) AND id NOT IN (SELECT entryId FROM saved_words)")
+    suspend fun deleteEntriesUnlessSaved(ids: List<Long>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMeanings(meanings: List<WordMeaningEntity>)

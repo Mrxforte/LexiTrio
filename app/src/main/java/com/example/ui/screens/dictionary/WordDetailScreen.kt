@@ -66,6 +66,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.FullDictionaryDetail
 import com.example.data.model.Language
+import com.example.data.model.DictionaryDirection
+import com.example.data.model.dictionaryCode
+import com.example.data.model.textIn
 import com.example.data.model.LearningStatus
 import com.example.data.preferences.AppPreferences
 import com.example.presentation.AppViewModel
@@ -85,6 +88,8 @@ fun WordDetailScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val direction = DictionaryDirection.from(preferences.searchSourceLanguage, preferences.searchTargetLanguage)
+    val visibleLanguages = setOf(direction.source.dictionaryCode, direction.target.dictionaryCode)
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -107,8 +112,13 @@ fun WordDetailScreen(
         detail = viewModel.getFullDetail(wordId)
         isLoading = false
 
+        // Shown immediately from Room; fresher content replaces it when it arrives.
+        viewModel.refreshFullDetail(wordId)?.let { detail = it }
+
         if (preferences.autoPlayAudio && detail != null) {
-            ttsManager.speak(detail!!.entry.headword, detail!!.entry.language)
+            val entry = detail!!.entry
+            val spoken = entry.textIn(direction.source)
+            if (spoken.isNotBlank()) ttsManager.speak(spoken, direction.source.code)
         }
     }
 
@@ -117,7 +127,7 @@ fun WordDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = detail?.entry?.headword ?: "So‘z tafsiloti",
+                        text = detail?.entry?.textIn(direction.source)?.ifBlank { "So‘z tafsiloti" } ?: "So‘z tafsiloti",
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -219,13 +229,13 @@ fun WordDetailScreen(
                                     modifier = Modifier.weight(1f, fill = false)
                                 ) {
                                     Text(
-                                        text = entry.headword,
+                                        text = entry.textIn(direction.source).ifBlank { entry.headword },
                                         style = MaterialTheme.typography.headlineLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    LanguageBadge(lang = entry.language, text = entry.language.uppercase())
+                                    LanguageBadge(lang = direction.source.code, text = direction.source.dictionaryCode.uppercase())
                                 }
 
                                 Surface(
@@ -242,11 +252,25 @@ fun WordDetailScreen(
                                 }
                             }
 
+                            val targetText = entry.textIn(direction.target)
+                            if (targetText.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    LanguageBadge(lang = direction.target.code, text = direction.target.dictionaryCode.uppercase())
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(targetText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                                    PronunciationButton(
+                                        text = targetText, language = direction.target.code,
+                                        onSpeak = { text, lang -> ttsManager.speak(text, lang) }
+                                    )
+                                }
+                            }
+
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 PartOfSpeechChip(partOfSpeech = entry.partOfSpeech)
-                                if (entry.phoneticIpa.isNotBlank()) {
+                                if (entry.language.substringBefore('-') == direction.source.dictionaryCode && entry.phoneticIpa.isNotBlank()) {
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         text = entry.phoneticIpa,
@@ -257,7 +281,7 @@ fun WordDetailScreen(
                                 }
                             }
 
-                            if (entry.alternativeSpellings.isNotBlank()) {
+                            if (entry.language.substringBefore('-') == direction.source.dictionaryCode && entry.alternativeSpellings.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = "Yozilishi: ${entry.alternativeSpellings}",
@@ -270,7 +294,8 @@ fun WordDetailScreen(
 
                             // Audio Playback Controls: Normal & Slow Speed + Stop
                             val playbackState by ttsManager.playbackState.collectAsState()
-                            val isThisWordPlaying = playbackState.isPlaying && playbackState.currentText.equals(entry.headword, ignoreCase = true)
+                            val spokenWord = entry.textIn(direction.source)
+                            val isThisWordPlaying = playbackState.isPlaying && playbackState.currentText.equals(spokenWord, ignoreCase = true)
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -281,7 +306,7 @@ fun WordDetailScreen(
                                         if (isThisWordPlaying && !playbackState.isSlowRate) {
                                             ttsManager.stop()
                                         } else {
-                                            ttsManager.speak(entry.headword, entry.language, 1.0f)
+                                            ttsManager.speak(spokenWord, direction.source.code, 1.0f)
                                         }
                                     },
                                     shape = RoundedCornerShape(12.dp),
@@ -311,7 +336,7 @@ fun WordDetailScreen(
                                         if (isThisWordPlaying && playbackState.isSlowRate) {
                                             ttsManager.stop()
                                         } else {
-                                            ttsManager.speak(entry.headword, entry.language, 0.65f)
+                                            ttsManager.speak(spokenWord, direction.source.code, 0.65f)
                                         }
                                     },
                                     shape = RoundedCornerShape(12.dp),
@@ -353,8 +378,9 @@ fun WordDetailScreen(
                     items(d.meanings, key = { it.id }) { meaning ->
                         SenseCard(
                             sense = meaning,
-                            translations = d.translations.filter { it.meaningId == meaning.id || it.meaningId == 0L },
+                            translations = d.translations.filter { (it.meaningId == meaning.id || it.meaningId == 0L) && it.targetLanguage.substringBefore('-') == direction.target.dictionaryCode },
                             examples = d.examples.filter { it.meaningId == meaning.id || it.meaningId == 0L },
+                            visibleLanguages = visibleLanguages,
                             onAudioPlay = { text, lang -> ttsManager.speak(text, lang) }
                         )
                     }
@@ -369,7 +395,7 @@ fun WordDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (entry.primaryMeaningUz.isNotBlank()) {
+                                if ("uz" in visibleLanguages && entry.primaryMeaningUz.isNotBlank()) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
@@ -389,7 +415,7 @@ fun WordDetailScreen(
                                         )
                                     }
                                 }
-                                if (entry.primaryMeaningRu.isNotBlank()) {
+                                if ("ru" in visibleLanguages && entry.primaryMeaningRu.isNotBlank()) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
@@ -408,7 +434,7 @@ fun WordDetailScreen(
                                         )
                                     }
                                 }
-                                if (entry.primaryMeaningEn.isNotBlank()) {
+                                if ("en" in visibleLanguages && entry.primaryMeaningEn.isNotBlank()) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
@@ -433,7 +459,7 @@ fun WordDetailScreen(
                 }
 
                 // 3. Word Forms & Inflections
-                if (d.forms.isNotEmpty()) {
+                if (d.forms.isNotEmpty() && entry.language.substringBefore('-') in visibleLanguages) {
                     item {
                         Card(
                             shape = RoundedCornerShape(16.dp),
@@ -476,7 +502,7 @@ fun WordDetailScreen(
                 }
 
                 // 4. Collocations and Idioms
-                if (d.collocations.isNotEmpty()) {
+                if (d.collocations.isNotEmpty() && "en" in visibleLanguages) {
                     item {
                         Card(
                             shape = RoundedCornerShape(16.dp),
@@ -502,7 +528,10 @@ fun WordDetailScreen(
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = "🇺🇿 ${colloc.translationUz}  |  🇷🇺 ${colloc.translationRu}",
+                                            text = listOfNotNull(
+                                                colloc.translationUz.takeIf { "uz" in visibleLanguages && it.isNotBlank() }?.let { "🇺🇿 $it" },
+                                                colloc.translationRu.takeIf { "ru" in visibleLanguages && it.isNotBlank() }?.let { "🇷🇺 $it" }
+                                            ).joinToString("  |  "),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -562,7 +591,7 @@ fun WordDetailScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "«${entry.headword}» so‘zi SM-2 takrorlash rejasiga kiritiladi.",
+                        text = "«${entry.textIn(direction.source).ifBlank { entry.headword }}» so‘zi SM-2 takrorlash rejasiga kiritiladi.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -653,6 +682,7 @@ fun SenseCard(
     sense: com.example.data.model.WordMeaningEntity,
     translations: List<com.example.data.model.TranslationEntity>,
     examples: List<com.example.data.model.ExampleSentenceEntity>,
+    visibleLanguages: Set<String>,
     onAudioPlay: (text: String, lang: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -705,7 +735,7 @@ fun SenseCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             // English definition
-            if (sense.definitionEn.isNotBlank()) {
+            if ("en" in visibleLanguages && sense.definitionEn.isNotBlank()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -788,7 +818,7 @@ fun SenseCard(
                             .padding(vertical = 4.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
+                            if ("en" in visibleLanguages && eg.sentenceEn.isNotBlank()) Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -807,7 +837,7 @@ fun SenseCard(
                                     size = 32.dp
                                 )
                             }
-                            if (eg.sentenceUz.isNotBlank()) {
+                            if ("uz" in visibleLanguages && eg.sentenceUz.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -829,7 +859,7 @@ fun SenseCard(
                                     )
                                 }
                             }
-                            if (eg.sentenceRu.isNotBlank()) {
+                            if ("ru" in visibleLanguages && eg.sentenceRu.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),

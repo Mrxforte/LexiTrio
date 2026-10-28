@@ -6,12 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.data.dao.CacheDao
 import com.example.data.dao.ConversationGrammarDao
 import com.example.data.dao.CurriculumDao
 import com.example.data.dao.DictionaryDao
 import com.example.data.dao.LearningDao
 import com.example.data.dao.QuizDao
 import com.example.data.dao.VocabularyDao
+import com.example.data.model.CacheMetadataEntity
 import com.example.data.model.CollocationEntity
 import com.example.data.model.ConversationEntity
 import com.example.data.model.ConversationTurnEntity
@@ -20,6 +22,7 @@ import com.example.data.model.CurriculumExerciseEntity
 import com.example.data.model.CurriculumLevelEntity
 import com.example.data.model.CurriculumTopicEntity
 import com.example.data.model.DictionaryEntryEntity
+import com.example.data.model.DictionaryFtsEntity
 import com.example.data.model.ExampleSentenceEntity
 import com.example.data.model.GrammarLessonEntity
 import com.example.data.model.GrammarTableEntity
@@ -47,6 +50,8 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [
         DictionaryEntryEntity::class,
+        DictionaryFtsEntity::class,
+        CacheMetadataEntity::class,
         WordMeaningEntity::class,
         TranslationEntity::class,
         ExampleSentenceEntity::class,
@@ -75,7 +80,7 @@ import kotlinx.coroutines.launch
         UserTopicProgressEntity::class,
         MistakeRecordEntity::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 abstract class LexiTrioDatabase : RoomDatabase() {
@@ -86,6 +91,7 @@ abstract class LexiTrioDatabase : RoomDatabase() {
     abstract fun conversationGrammarDao(): ConversationGrammarDao
     abstract fun quizDao(): QuizDao
     abstract fun curriculumDao(): CurriculumDao
+    abstract fun cacheDao(): CacheDao
 
     companion object {
         @Volatile
@@ -340,6 +346,30 @@ abstract class LexiTrioDatabase : RoomDatabase() {
             }
         }
 
+        // Adds the FTS4 search index (SQL mirrors what Room generates for a fresh install).
+        internal val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val columns = "`headwordNormalized`, `alternativeSpellings`, `primaryMeaningEn`, `primaryMeaningRu`, `primaryMeaningUz`"
+                val newValues = "NEW.`rowid`, NEW.`headwordNormalized`, NEW.`alternativeSpellings`, NEW.`primaryMeaningEn`, NEW.`primaryMeaningRu`, NEW.`primaryMeaningUz`"
+                db.execSQL("CREATE VIRTUAL TABLE IF NOT EXISTS `dictionary_fts` USING FTS4(`headwordNormalized` TEXT NOT NULL, `alternativeSpellings` TEXT NOT NULL, `primaryMeaningEn` TEXT NOT NULL, `primaryMeaningRu` TEXT NOT NULL, `primaryMeaningUz` TEXT NOT NULL, tokenize=unicode61, content=`dictionary_entries`)")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_dictionary_fts_BEFORE_UPDATE BEFORE UPDATE ON `dictionary_entries` BEGIN DELETE FROM `dictionary_fts` WHERE `docid`=OLD.`rowid`; END")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_dictionary_fts_BEFORE_DELETE BEFORE DELETE ON `dictionary_entries` BEGIN DELETE FROM `dictionary_fts` WHERE `docid`=OLD.`rowid`; END")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_dictionary_fts_AFTER_UPDATE AFTER UPDATE ON `dictionary_entries` BEGIN INSERT INTO `dictionary_fts`(`docid`, $columns) VALUES ($newValues); END")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_dictionary_fts_AFTER_INSERT AFTER INSERT ON `dictionary_entries` BEGIN INSERT INTO `dictionary_fts`(`docid`, $columns) VALUES ($newValues); END")
+                db.execSQL("INSERT INTO `dictionary_fts`(`dictionary_fts`) VALUES('rebuild')")
+            }
+        }
+
+        // Adds per-word cache bookkeeping for lazily loaded detail content.
+        internal val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `cache_metadata` (`entryId` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `lastAccessedAt` INTEGER NOT NULL, `accessCount` INTEGER NOT NULL, `detailValidatedAt` INTEGER NOT NULL, `serverVersion` TEXT, PRIMARY KEY(`entryId`))")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_cache_metadata_priority` ON `cache_metadata` (`priority`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_cache_metadata_lastAccessedAt` ON `cache_metadata` (`lastAccessedAt`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_cache_metadata_detailValidatedAt` ON `cache_metadata` (`detailValidatedAt`)")
+            }
+        }
+
         fun getInstance(context: Context): LexiTrioDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -347,7 +377,7 @@ abstract class LexiTrioDatabase : RoomDatabase() {
                     LexiTrioDatabase::class.java,
                     "lexitrio_database.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .addCallback(DatabaseCallback())
                     .fallbackToDestructiveMigration()
                     .build()

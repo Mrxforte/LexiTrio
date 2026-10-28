@@ -38,14 +38,34 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
-    "accounts",
-    "learning",
-    "syncing",
-    "translation",
+    "apps.accounts",
+    # Legacy schema history of the former single "learning" app (no models).
+    "apps.learning",
+    # Dictionary
+    "apps.dictionary.entries",
+    "apps.dictionary.search",
+    "apps.dictionary.sync",
+    # Learning content shown in the app
+    "apps.catalog.topics",
+    "apps.catalog.conversations",
+    "apps.catalog.grammar",
+    "apps.catalog.quiz",
+    "apps.catalog.snapshot",
+    # Curriculum
+    "apps.curriculum.content",
+    "apps.curriculum.progress",
+    # Learner data and its sync
+    "apps.userdata",
+    "apps.syncing",
+    # Translation and operations
+    "apps.translation",
+    "apps.maintenance",
 ]
 
 MIDDLEWARE = [
+    "config.api.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -124,6 +144,29 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Every record carries the request id (see config.api.RequestIdMiddleware).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"request_id": {"()": "config.api.RequestIdFilter"}},
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s %(levelname)s [%(request_id)s] %(name)s: %(message)s",
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["request_id"],
+            "formatter": "standard",
+        }
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+    },
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
@@ -133,7 +176,8 @@ REST_FRAMEWORK = {
     ],
     # Catalog list endpoints are paged: the English corpus alone holds 130k
     # entries, so an unbounded list response is never acceptable.
-    "DEFAULT_PAGINATION_CLASS": "learning.pagination.CatalogPagination",
+    "DEFAULT_PAGINATION_CLASS": "shared.pagination.CatalogPagination",
+    "EXCEPTION_HANDLER": "config.api.api_exception_handler",
     "PAGE_SIZE": 50,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -190,6 +234,14 @@ DICTIONARY_SEARCH_MAX_PAGE_SIZE = int(
 DICTIONARY_SEARCH_CACHE_TTL = int(os.environ.get("DICTIONARY_SEARCH_CACHE_TTL", "300"))
 # Seconds the aggregate "dictionary version" stamp stays cached.
 DICTIONARY_VERSION_CACHE_TTL = int(os.environ.get("DICTIONARY_VERSION_CACHE_TTL", "5"))
+# Seconds the corpus totals shown on the first sync page stay cached.
+DICTIONARY_META_CACHE_TTL = int(os.environ.get("DICTIONARY_META_CACHE_TTL", "600"))
+# Days a deletion marker is kept; older sync cursors get a full pass instead.
+DICTIONARY_TOMBSTONE_RETENTION_DAYS = int(
+    os.environ.get("DICTIONARY_TOMBSTONE_RETENTION_DAYS", "365")
+)
+# Most deletion markers returned with one incremental pass.
+DICTIONARY_TOMBSTONE_PAGE_MAX = int(os.environ.get("DICTIONARY_TOMBSTONE_PAGE_MAX", "5000"))
 # Maximum number of rows the substring ("partial") scan may contribute per page.
 DICTIONARY_SEARCH_PARTIAL_ROWS = int(os.environ.get("DICTIONARY_SEARCH_PARTIAL_ROWS", "200"))
 # Rows serialized into each search response translation list.

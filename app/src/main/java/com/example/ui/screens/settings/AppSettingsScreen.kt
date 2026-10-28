@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.RecordVoiceOver
@@ -56,8 +55,8 @@ fun AppSettingsScreen(
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
     onNavigateToVoiceSettings: () -> Unit,
-    onNavigateToDataImport: () -> Unit,
     onNavigateToCloudSync: () -> Unit,
+    onNavigateToOnboarding: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -310,14 +309,14 @@ fun AppSettingsScreen(
                             }
                         }
 
-                        // Data Ingestion
+                        // Elingo Onboarding Screens Preview
                         Surface(
                             shape = RoundedCornerShape(10.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onNavigateToDataImport() }
+                                .clickable { onNavigateToOnboarding() }
                         ) {
                             Row(
                                 modifier = Modifier.padding(14.dp),
@@ -326,13 +325,13 @@ fun AppSettingsScreen(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = Icons.Default.CloudDownload,
+                                        imageVector = Icons.Default.Language,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "100 000+ Lug‘at bazasini yuklash",
+                                        text = "Elingo Onboarding ekranlarini ko'rish",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface

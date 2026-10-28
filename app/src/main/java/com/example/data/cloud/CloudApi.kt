@@ -42,8 +42,12 @@ internal interface CloudApi {
     suspend fun syncDictionary(
         @Query("afterId") afterId: Long,
         @Query("limit") limit: Int,
-        @Query("since") since: String? = null
+        @Query("since") since: String? = null,
+        @Query("lite") lite: Boolean? = null
     ): DictionarySyncPage
+
+    @GET("dictionary/details/")
+    suspend fun getDictionaryDetails(@Query("ids") ids: String): DictionaryDetailsResponse
 
     @GET("dictionary/search/")
     suspend fun searchDictionary(
@@ -98,7 +102,24 @@ internal data class DictionarySyncPage(
     val nextAfterId: Long = 0,
     val hasMore: Boolean = false,
     val serverTime: String? = null,
-    val dictionary: DictionaryMeta? = null
+    val dictionary: DictionaryMeta? = null,
+    /** Entries deleted on the server since the pass's `since` (first page only). */
+    val deletedIds: List<Long> = emptyList(),
+    val deletedIdsTruncated: Boolean = false,
+    /** The server could not answer the cursor incrementally and sent everything. */
+    val fullResync: Boolean = false
+)
+
+internal data class DictionaryDetailsResponse(
+    val entries: List<DictionaryEntryEntity> = emptyList(),
+    val meanings: List<WordMeaningEntity> = emptyList(),
+    val translations: List<TranslationEntity> = emptyList(),
+    val examples: List<ExampleSentenceEntity> = emptyList(),
+    val synonyms: List<SynonymAntonymEntity> = emptyList(),
+    val forms: List<WordFormEntity> = emptyList(),
+    val collocations: List<CollocationEntity> = emptyList(),
+    val missingIds: List<Long> = emptyList(),
+    val serverTime: String? = null
 )
 
 internal data class SyncRequest(

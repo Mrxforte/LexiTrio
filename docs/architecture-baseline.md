@@ -46,7 +46,7 @@ LexiTrio is an enterprise trilingual dictionary platform (English, Uzbek, Russia
   - Production: PostgreSQL with `psycopg` connection pooling.
 - **Search Engine**:
   - SQLite: FTS5 virtual table (`dictionary_search`) synced via triggers.
-  - PostgreSQL: Trigram & Full-Text Search fallback (`learning/search.py`).
+  - PostgreSQL: Trigram & Full-Text Search fallback (`apps/dictionary/search/engine.py`).
 - **Caching**: Local memory / Redis (`django.core.cache.backends.redis.RedisCache`).
 - **Data Apps**:
   - `accounts`: Authentication & Token management.

@@ -223,7 +223,7 @@ Rolling back the search index alone:
 backend\.venv\Scripts\python.exe backend\manage.py test
 ```
 
-`learning/test_search.py` covers ranking, language filters, pagination
+`apps/dictionary/search/tests.py` covers ranking, language filters, pagination
 boundaries, the trigger-driven index synchronisation, ETag/`304` behaviour,
 the query budget, and the ORM fallback.
 
@@ -321,6 +321,29 @@ backend\.venv\Scripts\python.exe backend\manage.py import_kaikki path\to\kaikki.
 
 # Ready-made CSV/TSV/JSON/JSONL/word list with flexible column names
 backend\.venv\Scripts\python.exe backend\manage.py import_lexicon path\to\words.csv
+```
+
+### Russian and Uzbek headwords
+
+The imports above create English entries only; Russian and Uzbek words exist as
+translations of them. Run `build_reverse_entries` once so every ru/uz word is
+also searchable as a headword of its own (it is idempotent; `--purge` removes
+the generated entries). The Android app picks the new rows up by itself: its
+background download fetches changes since the last run.
+
+### How the app gets the dictionary
+
+First launch needs no download or login. Search is answered by
+`GET /dictionary/search/` (FTS5/trigram, ETag + `Cache-Control`, so the app's
+OkHttp disk cache turns repeats into body-less `304`s) while a WorkManager job
+downloads the catalog in the background through
+`GET /dictionary/sync/?lite=1&limit=2000` (entries and meanings only, gzip,
+resumable by `afterId`; later runs pass `since` to fetch only changes). Once the
+download completes, search runs entirely on-device against an FTS4 index and the
+server is no longer asked.
+
+```powershell
+backend\.venv\Scripts\python.exe backend\manage.py build_reverse_entries
 ```
 
 ### Professional dictionary data (transcription, POS, article, grammar)

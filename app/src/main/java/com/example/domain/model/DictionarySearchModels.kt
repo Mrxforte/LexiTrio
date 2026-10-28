@@ -10,6 +10,7 @@ import com.example.data.model.Language
 data class DictionarySearchFilters(
     val query: String = "",
     val language: Language? = null,
+    val targetLanguage: Language? = null,
     val partOfSpeech: String? = null,
     val reverseTranslation: Boolean = false
 ) {
@@ -25,7 +26,10 @@ data class DictionarySearchUiState(
     val isLoading: Boolean = false,
     val results: List<DictionaryEntryEntity> = emptyList(),
     val hasSearched: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** More pages are available after [results]; the list loads them on scroll. */
+    val canLoadMore: Boolean = false,
+    val isLoadingMore: Boolean = false
 ) {
     val isEmptyResult: Boolean
         get() = hasSearched && !isLoading && errorMessage == null && results.isEmpty()

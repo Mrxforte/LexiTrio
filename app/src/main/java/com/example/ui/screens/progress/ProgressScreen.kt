@@ -18,16 +18,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -45,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +69,9 @@ fun ProgressScreen(
     viewModel: AppViewModel,
     preferences: AppPreferences,
     onNavigateBack: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToVoiceSettings: () -> Unit = {},
+    onNavigateToCloudSync: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val progress by viewModel.progress.collectAsState()
@@ -84,18 +95,6 @@ fun ProgressScreen(
                 iconName = "school",
                 isUnlocked = allSavedWords.size >= 5,
                 progress = (allSavedWords.size.toFloat() / 5f).coerceIn(0f, 1f)
-            ),
-            AchievementItem(
-                id = "streak_master",
-                titleEn = "Unstoppable Streak",
-                titleRu = "Неудержимая серия",
-                titleUzLatn = "To‘xtovsiz seriya",
-                descriptionEn = "Maintain a 3-day continuous learning streak",
-                descriptionRu = "Поддерживайте 3-дневную серию занятий",
-                descriptionUzLatn = "Ketma-ket 3 kunlik o‘rganish seriyasiga erishing",
-                iconName = "fire",
-                isUnlocked = userProg.streakDays >= 3,
-                progress = (userProg.streakDays.toFloat() / 3f).coerceIn(0f, 1f)
             ),
             AchievementItem(
                 id = "quiz_champion",
@@ -125,28 +124,6 @@ fun ProgressScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "O‘sish va statistika (Progress)",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
-        },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
@@ -267,13 +244,6 @@ fun ProgressScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     MetricCard(
-                        title = "Kunlik seriya",
-                        value = "${userProg.streakDays} kun",
-                        icon = Icons.Default.LocalFireDepartment,
-                        color = Color(0xFFF59E0B),
-                        modifier = Modifier.weight(1f)
-                    )
-                    MetricCard(
                         title = "Viktorinalar",
                         value = "${userProg.totalQuizzesCompleted}",
                         icon = Icons.Default.AutoAwesome,
@@ -364,7 +334,108 @@ fun ProgressScreen(
                     }
                 }
             }
+
+            // Settings Section
+            item {
+                Text(
+                    text = "Sozlamalar (Settings)",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        ProfileSettingRow(
+                            title = "Ilova Sozlamalari",
+                            subtitle = "Til, bildirishnomalar va ko‘rinish",
+                            icon = Icons.Default.Settings,
+                            onClick = onNavigateToSettings
+                        )
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+                        ProfileSettingRow(
+                            title = "Ovoz va TTS",
+                            subtitle = "Ovozli talaffuz dvigateli va modellari",
+                            icon = Icons.Default.RecordVoiceOver,
+                            onClick = onNavigateToVoiceSettings
+                        )
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+                        ProfileSettingRow(
+                            title = "Bulutli Sinxronizatsiya",
+                            subtitle = "Ma’lumotlarni zaxiralash va yuklash",
+                            icon = Icons.Default.CloudSync,
+                            onClick = onNavigateToCloudSync
+                        )
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun ProfileSettingRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

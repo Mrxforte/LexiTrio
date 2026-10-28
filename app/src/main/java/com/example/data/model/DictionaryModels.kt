@@ -1,11 +1,32 @@
 package com.example.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Fts4
+import androidx.room.FtsOptions
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+
+/**
+ * Full-text index over the searchable columns of [DictionaryEntryEntity].
+ * Room keeps it in sync through triggers on the content table, so writes must
+ * go through UPDATE/INSERT (never REPLACE, which bypasses delete triggers).
+ */
+@Fts4(contentEntity = DictionaryEntryEntity::class, tokenizer = FtsOptions.TOKENIZER_UNICODE61)
+@Entity(tableName = "dictionary_fts")
+data class DictionaryFtsEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "rowid")
+    val rowId: Long,
+    val headwordNormalized: String,
+    val alternativeSpellings: String,
+    val primaryMeaningEn: String,
+    val primaryMeaningRu: String,
+    val primaryMeaningUz: String
+)
 
 @Entity(
     tableName = "dictionary_entries",

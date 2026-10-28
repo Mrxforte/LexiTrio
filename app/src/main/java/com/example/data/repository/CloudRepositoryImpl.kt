@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.first
 class CloudRepositoryImpl internal constructor(
     context: Context,
     private val database: LexiTrioDatabase = LexiTrioDatabase.getInstance(context),
-    private val api: CloudApi = CloudApiFactory.create()
+    private val api: CloudApi = CloudApiFactory.create(context)
 ) : CloudRepository {
     private val sessionStore = SessionStore(context.applicationContext)
     private val syncStateStore = SyncStateStore(context.applicationContext)

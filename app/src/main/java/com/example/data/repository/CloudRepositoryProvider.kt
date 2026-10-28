@@ -9,6 +9,6 @@ object CloudRepositoryProvider {
         CloudRepositoryImpl(
             context.applicationContext,
             LexiTrioDatabase.getInstance(context.applicationContext),
-            CloudApiFactory.create()
+            CloudApiFactory.create(context.applicationContext)
         )
 }

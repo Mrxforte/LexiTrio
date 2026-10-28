@@ -38,7 +38,6 @@ sealed class Screen(val route: String) {
     }
     data object ProgressStats : Screen("progress_stats")
     data object VoiceSettings : Screen("voice_settings")
-    data object DataImport : Screen("data_import")
     data object Settings : Screen("settings")
     data object CloudSync : Screen("cloud_sync")
 
@@ -51,4 +50,10 @@ sealed class Screen(val route: String) {
         fun createRoute(topicId: Long): String = "curriculum_exercises/$topicId"
     }
     data object ContentDashboard : Screen("content_dashboard")
+
+    // Elingo Splash & Onboarding Screens (Pixel Perfect from design)
+    data object Splash : Screen("elingo_splash")
+    data object OnboardingWelcome : Screen("elingo_welcome")
+    data object OnboardingAppLanguage : Screen("elingo_app_language")
+    data object OnboardingTargetLanguage : Screen("elingo_target_language")
 }

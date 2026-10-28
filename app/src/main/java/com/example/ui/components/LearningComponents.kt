@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,10 +47,14 @@ import com.example.data.model.GrammarLessonEntity
 import com.example.data.model.Language
 import com.example.data.model.TopicEntity
 import com.example.data.model.UserProgressEntity
+import com.example.data.model.DictionaryDirection
+import com.example.data.model.dictionaryCode
+import com.example.data.model.textIn
 
 @Composable
 fun WordOfTheDayCard(
     entry: DictionaryEntryEntity,
+    direction: DictionaryDirection,
     onClick: () -> Unit,
     onAudioClick: () -> Unit,
     onSaveClick: () -> Unit,
@@ -147,13 +150,13 @@ fun WordOfTheDayCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = entry.headword,
+                text = entry.textIn(direction.source),
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            if (entry.phoneticIpa.isNotBlank()) {
+            if (entry.language.substringBefore('-') == direction.source.dictionaryCode && entry.phoneticIpa.isNotBlank()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = entry.phoneticIpa,
@@ -166,12 +169,13 @@ fun WordOfTheDayCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (entry.primaryMeaningUz.isNotBlank()) {
+                val targetText = entry.textIn(direction.target)
+                if (targetText.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        LanguageBadge(lang = "uz", text = "UZ")
+                        LanguageBadge(lang = direction.target.code, text = direction.target.dictionaryCode.uppercase())
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = entry.primaryMeaningUz,
+                            text = targetText,
                             color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
@@ -179,24 +183,13 @@ fun WordOfTheDayCard(
                     }
                 }
 
-                if (entry.primaryMeaningRu.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        LanguageBadge(lang = "ru", text = "RU")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = entry.primaryMeaningRu,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
             }
         }
     }
 }
 
 @Composable
-fun StreakProgressHeader(
+fun LearningProgressHeader(
     progress: UserProgressEntity,
     dueCardsCount: Int,
     onStartReview: () -> Unit,
@@ -215,7 +208,6 @@ fun StreakProgressHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Streak Counter
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -224,22 +216,22 @@ fun StreakProgressHeader(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.LocalFireDepartment,
-                            contentDescription = "Streak",
-                            tint = Color(0xFFD97706),
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "${progress.streakDays} kunlik seriya",
+                            text = "${progress.xp} XP",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "${progress.xp} XP • ${progress.getLevelTitle(Language.UZBEK_LATIN)}",
+                            text = progress.getLevelTitle(Language.UZBEK_LATIN),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

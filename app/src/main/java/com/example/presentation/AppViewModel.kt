@@ -1,6 +1,5 @@
 package com.example.presentation
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,8 +13,6 @@ import com.example.data.tts.TtsEngineType
 import com.example.data.repository.CurriculumRepository
 import com.example.domain.model.DictionarySearchFilters
 import com.example.domain.model.DictionarySearchUiState
-import com.example.domain.model.ImportProgress
-import com.example.domain.repository.DictionaryImportRepository
 import com.example.domain.repository.DictionaryRepository
 import com.example.domain.repository.LearningRepository
 import com.example.domain.repository.PreferenceRepository
@@ -26,9 +23,11 @@ import com.example.domain.usecase.RecordQuizAttemptUseCase
 import com.example.domain.usecase.SaveWordUseCase
 import com.example.domain.usecase.SearchDictionaryUseCase
 import com.example.domain.usecase.UpdateLearningProgressUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,7 +52,6 @@ class AppViewModel(
     private val vocabulary: VocabularyRepository,
     private val learning: LearningRepository,
     private val preferencesRepository: PreferenceRepository,
-    private val dictionaryImport: DictionaryImportRepository,
     private val curriculum: CurriculumRepository? = null
 ) : ViewModel() {
     private val searchDictionary = SearchDictionaryUseCase(dictionary)
@@ -106,10 +104,6 @@ class AppViewModel(
         viewModelScope, SharingStarted.WhileSubscribed(5_000),
         com.example.data.preferences.AppPreferences()
     )
-    val importProgress = dictionaryImport.progress.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), ImportProgress()
-    )
-
     private val searchFilters = MutableStateFlow(DictionarySearchFilters())
     private val searchRefreshTicket = MutableStateFlow(0L)
     private val _searchState = MutableStateFlow(DictionarySearchUiState())
@@ -119,7 +113,14 @@ class AppViewModel(
 
     init {
         viewModelScope.launch {
-            searchFilters.collect { filters -> _searchState.update { it.copy(filters = filters) } }
+            searchFilters.collect { filters ->
+                _searchState.update {
+                    if (it.filters == filters) it else it.copy(
+                        filters = filters, results = emptyList(), isLoading = filters.isActive,
+                        hasSearched = false, errorMessage = null, canLoadMore = false, isLoadingMore = false
+                    )
+                }
+            }
         }
         observeSearch()
     }
@@ -131,41 +132,88 @@ class AppViewModel(
                 .debounce(SEARCH_DEBOUNCE_MILLIS)
                 .distinctUntilChanged()
                 // A newer query cancels the previous one instead of queueing it.
-                .flatMapLatest { (filters, _) -> searchFlow(filters) }
-                .catch { error ->
-                    _searchState.update {
-                        it.copy(
-                            isLoading = false,
-                            hasSearched = true,
-                            errorMessage = error.message ?: SEARCH_ERROR_MESSAGE
-                        )
+                .flatMapLatest { (filters, _) ->
+                    searchFlow(filters).catch { error ->
+                        emit(SearchOutcome(filters, hasSearched = true, errorMessage = error.message ?: SEARCH_ERROR_MESSAGE))
                     }
                 }
                 .collect { outcome ->
                     _searchState.update {
+                        if (outcome.filters != searchFilters.value || it.filters != outcome.filters) return@update it
                         it.copy(
                             isLoading = outcome.isLoading,
                             results = if (outcome.isLoading) it.results else outcome.results,
                             hasSearched = outcome.hasSearched,
-                            errorMessage = outcome.errorMessage
+                            errorMessage = outcome.errorMessage,
+                            canLoadMore = !outcome.isLoading && outcome.results.size >= SearchDictionaryUseCase.PAGE_SIZE,
+                            isLoadingMore = false
                         )
                     }
                 }
         }
     }
 
+    /** Appends the next page of the current search; called when the list nears its end. */
+    fun loadMoreSearchResults() {
+        val state = _searchState.value
+        if (!state.canLoadMore || state.isLoadingMore || state.isLoading) return
+        val filters = state.filters
+        val offset = state.results.size
+        _searchState.update { it.copy(isLoadingMore = true) }
+        viewModelScope.launch {
+            var pageError: String? = null
+            val page = try {
+                withContext(Dispatchers.IO) {
+                    searchPage(filters, offset)
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                pageError = error.message ?: SEARCH_ERROR_MESSAGE
+                null
+            }
+            _searchState.update { current ->
+                // The user changed the query or filters meanwhile: drop this page.
+                if (current.filters != filters || current.results.size != offset) {
+                    return@update current.copy(isLoadingMore = false)
+                }
+                if (page == null) return@update current.copy(isLoadingMore = false, errorMessage = pageError)
+                val known = current.results.mapTo(HashSet()) { it.id }
+                current.copy(
+                    results = current.results + page.filter { it.id !in known },
+                    canLoadMore = page.size >= SearchDictionaryUseCase.PAGE_SIZE,
+                    isLoadingMore = false
+                )
+            }
+        }
+    }
+
     private fun searchFlow(filters: DictionarySearchFilters): Flow<SearchOutcome> = flow {
         if (!filters.isActive) {
-            emit(SearchOutcome())
+            emit(SearchOutcome(filters))
             return@flow
         }
-        emit(SearchOutcome(isLoading = true))
-        val sourceLanguage = if (filters.reverseTranslation) null else filters.language
-        val rows = searchDictionary(filters.query, sourceLanguage, filters.partOfSpeech)
-        emit(SearchOutcome(hasSearched = true, results = rows))
+        emit(SearchOutcome(filters, isLoading = true))
+        val rows = searchPage(filters, 0)
+        emit(SearchOutcome(filters, hasSearched = true, results = rows))
     }.flowOn(Dispatchers.IO)
 
+    private suspend fun searchPage(filters: DictionarySearchFilters, offset: Int): List<DictionaryEntryEntity> {
+        val source = filters.language
+        val target = filters.targetLanguage
+        return if (source != null && target != null) {
+            dictionary.searchDirected(filters.query, source, target, SearchDictionaryUseCase.PAGE_SIZE, offset)
+        } else {
+            searchDictionary(filters.query, if (filters.reverseTranslation) null else source, filters.partOfSpeech, offset = offset)
+        }
+    }
+
+    fun setSearchDirection(source: Language, target: Language) {
+        searchFilters.update { it.copy(language = source, targetLanguage = target, partOfSpeech = null, reverseTranslation = false) }
+    }
+
     private class SearchOutcome(
+        val filters: DictionarySearchFilters,
         val isLoading: Boolean = false,
         val results: List<DictionaryEntryEntity> = emptyList(),
         val hasSearched: Boolean = false,
@@ -175,6 +223,9 @@ class AppViewModel(
     fun setSearchQuery(query: String) {
         searchFilters.update { it.copy(query = query) }
     }
+
+    fun setDictionaryLanguages(source: Language, target: Language) =
+        viewModelScope.launch { preferencesRepository.setDictionaryLanguages(source, target) }
 
     /**
      * Applies navigation arguments once. Re-applying after a configuration
@@ -217,8 +268,10 @@ class AppViewModel(
     fun recordSearch(query: String, language: String) =
         viewModelScope.launch { dictionary.recordSearch(query, language) }
     fun clearSearchHistory() = viewModelScope.launch { dictionary.clearSearchHistory() }
-    suspend fun getRandomWord(): DictionaryEntryEntity? = dictionary.getRandomWord()
+    suspend fun getWordOfDay(source: Language, target: Language, dayKey: Int): DictionaryEntryEntity? =
+        withContext(Dispatchers.IO) { dictionary.getWordOfDay(source, target, dayKey) }
     suspend fun getFullDetail(id: Long) = dictionary.getFullDetail(id)
+    suspend fun refreshFullDetail(id: Long) = dictionary.refreshDetail(id)
     suspend fun getTopicById(id: Long) = learning.getTopicById(id)
     fun getWordsForTopic(id: Long) = learning.getWordsForTopic(id)
     suspend fun getConversationById(id: Long) = learning.getConversationById(id)
@@ -231,9 +284,6 @@ class AppViewModel(
     fun getWordsByStatus(status: LearningStatus) = vocabulary.getWordsByStatus(status)
     fun getDueWords() = vocabulary.getDueWords()
     fun getWordsCount() = dictionary.getEntryCountFlow()
-    fun importFromUri(uri: Uri) =
-        viewModelScope.launch { dictionaryImport.importFromUri(uri) }
-    fun sampleJsonlTemplate() = dictionaryImport.getSampleJsonlTemplate()
 
     suspend fun saveWord(
         entry: DictionaryEntryEntity,
@@ -278,6 +328,8 @@ class AppViewModel(
         viewModelScope.launch { preferencesRepository.setDailyGoalWords(goal) }
     fun setDarkMode(enabled: Boolean?) =
         viewModelScope.launch { preferencesRepository.setDarkMode(enabled) }
+    fun setOnboardingCompleted(completed: Boolean) =
+        viewModelScope.launch { preferencesRepository.setOnboardingCompleted(completed) }
 
     // Curriculum Methods
     fun getCurriculumTopics(language: String, level: String) =
@@ -319,7 +371,6 @@ class AppViewModel(
         private val vocabulary: VocabularyRepository,
         private val learning: LearningRepository,
         private val preferences: PreferenceRepository,
-        private val importManager: DictionaryImportRepository,
         private val curriculum: CurriculumRepository? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -332,7 +383,6 @@ class AppViewModel(
                 vocabulary,
                 learning,
                 preferences,
-                importManager,
                 curriculum
             ) as T
         }

@@ -99,13 +99,15 @@ LexiTrio/
 │
 ├── backend/                              # Django REST API Backend
 │   ├── config/                           # Django Settings, URLs, Celery & WSGI Configuration
-│   ├── learning/                         # Dictionary, Search, Curriculum, Sync & FTS App
-│   │   ├── management/commands/          # CLI Commands (import_curriculum, rebuild_search_index, etc.)
-│   │   ├── migrations/                   # PostgreSQL Migration Files
-│   │   ├── models.py                     # Database Schema (Dictionary, Grammar, Progress)
-│   │   ├── search.py                     # High-Performance FTS Search Services
-│   │   └── views.py                      # REST Endpoints
-│   ├── translation/                      # Dictionary Translation Pipeline & External Providers
+│   ├── apps/                             # One Django app per feature (see docs/backend-architecture.md)
+│   │   ├── dictionary/                   #   entries (models, browse) · search (FTS, ranking) · sync (delta sync, details)
+│   │   ├── catalog/                      #   topics · conversations · grammar · quiz · snapshot
+│   │   ├── curriculum/                   #   content (courses, lessons, exercises) · progress (learner progress)
+│   │   ├── userdata/                     #   saved words, collections, attempts, preferences
+│   │   ├── syncing/ accounts/ translation/ maintenance/
+│   │   └── learning/                     #   Legacy schema history only (migrations); no code
+│   ├── shared/                           # Cross-app helpers (pagination, serializers base, text, HTTP)
+│   ├── tests/                            # API contract and architecture guard tests
 │   └── load_testing/                     # Locust Performance Testing Scripts
 │
 ├── nginx/                                # Production Nginx Reverse Proxy Config
@@ -163,14 +165,12 @@ Every topic includes 15 interactive practice exercises covering 5 distinct activ
 * **Phonetics:** Full IPA (International Phonetic Alphabet) support for English and Russian headwords.
 * **Metadata:** CEFR level tags (A1-C2), part of speech, frequency ranking, plural forms, irregular verb forms, collocations, and example usage sentences.
 
-### **How Search Works (Dual-Engine Ranking)**
-LexiTrio uses a specialized search system designed for instant response (< 5ms on device):
+### **How Search Works**
+Choose two different languages (EN, RU, UZ) on the home or dictionary screen. Tap the arrows to reverse the direction, or tap either language to choose the third. The selection is saved on the device.
 
-1. **Exact Headword Match:** Matches exact target headword (Highest Priority).
-2. **Headword Prefix Match:** Matches words starting with the user query.
-3. **FTS Token Match (BM25 Ranking):** SQLite FTS5 / PostgreSQL `tsvector` token match against definitions, primary meanings, and target translations.
-4. **Substring Fallback:** Substring search for partial query matching.
-5. **UI Text Highlighting:** Matched query terms are dynamically highlighted in search results using `HighlightedSearchText`.
+The dictionary searches the selected source language in the local FTS index and displays only entries with a translation in the chosen target language. While the offline catalog is downloading, matching server results can supplement the first page. Search results and word details show the selected language pair.
+
+The home screen's word of the day also uses that pair and changes when the pair is changed. Voice and pronunciation settings are available from Settings. Manual dictionary file import (JSON/JSONL/CSV) was removed; the dictionary is populated solely via automatic background synchronization.
 
 ---
 
@@ -184,7 +184,7 @@ LexiTrio uses a specialized search system designed for instant response (< 5ms o
 [Dictionary Results] ──► Instant Ranked FTS Results with Highlighted Search Terms
       │
       ▼
-[Word Detail Screen] ──► View IPA, Meanings (RU/UZ), Part of Speech, Examples
+[Word Detail Screen] ──► View IPA, meanings, and examples for the selected pair
       │
       ▼
 [Tap Speaker Icon] ──► SpeakDictionaryWordUseCase

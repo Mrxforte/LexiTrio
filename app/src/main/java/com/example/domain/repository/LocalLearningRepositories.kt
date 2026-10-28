@@ -3,14 +3,25 @@ package com.example.domain.repository
 import com.example.data.model.*
 import com.example.data.preferences.AppPreferences
 import com.example.data.tts.TtsEngineType
-import com.example.domain.model.ImportProgress
 import kotlinx.coroutines.flow.Flow
 
 interface DictionaryRepository {
     fun getEntryCountFlow(): Flow<Int>
-    suspend fun search(query: String, sourceLanguage: Language?, partOfSpeech: String? = null, limit: Int = 60): List<DictionaryEntryEntity>
+    suspend fun search(
+        query: String,
+        sourceLanguage: Language?,
+        partOfSpeech: String? = null,
+        limit: Int = 60,
+        offset: Int = 0
+    ): List<DictionaryEntryEntity>
+    suspend fun searchDirected(
+        query: String, source: Language, target: Language, limit: Int = 50, offset: Int = 0
+    ): List<DictionaryEntryEntity>
     suspend fun getFullDetail(id: Long): FullDictionaryDetail?
-    suspend fun getRandomWord(): DictionaryEntryEntity?
+
+    /** Revalidates lazily loaded detail content; returns the updated detail, or null if nothing changed. */
+    suspend fun refreshDetail(id: Long): FullDictionaryDetail? = null
+    suspend fun getWordOfDay(source: Language, target: Language, dayKey: Int): DictionaryEntryEntity?
     fun getRecentSearches(): Flow<List<SearchHistoryEntity>>
     suspend fun recordSearch(query: String, language: String)
     suspend fun clearSearchHistory()
@@ -48,6 +59,7 @@ interface PreferenceRepository {
     val preferences: Flow<AppPreferences>
     suspend fun setAppLanguage(language: Language)
     suspend fun setSearchSourceLanguage(language: Language)
+    suspend fun setDictionaryLanguages(source: Language, target: Language)
     suspend fun setSpeechRate(rate: Float)
     suspend fun setSpeechPitch(pitch: Float)
     suspend fun setSelectedVoiceId(voiceId: String)
@@ -55,10 +67,5 @@ interface PreferenceRepository {
     suspend fun setAutoPlayAudio(enabled: Boolean)
     suspend fun setDailyGoalWords(goal: Int)
     suspend fun setDarkMode(darkMode: Boolean?)
-}
-
-interface DictionaryImportRepository {
-    val progress: Flow<ImportProgress>
-    suspend fun importFromUri(uri: android.net.Uri): Result<Int>
-    fun getSampleJsonlTemplate(): String
+    suspend fun setOnboardingCompleted(completed: Boolean)
 }

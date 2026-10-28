@@ -7,12 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Style
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
@@ -46,8 +49,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.data.database.LexiTrioDatabase
+import com.example.data.cache.DetailCacheManager
+import com.example.data.cloud.AdaptivePrefetchScheduler
+import com.example.data.cloud.CloudApiFactory
+import com.example.data.cloud.DictionaryDownloadScheduler
 import com.example.data.cloud.SyncScheduler
-import com.example.data.importer.DictionaryImportManager
+import com.example.data.cloud.SyncStateStore
 import com.example.data.model.CurriculumCoverageReport
 import com.example.data.model.CurriculumTopicEntity
 import com.example.data.model.GrammarTableEntity
@@ -79,12 +86,15 @@ import com.example.ui.screens.quiz.QuizSetupScreen
 import com.example.ui.screens.settings.AppSettingsScreen
 import com.example.presentation.cloud.CloudSyncScreen
 import com.example.presentation.AppViewModel
-import com.example.ui.screens.settings.DataImportScreen
 import com.example.ui.screens.settings.VoiceSettingsScreen
 import com.example.ui.screens.topics.TopicDetailScreen
 import com.example.ui.screens.topics.TopicsScreen
 import com.example.ui.screens.vocabulary.FlashcardStudyScreen
 import com.example.ui.screens.vocabulary.VocabularyScreen
+import com.example.ui.screens.onboarding.ElingoSplashScreen
+import com.example.ui.screens.onboarding.ElingoWelcomeScreen
+import com.example.ui.screens.onboarding.ElingoAppLanguageScreen
+import com.example.ui.screens.onboarding.ElingoTargetLanguageScreen
 import com.example.ui.theme.LexiTrioTheme
 
 class MainActivity : ComponentActivity() {
@@ -95,9 +105,19 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         SyncScheduler.schedule(applicationContext)
+        DictionaryDownloadScheduler.schedule(applicationContext)
+        AdaptivePrefetchScheduler.schedule(applicationContext)
 
         val database = LexiTrioDatabase.getInstance(this)
-        val dictionaryRepository = DictionaryRepository(database.dictionaryDao())
+        // Without a configured API (e.g. a release build missing its URL) the app stays fully offline.
+        val cloudApi = runCatching { CloudApiFactory.create(applicationContext) }.getOrNull()
+        val syncState = SyncStateStore(applicationContext)
+        val dictionaryRepository = DictionaryRepository(
+            database.dictionaryDao(),
+            cloudApi,
+            isCatalogComplete = { syncState.isDictionaryComplete },
+            detailCache = DetailCacheManager(database, cloudApi)
+        )
         val vocabularyRepository = VocabularyRepository(database.vocabularyDao())
         val learningRepository = LearningRepository(
             database.learningDao(),
@@ -106,7 +126,6 @@ class MainActivity : ComponentActivity() {
         )
         val curriculumRepository = CurriculumRepositoryImpl(database.curriculumDao())
         val userPreferencesRepository = UserPreferencesRepository(this)
-        val importManager = DictionaryImportManager(this, database.dictionaryDao())
         ttsManager = TtsManager(this)
         val appViewModel = ViewModelProvider(
             this,
@@ -115,7 +134,6 @@ class MainActivity : ComponentActivity() {
                 vocabularyRepository,
                 learningRepository,
                 userPreferencesRepository,
-                importManager,
                 curriculumRepository
             )
         )[AppViewModel::class.java]
@@ -147,6 +165,7 @@ fun MainAppContent(
     ttsManager: TtsManager,
     preferences: AppPreferences
 ) {
+    var onboardingNative by rememberSaveable { mutableStateOf(preferences.searchTargetLanguage.code) }
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -156,7 +175,7 @@ fun MainAppContent(
         Triple(Screen.Dictionary.route, "Lug‘at", Icons.Default.Book),
         Triple(Screen.Curriculum.route, "Dastur", Icons.Default.School),
         Triple(Screen.Vocabulary.route, "Yodlash", Icons.Default.Style),
-        Triple(Screen.ProgressStats.route, "O‘sish", Icons.Default.EmojiEvents)
+        Triple(Screen.ProgressStats.route, "Profil", Icons.Default.Person)
     )
 
     val showBottomBar = bottomNavScreens.any { currentRoute?.startsWith(it.first.substringBefore("?")) == true }
@@ -209,13 +228,91 @@ fun MainAppContent(
                 }
             }
         },
+        // Every screen owns its status-bar inset; the host only reserves room for the bottom bar.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = Screen.Splash.route,
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
+            // Elingo Screen 1: Splash Screen
+            composable(Screen.Splash.route) {
+                ElingoSplashScreen(
+                    onSplashFinished = {
+                        val destination = if (preferences.isOnboardingCompleted) {
+                            Screen.Home.route
+                        } else {
+                            Screen.OnboardingWelcome.route
+                        }
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Elingo Screen 2: Welcome / Mascot Screen
+            composable(Screen.OnboardingWelcome.route) {
+                ElingoWelcomeScreen(
+                    onGetStartedClick = {
+                        navController.navigate(Screen.OnboardingAppLanguage.route)
+                    },
+                    onAlreadyHaveAccountClick = {
+                        viewModel.setOnboardingCompleted(true)
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.OnboardingWelcome.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Elingo Screen 3: App & Native Language Selection
+            composable(Screen.OnboardingAppLanguage.route) {
+                ElingoAppLanguageScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onContinueClick = { appLangCode, nativeLangCode ->
+                        onboardingNative = nativeLangCode
+                        val selectedAppLang = when (appLangCode.lowercase()) {
+                            "en" -> Language.ENGLISH
+                            "ru" -> Language.RUSSIAN
+                            "uz" -> Language.UZBEK_LATIN
+                            else -> Language.ENGLISH
+                        }
+                        viewModel.setAppLanguage(selectedAppLang)
+                        navController.navigate(Screen.OnboardingTargetLanguage.route)
+                    }
+                )
+            }
+
+            // Elingo Screen 4: Target Learning Language Selection
+            composable(Screen.OnboardingTargetLanguage.route) {
+                ElingoTargetLanguageScreen(
+                    onBackClick = { navController.popBackStack() },
+                    nativeLangCode = onboardingNative,
+                    onContinueClick = { targetLangCode ->
+                        val selectedTargetLang = when (targetLangCode.lowercase()) {
+                            "en" -> Language.ENGLISH
+                            "ru" -> Language.RUSSIAN
+                            "uz" -> Language.UZBEK_LATIN
+                            else -> Language.ENGLISH
+                        }
+                        val native = Language.fromCode(onboardingNative)
+                        val target = if (native.code.substringBefore('-') == selectedTargetLang.code.substringBefore('-')) {
+                            if (selectedTargetLang == Language.ENGLISH) Language.UZBEK_LATIN else Language.ENGLISH
+                        } else native
+                        viewModel.setDictionaryLanguages(selectedTargetLang, target)
+                        viewModel.setOnboardingCompleted(true)
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.OnboardingWelcome.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             // Home
             composable(Screen.Home.route) {
                 HomeScreen(
@@ -239,8 +336,6 @@ fun MainAppContent(
                         navController.navigate(Screen.FlashcardStudy.createRoute(mode))
                     },
                     onNavigateToCurriculum = { navController.navigate(Screen.Curriculum.route) },
-                    onNavigateToVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },
-                    onNavigateToDataImport = { navController.navigate(Screen.DataImport.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                 )
             }
@@ -480,12 +575,15 @@ fun MainAppContent(
                 )
             }
 
-            // Progress Stats
+            // Profile & Progress Stats
             composable(Screen.ProgressStats.route) {
                 ProgressScreen(
                     viewModel = viewModel,
                     preferences = preferences,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },
+                    onNavigateToCloudSync = { navController.navigate(Screen.CloudSync.route) }
                 )
             }
 
@@ -499,14 +597,6 @@ fun MainAppContent(
                 )
             }
 
-            // Data Import
-            composable(Screen.DataImport.route) {
-                DataImportScreen(
-                    viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-
             // App Settings
             composable(Screen.Settings.route) {
                 AppSettingsScreen(
@@ -514,8 +604,8 @@ fun MainAppContent(
                     preferences = preferences,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToVoiceSettings = { navController.navigate(Screen.VoiceSettings.route) },
-                    onNavigateToDataImport = { navController.navigate(Screen.DataImport.route) },
-                    onNavigateToCloudSync = { navController.navigate(Screen.CloudSync.route) }
+                    onNavigateToCloudSync = { navController.navigate(Screen.CloudSync.route) },
+                    onNavigateToOnboarding = { navController.navigate(Screen.Splash.route) }
                 )
             }
 

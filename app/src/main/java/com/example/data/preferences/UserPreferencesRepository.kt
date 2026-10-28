@@ -28,7 +28,9 @@ data class AppPreferences(
     val autoPlayAudio: Boolean = false,
     val dailyGoalWords: Int = 10,
     val isDarkMode: Boolean? = null,
-    val lastUpdatedTimestamp: Long = 0L
+    val lastUpdatedTimestamp: Long = 0L,
+    val isOnboardingCompleted: Boolean = false,
+    val searchTargetLanguage: Language = Language.UZBEK_LATIN
 )
 
 class UserPreferencesRepository(private val context: Context) : PreferenceRepository {
@@ -36,6 +38,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
     private object Keys {
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val SEARCH_SOURCE_LANG = stringPreferencesKey("search_source_lang")
+        val SEARCH_TARGET_LANG = stringPreferencesKey("search_target_lang")
         val SPEECH_RATE = floatPreferencesKey("speech_rate")
         val SPEECH_PITCH = floatPreferencesKey("speech_pitch")
         val SELECTED_VOICE_ID = stringPreferencesKey("selected_voice_id")
@@ -44,6 +47,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
         val DAILY_GOAL_WORDS = intPreferencesKey("daily_goal_words")
         val DARK_MODE = stringPreferencesKey("dark_mode")
         val LAST_UPDATED_TIMESTAMP = longPreferencesKey("preferences_last_updated_timestamp")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
     override val preferences: Flow<AppPreferences> = context.dataStore.data.map { prefs ->
@@ -55,6 +59,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
         AppPreferences(
             appLanguage = Language.fromCode(langCode),
             searchSourceLanguage = Language.fromCode(searchLangCode),
+            searchTargetLanguage = Language.fromCode(prefs[Keys.SEARCH_TARGET_LANG] ?: "uz"),
             speechRate = prefs[Keys.SPEECH_RATE] ?: 1.0f,
             speechPitch = prefs[Keys.SPEECH_PITCH] ?: 1.0f,
             selectedVoiceId = prefs[Keys.SELECTED_VOICE_ID] ?: "",
@@ -68,7 +73,8 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
                 "false" -> false
                 else -> null
             },
-            lastUpdatedTimestamp = prefs[Keys.LAST_UPDATED_TIMESTAMP] ?: 0L
+            lastUpdatedTimestamp = prefs[Keys.LAST_UPDATED_TIMESTAMP] ?: 0L,
+            isOnboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: false
         )
     }
 
@@ -82,6 +88,15 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
     override suspend fun setSearchSourceLanguage(language: Language) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SEARCH_SOURCE_LANG] = language.code
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
+        }
+    }
+
+    override suspend fun setDictionaryLanguages(source: Language, target: Language) {
+        require(source.code.substringBefore('-') != target.code.substringBefore('-'))
+        context.dataStore.edit { prefs ->
+            prefs[Keys.SEARCH_SOURCE_LANG] = source.code
+            prefs[Keys.SEARCH_TARGET_LANG] = target.code
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
         }
     }
@@ -139,6 +154,13 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
         }
     }
 
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ONBOARDING_COMPLETED] = completed
+            prefs[Keys.LAST_UPDATED_TIMESTAMP] = System.currentTimeMillis()
+        }
+    }
+
     suspend fun replaceWith(preferences: AppPreferences) {
         context.dataStore.edit { prefs ->
             prefs[Keys.APP_LANGUAGE] = preferences.appLanguage.code
@@ -149,6 +171,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
             prefs[Keys.AUTO_PLAY_AUDIO] = preferences.autoPlayAudio
             prefs[Keys.DAILY_GOAL_WORDS] = preferences.dailyGoalWords
             prefs[Keys.LAST_UPDATED_TIMESTAMP] = preferences.lastUpdatedTimestamp
+            prefs[Keys.ONBOARDING_COMPLETED] = preferences.isOnboardingCompleted
             if (preferences.isDarkMode == null) {
                 prefs.remove(Keys.DARK_MODE)
             } else {

@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Style
@@ -43,8 +42,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,16 +60,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.DictionaryEntryEntity
 import com.example.data.model.Language
+import com.example.data.model.DictionaryDirection
 import com.example.data.model.UserProgressEntity
+import com.example.data.model.textIn
 import com.example.data.preferences.AppPreferences
 import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.DictionarySearchBar
 import com.example.ui.components.LanguageDirectionSelector
-import com.example.ui.components.StreakProgressHeader
+import com.example.ui.components.LearningProgressHeader
 import com.example.ui.components.TopicCard
 import com.example.ui.components.WordOfTheDayCard
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,8 +90,6 @@ fun HomeScreen(
     onNavigateToQuiz: () -> Unit,
     onNavigateToFlashcards: (mode: String) -> Unit,
     onNavigateToCurriculum: () -> Unit = {},
-    onNavigateToVoiceSettings: () -> Unit,
-    onNavigateToDataImport: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -98,75 +97,32 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var searchQuery by remember { mutableStateOf("") }
-    var sourceLanguage by remember { mutableStateOf<Language?>(preferences.searchSourceLanguage) }
-    var targetLanguage by remember { mutableStateOf<Language?>(Language.UZBEK_LATIN) }
+    val direction = DictionaryDirection.from(preferences.searchSourceLanguage, preferences.searchTargetLanguage)
 
-    val totalWordsCount by viewModel.entryCount.collectAsState()
-    val userProgress by viewModel.progress.collectAsState()
-    val dueCardsCount by viewModel.dueWordsCount.collectAsState()
     val recentSearches by viewModel.recentSearches.collectAsState()
-    val topics by viewModel.topics.collectAsState()
 
-    var wordOfTheDay by remember { mutableStateOf<DictionaryEntryEntity?>(null) }
+    var wordOfTheDay by remember(direction) { mutableStateOf<DictionaryEntryEntity?>(null) }
+    var wordLoaded by remember(direction) { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        val word = viewModel.getRandomWord()
-        wordOfTheDay = word
+    LaunchedEffect(direction) {
+        while (true) {
+            wordLoaded = false
+            val today = Calendar.getInstance()
+            val dayKey = today.get(Calendar.YEAR) * 1000 + today.get(Calendar.DAY_OF_YEAR)
+            wordOfTheDay = viewModel.getWordOfDay(direction.source, direction.target, dayKey)
+            wordLoaded = true
+            val tomorrow = (today.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            delay((tomorrow.timeInMillis - System.currentTimeMillis()).coerceAtLeast(1L))
+        }
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "LexiTrio",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Text(
-                                text = "PRO",
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = onNavigateToVoiceSettings,
-                        modifier = Modifier.testTag("home_voice_settings_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.RecordVoiceOver,
-                            contentDescription = "Voice & Pronunciation Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = onNavigateToSettings,
-                        modifier = Modifier.testTag("home_settings_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
@@ -179,7 +135,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(top = 4.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Search Bar & Ingestion Counter Banner
+            // 1. Search Bar & Language Selector
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     DictionarySearchBar(
@@ -187,75 +143,27 @@ fun HomeScreen(
                         onQueryChange = { q ->
                             searchQuery = q
                             if (q.isNotBlank()) {
-                                onNavigateToSearch(q, sourceLanguage?.code ?: "")
+                                onNavigateToSearch(q, direction.source.code)
                             }
                         },
                         placeholder = when (preferences.appLanguage) {
                             Language.ENGLISH -> "Search 100,000+ words or translations..."
                             Language.RUSSIAN -> "Поиск среди 100 000+ слов или переводов..."
                             else -> "100 000+ so‘z yoki tarjimalarni qidiring..."
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     LanguageDirectionSelector(
-                        selectedSource = sourceLanguage,
-                        selectedTarget = targetLanguage,
-                        onSourceSelect = { sourceLanguage = it },
-                        onTargetSelect = { targetLanguage = it },
+                        selectedSource = direction.source,
+                        selectedTarget = direction.target,
+                        onSourceSelect = { it?.let { language -> direction.withSource(language).let { pair -> viewModel.setDictionaryLanguages(pair.source, pair.target) } } },
+                        onTargetSelect = { it?.let { language -> direction.withTarget(language).let { pair -> viewModel.setDictionaryLanguages(pair.source, pair.target) } } },
                         onSwap = {
-                            val temp = sourceLanguage
-                            sourceLanguage = targetLanguage
-                            targetLanguage = temp
+                            viewModel.setDictionaryLanguages(direction.target, direction.source)
                         }
                     )
-
-                    // Data Ingestion & Real Corpus Status Badge
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigateToDataImport() }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.CloudDownload,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "$totalWordsCount ta tasdiqlangan lug‘at birligi",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            Text(
-                                text = "Import qilish →",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
                 }
-            }
-
-            // 2. Learning Streak & Spaced Repetition (SM-2) Header
-            item {
-                StreakProgressHeader(
-                    progress = userProgress ?: UserProgressEntity(),
-                    dueCardsCount = dueCardsCount,
-                    onStartReview = { onNavigateToFlashcards("due") }
-                )
             }
 
             // 3. Word of the Day
@@ -263,16 +171,28 @@ fun HomeScreen(
                 wordOfTheDay?.let { word ->
                     WordOfTheDayCard(
                         entry = word,
+                        direction = direction,
                         onClick = { onNavigateToWordDetail(word.id) },
                         onAudioClick = {
-                            ttsManager.speak(word.headword, word.language)
+                            ttsManager.speak(word.textIn(direction.source), direction.source.code)
                         },
                         onSaveClick = {
                             coroutineScope.launch {
                                 viewModel.saveWord(word, isFavorite = true)
-                                snackbarHostState.showSnackbar("«${word.headword}» saqlanganlarga qo‘shildi")
+                                snackbarHostState.showSnackbar("«${word.textIn(direction.source)}» saqlanganlarga qo‘shildi")
                             }
                         }
+                    )
+                }
+                if (wordOfTheDay == null && wordLoaded) {
+                    Text(
+                        text = when (preferences.appLanguage) {
+                            Language.ENGLISH -> "No word of the day is available for this language pair."
+                            Language.RUSSIAN -> "Для этой языковой пары слово дня недоступно."
+                            else -> "Bu til juftligi uchun kun so‘zi mavjud emas."
+                        },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
@@ -295,7 +215,7 @@ fun HomeScreen(
                             icon = Icons.Default.Book,
                             iconContainerColor = Color(0xFFE3F2FD),
                             iconColor = MaterialTheme.colorScheme.primary,
-                            onClick = { onNavigateToSearch("", sourceLanguage?.code ?: "") },
+                            onClick = { onNavigateToSearch("", direction.source.code) },
                             modifier = Modifier.weight(1f)
                         )
                         QuickActionCard(
@@ -400,7 +320,7 @@ fun HomeScreen(
                                     color = MaterialTheme.colorScheme.surface,
                                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                     modifier = Modifier.clickable {
-                                        onNavigateToSearch(item.query, item.language)
+                                        onNavigateToSearch(item.query, direction.source.code)
                                     }
                                 ) {
                                     Text(
@@ -410,39 +330,6 @@ fun HomeScreen(
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                     )
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 6. Featured Topic Collections
-            if (topics.isNotEmpty()) {
-                item {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Mavzuli lug‘at to‘plamlari",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            TextButton(onClick = onNavigateToTopics) {
-                                Text("Barchasi (${topics.size}) →", style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            topics.take(4).forEach { topic ->
-                                TopicCard(
-                                    topic = topic,
-                                    lang = preferences.appLanguage,
-                                    onClick = { onNavigateToTopicDetail(topic.id) }
-                                )
                             }
                         }
                     }

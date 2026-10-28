@@ -32,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,21 +62,7 @@ fun CurriculumScreen(
         listOf("All", "A1", "A2", "B1", "B2")
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Structured Curriculum") },
-                actions = {
-                    IconButton(onClick = onOpenTestBank) {
-                        Icon(Icons.Default.School, contentDescription = "Test Bank")
-                    }
-                    IconButton(onClick = onOpenDashboard) {
-                        Icon(Icons.Default.Dashboard, contentDescription = "Inventory Dashboard")
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    Scaffold { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -87,19 +72,27 @@ fun CurriculumScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
                     selected = selectedLanguage == "en",
                     onClick = { onLanguageSelected("en") },
-                    label = { Text("English (A1-C2)") }
+                    label = { Text("English") }
                 )
                 FilterChip(
                     selected = selectedLanguage == "ru",
                     onClick = { onLanguageSelected("ru") },
-                    label = { Text("Russian (Beginner-Adv)") }
+                    label = { Text("Russian") }
                 )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = onOpenTestBank) {
+                    Icon(Icons.Default.School, contentDescription = "Test Bank")
+                }
+                IconButton(onClick = onOpenDashboard) {
+                    Icon(Icons.Default.Dashboard, contentDescription = "Inventory Dashboard")
+                }
             }
 
             // CEFR Level Scrollable Tabs

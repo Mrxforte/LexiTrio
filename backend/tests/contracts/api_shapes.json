@@ -1,0 +1,878 @@
+{
+ "/api/v1/catalog/": [
+  200,
+  {
+   "conversationTurns": [
+    {
+     "conversationId": "int",
+     "culturalNote": "str",
+     "id": "int",
+     "isSpeakerOne": "bool",
+     "speakerRole": "str",
+     "textEn": "str",
+     "textRu": "str",
+     "textUz": "str",
+     "turnIndex": "int"
+    }
+   ],
+   "conversations": [
+    {
+     "category": "str",
+     "difficulty": "str",
+     "iconName": "str",
+     "id": "int",
+     "situationEn": "str",
+     "situationRu": "str",
+     "situationUzLatn": "str",
+     "speakerOneName": "str",
+     "speakerTwoName": "str",
+     "titleEn": "str",
+     "titleRu": "str",
+     "titleUzCyrl": "str",
+     "titleUzLatn": "str"
+    }
+   ],
+   "dictionary": {
+    "entries": "int",
+    "maxEntryId": "int",
+    "missingRussian": "int",
+    "missingUzbek": "int"
+   },
+   "grammarLessons": [
+    {
+     "category": "str",
+     "examplesJson": "str",
+     "id": "int",
+     "level": "str",
+     "ruleDetailsJson": "str",
+     "summaryEn": "str",
+     "summaryRu": "str",
+     "summaryUzLatn": "str",
+     "titleEn": "str",
+     "titleRu": "str",
+     "titleUzCyrl": "str",
+     "titleUzLatn": "str"
+    }
+   ],
+   "quizQuestions": [
+    {
+     "category": "str",
+     "correctAnswer": "str",
+     "difficulty": "str",
+     "explanation": "str",
+     "id": "int",
+     "optionA": "str",
+     "optionB": "str",
+     "optionC": "str",
+     "optionD": "str",
+     "promptAudioText": "str",
+     "promptLanguage": "str",
+     "questionText": "str",
+     "type": "str"
+    }
+   ],
+   "serverTime": "str",
+   "topicWords": [
+    {
+     "id": "int",
+     "topicId": "int",
+     "wordId": "int"
+    }
+   ],
+   "topics": [
+    {
+     "category": "str",
+     "cefrLevel": "str",
+     "descriptionEn": "str",
+     "descriptionRu": "str",
+     "descriptionUzLatn": "str",
+     "estimatedMinutes": "int",
+     "iconName": "str",
+     "id": "int",
+     "titleEn": "str",
+     "titleRu": "str",
+     "titleUzCyrl": "str",
+     "titleUzLatn": "str",
+     "totalWords": "int",
+     "words": [
+      "int"
+     ]
+    }
+   ]
+  }
+ ],
+ "/api/v1/conversation-turns/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "conversationId": "int",
+     "culturalNote": "str",
+     "id": "int",
+     "isSpeakerOne": "bool",
+     "speakerRole": "str",
+     "textEn": "str",
+     "textRu": "str",
+     "textUz": "str",
+     "turnIndex": "int"
+    }
+   ]
+  }
+ ],
+ "/api/v1/conversations/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "category": "str",
+     "difficulty": "str",
+     "iconName": "str",
+     "id": "int",
+     "situationEn": "str",
+     "situationRu": "str",
+     "situationUzLatn": "str",
+     "speakerOneName": "str",
+     "speakerTwoName": "str",
+     "titleEn": "str",
+     "titleRu": "str",
+     "titleUzCyrl": "str",
+     "titleUzLatn": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/curriculum/courses/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": []
+  }
+ ],
+ "/api/v1/curriculum/inventory/": [
+  200,
+  {
+   "completionPercentage": {
+    "enExercises": "float",
+    "enTests": "float",
+    "enTopics": "float",
+    "overall": "float",
+    "ruExercises": "float",
+    "ruTests": "float",
+    "ruTopics": "float"
+   },
+   "duplicates": "int",
+   "generated": {
+    "enExercises": "int",
+    "enTests": "int",
+    "enTopics": "int",
+    "ruExercises": "int",
+    "ruTests": "int",
+    "ruTopics": "int",
+    "total": "int"
+   },
+   "published": {
+    "enExercises": "int",
+    "enTests": "int",
+    "enTopics": "int",
+    "ruExercises": "int",
+    "ruTests": "int",
+    "ruTopics": "int",
+    "total": "int"
+   },
+   "target": {
+    "en_exercises": "int",
+    "en_tests": "int",
+    "en_topics": "int",
+    "ru_exercises": "int",
+    "ru_tests": "int",
+    "ru_topics": "int",
+    "total_units": "int"
+   },
+   "validationFailures": "int"
+  }
+ ],
+ "/api/v1/curriculum/mistakes/": [
+  401,
+  {
+   "detail": "str"
+  }
+ ],
+ "/api/v1/curriculum/progress/": [
+  401,
+  {
+   "detail": "str"
+  }
+ ],
+ "/api/v1/curriculum/topics/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": []
+  }
+ ],
+ "/api/v1/dictionary/collocations/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "entryId": "int",
+     "expression": "str",
+     "id": "int",
+     "translationRu": "str",
+     "translationUz": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/details/?ids={id}": [
+  200,
+  {
+   "collocations": [
+    {
+     "entryId": "int",
+     "expression": "str",
+     "id": "int",
+     "translationRu": "str",
+     "translationUz": "str"
+    }
+   ],
+   "entries": [
+    {
+     "alternativeSpellings": "str",
+     "article": "str",
+     "cefrLevel": "str",
+     "comparativeForm": "str",
+     "etymology": "str",
+     "frequencyRank": "int",
+     "headword": "str",
+     "headwordNormalized": "str",
+     "id": "int",
+     "language": "str",
+     "lemma": "str",
+     "partOfSpeech": "str",
+     "phoneticIpa": "str",
+     "pluralForm": "str",
+     "primaryMeaningEn": "str",
+     "primaryMeaningRu": "str",
+     "primaryMeaningUz": "str",
+     "source": "str",
+     "superlativeForm": "str",
+     "transliteration": "str",
+     "updatedAt": "str",
+     "verified": "bool"
+    }
+   ],
+   "examples": [
+    {
+     "entryId": "int",
+     "id": "int",
+     "meaningId": "int",
+     "sentenceEn": "str",
+     "sentenceRu": "str",
+     "sentenceUz": "str"
+    }
+   ],
+   "forms": [
+    {
+     "entryId": "int",
+     "formType": "str",
+     "formValue": "str",
+     "id": "int"
+    }
+   ],
+   "meanings": [
+    {
+     "definitionEn": "str",
+     "definitionRu": "str",
+     "definitionUz": "str",
+     "entryId": "int",
+     "grammarNotes": "str",
+     "id": "int",
+     "register": "str",
+     "senseNumber": "int",
+     "updatedAt": "str"
+    }
+   ],
+   "missingIds": [],
+   "serverTime": "str",
+   "synonyms": [
+    {
+     "id": "int",
+     "isAntonym": "bool",
+     "meaningId": "int",
+     "word": "str"
+    }
+   ],
+   "translations": [
+    {
+     "article": "str",
+     "contextNote": "str",
+     "entryId": "int",
+     "gender": "str",
+     "id": "int",
+     "meaningId": "int",
+     "number": "str",
+     "partOfSpeech": "str",
+     "quality": "str",
+     "targetLanguage": "str",
+     "translationText": "str",
+     "transliteration": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/entries/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "alternativeSpellings": "str",
+     "article": "str",
+     "cefrLevel": "str",
+     "comparativeForm": "str",
+     "etymology": "str",
+     "frequencyRank": "int",
+     "headword": "str",
+     "headwordNormalized": "str",
+     "id": "int",
+     "language": "str",
+     "lemma": "str",
+     "partOfSpeech": "str",
+     "phoneticIpa": "str",
+     "pluralForm": "str",
+     "primaryMeaningEn": "str",
+     "primaryMeaningRu": "str",
+     "primaryMeaningUz": "str",
+     "source": "str",
+     "superlativeForm": "str",
+     "transliteration": "str",
+     "updatedAt": "str",
+     "verified": "bool"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/entries/{id}/": [
+  200,
+  {
+   "alternativeSpellings": "str",
+   "article": "str",
+   "cefrLevel": "str",
+   "comparativeForm": "str",
+   "etymology": "str",
+   "frequencyRank": "int",
+   "headword": "str",
+   "headwordNormalized": "str",
+   "id": "int",
+   "language": "str",
+   "lemma": "str",
+   "partOfSpeech": "str",
+   "phoneticIpa": "str",
+   "pluralForm": "str",
+   "primaryMeaningEn": "str",
+   "primaryMeaningRu": "str",
+   "primaryMeaningUz": "str",
+   "source": "str",
+   "superlativeForm": "str",
+   "transliteration": "str",
+   "updatedAt": "str",
+   "verified": "bool"
+  }
+ ],
+ "/api/v1/dictionary/entries/?q=apple": [
+  200,
+  {
+   "backend": "str",
+   "hasMore": "bool",
+   "next": "NoneType",
+   "page": "int",
+   "pageSize": "int",
+   "partOfSpeech": "NoneType",
+   "previous": "NoneType",
+   "query": "str",
+   "results": [
+    {
+     "alternativeSpellings": "str",
+     "article": "str",
+     "cefrLevel": "str",
+     "comparativeForm": "str",
+     "etymology": "str",
+     "frequencyRank": "int",
+     "headword": "str",
+     "headwordNormalized": "str",
+     "id": "int",
+     "language": "str",
+     "lemma": "str",
+     "partOfSpeech": "str",
+     "phoneticIpa": "str",
+     "pluralForm": "str",
+     "primaryMeaningEn": "str",
+     "primaryMeaningRu": "str",
+     "primaryMeaningUz": "str",
+     "source": "str",
+     "superlativeForm": "str",
+     "transliteration": "str",
+     "updatedAt": "str",
+     "verified": "bool"
+    }
+   ],
+   "sourceLanguage": "NoneType",
+   "targetLanguage": "NoneType",
+   "tookMs": "float"
+  }
+ ],
+ "/api/v1/dictionary/examples/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "entryId": "int",
+     "id": "int",
+     "meaningId": "int",
+     "sentenceEn": "str",
+     "sentenceRu": "str",
+     "sentenceUz": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/forms/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "entryId": "int",
+     "formType": "str",
+     "formValue": "str",
+     "id": "int"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/meanings/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "definitionEn": "str",
+     "definitionRu": "str",
+     "definitionUz": "str",
+     "entryId": "int",
+     "grammarNotes": "str",
+     "id": "int",
+     "register": "str",
+     "senseNumber": "int",
+     "updatedAt": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/search/": [
+  400,
+  {
+   "q": "str"
+  }
+ ],
+ "/api/v1/dictionary/search/?q=apple": [
+  200,
+  {
+   "backend": "str",
+   "hasMore": "bool",
+   "next": "NoneType",
+   "page": "int",
+   "pageSize": "int",
+   "partOfSpeech": "NoneType",
+   "previous": "NoneType",
+   "query": "str",
+   "results": [
+    {
+     "article": "str",
+     "cefrLevel": "str",
+     "frequencyRank": "int",
+     "headword": "str",
+     "headwordNormalized": "str",
+     "id": "int",
+     "language": "str",
+     "partOfSpeech": "str",
+     "phoneticIpa": "str",
+     "pluralForm": "str",
+     "primaryMeaningEn": "str",
+     "primaryMeaningRu": "str",
+     "primaryMeaningUz": "str",
+     "sourceLanguage": "str",
+     "translations": [
+      {
+       "article": "str",
+       "contextNote": "str",
+       "gender": "str",
+       "id": "int",
+       "number": "str",
+       "partOfSpeech": "str",
+       "quality": "str",
+       "targetLanguage": "str",
+       "text": "str",
+       "transliteration": "str"
+      }
+     ],
+     "word": "str"
+    }
+   ],
+   "sourceLanguage": "NoneType",
+   "targetLanguage": "NoneType",
+   "tookMs": "float"
+  }
+ ],
+ "/api/v1/dictionary/sync/?limit=1": [
+  200,
+  {
+   "collocations": [
+    {
+     "entryId": "int",
+     "expression": "str",
+     "id": "int",
+     "translationRu": "str",
+     "translationUz": "str"
+    }
+   ],
+   "dictionary": {
+    "entries": "int",
+    "maxEntryId": "int",
+    "missingRussian": "int",
+    "missingUzbek": "int"
+   },
+   "entries": [
+    {
+     "alternativeSpellings": "str",
+     "article": "str",
+     "cefrLevel": "str",
+     "comparativeForm": "str",
+     "etymology": "str",
+     "frequencyRank": "int",
+     "headword": "str",
+     "headwordNormalized": "str",
+     "id": "int",
+     "language": "str",
+     "lemma": "str",
+     "partOfSpeech": "str",
+     "phoneticIpa": "str",
+     "pluralForm": "str",
+     "primaryMeaningEn": "str",
+     "primaryMeaningRu": "str",
+     "primaryMeaningUz": "str",
+     "source": "str",
+     "superlativeForm": "str",
+     "transliteration": "str",
+     "updatedAt": "str",
+     "verified": "bool"
+    }
+   ],
+   "examples": [
+    {
+     "entryId": "int",
+     "id": "int",
+     "meaningId": "int",
+     "sentenceEn": "str",
+     "sentenceRu": "str",
+     "sentenceUz": "str"
+    }
+   ],
+   "forms": [
+    {
+     "entryId": "int",
+     "formType": "str",
+     "formValue": "str",
+     "id": "int"
+    }
+   ],
+   "hasMore": "bool",
+   "meanings": [
+    {
+     "definitionEn": "str",
+     "definitionRu": "str",
+     "definitionUz": "str",
+     "entryId": "int",
+     "grammarNotes": "str",
+     "id": "int",
+     "register": "str",
+     "senseNumber": "int",
+     "updatedAt": "str"
+    }
+   ],
+   "nextAfterId": "int",
+   "serverTime": "str",
+   "synonyms": [
+    {
+     "id": "int",
+     "isAntonym": "bool",
+     "meaningId": "int",
+     "word": "str"
+    }
+   ],
+   "translations": [
+    {
+     "article": "str",
+     "contextNote": "str",
+     "entryId": "int",
+     "gender": "str",
+     "id": "int",
+     "meaningId": "int",
+     "number": "str",
+     "partOfSpeech": "str",
+     "quality": "str",
+     "targetLanguage": "str",
+     "translationText": "str",
+     "transliteration": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/sync/?limit=1&lite=1": [
+  200,
+  {
+   "dictionary": {
+    "entries": "int",
+    "maxEntryId": "int",
+    "missingRussian": "int",
+    "missingUzbek": "int"
+   },
+   "entries": [
+    {
+     "alternativeSpellings": "str",
+     "article": "str",
+     "cefrLevel": "str",
+     "comparativeForm": "str",
+     "etymology": "str",
+     "frequencyRank": "int",
+     "headword": "str",
+     "headwordNormalized": "str",
+     "id": "int",
+     "language": "str",
+     "lemma": "str",
+     "partOfSpeech": "str",
+     "phoneticIpa": "str",
+     "pluralForm": "str",
+     "primaryMeaningEn": "str",
+     "primaryMeaningRu": "str",
+     "primaryMeaningUz": "str",
+     "source": "str",
+     "superlativeForm": "str",
+     "transliteration": "str",
+     "updatedAt": "str",
+     "verified": "bool"
+    }
+   ],
+   "hasMore": "bool",
+   "meanings": [
+    {
+     "definitionEn": "str",
+     "definitionRu": "str",
+     "definitionUz": "str",
+     "entryId": "int",
+     "grammarNotes": "str",
+     "id": "int",
+     "register": "str",
+     "senseNumber": "int",
+     "updatedAt": "str"
+    }
+   ],
+   "nextAfterId": "int",
+   "serverTime": "str"
+  }
+ ],
+ "/api/v1/dictionary/synonyms/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "id": "int",
+     "isAntonym": "bool",
+     "meaningId": "int",
+     "word": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/dictionary/translations/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "article": "str",
+     "contextNote": "str",
+     "entryId": "int",
+     "gender": "str",
+     "id": "int",
+     "meaningId": "int",
+     "number": "str",
+     "partOfSpeech": "str",
+     "quality": "str",
+     "targetLanguage": "str",
+     "translationText": "str",
+     "transliteration": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/grammar-lessons/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "category": "str",
+     "examplesJson": "str",
+     "id": "int",
+     "level": "str",
+     "ruleDetailsJson": "str",
+     "summaryEn": "str",
+     "summaryRu": "str",
+     "summaryUzLatn": "str",
+     "titleEn": "str",
+     "titleRu": "str",
+     "titleUzCyrl": "str",
+     "titleUzLatn": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/health/": [
+  200,
+  {
+   "services": {
+    "cache": {
+     "backend": "str",
+     "error": "NoneType",
+     "latency_ms": "float",
+     "status": "str"
+    },
+    "database": {
+     "engine": "str",
+     "error": "NoneType",
+     "latency_ms": "float",
+     "status": "str"
+    }
+   },
+   "status": "str",
+   "timestamp": "str"
+  }
+ ],
+ "/api/v1/quiz-questions/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "category": "str",
+     "correctAnswer": "str",
+     "difficulty": "str",
+     "explanation": "str",
+     "id": "int",
+     "optionA": "str",
+     "optionB": "str",
+     "optionC": "str",
+     "optionD": "str",
+     "promptAudioText": "str",
+     "promptLanguage": "str",
+     "questionText": "str",
+     "type": "str"
+    }
+   ]
+  }
+ ],
+ "/api/v1/sync/": [
+  401,
+  {
+   "detail": "str"
+  }
+ ],
+ "/api/v1/topic-words/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "id": "int",
+     "topicId": "int",
+     "wordId": "int"
+    }
+   ]
+  }
+ ],
+ "/api/v1/topics/": [
+  200,
+  {
+   "count": "int",
+   "next": "NoneType",
+   "previous": "NoneType",
+   "results": [
+    {
+     "category": "str",
+     "cefrLevel": "str",
+     "descriptionEn": "str",
+     "descriptionRu": "str",
+     "descriptionUzLatn": "str",
+     "estimatedMinutes": "int",
+     "iconName": "str",
+     "id": "int",
+     "titleEn": "str",
+     "titleRu": "str",
+     "titleUzCyrl": "str",
+     "titleUzLatn": "str",
+     "totalWords": "int",
+     "words": [
+      "int"
+     ]
+    }
+   ]
+  }
+ ],
+ "/api/v1/translation/jobs/": [
+  401,
+  {
+   "detail": "str"
+  }
+ ],
+ "/api/v1/translation/status/": [
+  401,
+  {
+   "detail": "str"
+  }
+ ]
+}

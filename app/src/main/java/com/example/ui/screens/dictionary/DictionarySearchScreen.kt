@@ -1,6 +1,5 @@
 package com.example.ui.screens.dictionary
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,23 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,16 +34,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.model.Language
+import com.example.data.model.DictionaryDirection
+import com.example.data.model.textIn
 import com.example.data.preferences.AppPreferences
 import com.example.presentation.AppViewModel
 import com.example.data.tts.TtsManager
 import com.example.ui.components.DictionarySearchBar
+import com.example.ui.components.LanguageDirectionSelector
 import com.example.ui.components.WordEntryCard
 import kotlinx.coroutines.launch
 
@@ -73,73 +71,26 @@ fun DictionarySearchScreen(
     // The text field owns the caret; the ViewModel owns the debounced search.
     var searchQuery by rememberSaveable { mutableStateOf(initialQuery) }
 
-    LaunchedEffect(initialQuery, initialLang) {
-        if (initialQuery.isNotBlank() || initialLang.isNotBlank()) {
-            searchQuery = initialQuery
-            viewModel.applyInitialSearch(
-                query = initialQuery,
-                language = if (initialLang.isNotBlank()) Language.fromCode(initialLang) else null
-            )
-        }
+    val direction = DictionaryDirection.from(preferences.searchSourceLanguage, preferences.searchTargetLanguage)
+    LaunchedEffect(direction) {
+        viewModel.setSearchDirection(direction.source, direction.target)
     }
     LaunchedEffect(searchQuery) {
         viewModel.setSearchQuery(searchQuery)
     }
 
-    val results = searchState.results
-    val isLoading = searchState.isLoading
-    val selectedLanguage = filters.language
-    val selectedPartOfSpeech = filters.partOfSpeech
-    val isReverseSearch = filters.reverseTranslation
-
+    val matchesDirection = filters.language == direction.source && filters.targetLanguage == direction.target &&
+        filters.query == searchQuery
+    val results = if (matchesDirection) searchState.results else emptyList()
+    val isLoading = searchState.isLoading || (!matchesDirection && searchQuery.isNotBlank())
     val onQueryChange: (String) -> Unit = { searchQuery = it }
-    val onLanguageSelect: (Language) -> Unit = { viewModel.setSearchLanguage(it) }
-    val onPartOfSpeechSelect: (String) -> Unit = { viewModel.setSearchPartOfSpeech(it) }
-    val onReverseToggle: () -> Unit = { viewModel.setReverseTranslation(!isReverseSearch) }
 
     val savedWords by viewModel.savedWords.collectAsState()
     val favoriteIds = remember(savedWords) {
         savedWords.filter { it.isFavorite }.map { it.entryId }.toSet()
     }
 
-    val chipColors = FilterChipDefaults.filterChipColors(
-        containerColor = MaterialTheme.colorScheme.surface,
-        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-    )
-    val chipBorder = FilterChipDefaults.filterChipBorder(
-        enabled = true,
-        selected = false,
-        borderColor = MaterialTheme.colorScheme.outline,
-        selectedBorderColor = MaterialTheme.colorScheme.primary
-    )
-
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Lug‘at qidiruvi",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
@@ -148,64 +99,37 @@ fun DictionarySearchScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search Input & Filters Box
-            Column(
+            // Compact Header: Back Button + Search Bar
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(start = 4.dp, end = 16.dp, top = 6.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 DictionarySearchBar(
                     query = searchQuery,
                     onQueryChange = onQueryChange,
-                    placeholder = if (isReverseSearch) "Tarjima bo‘yicha qidirish..." else "So‘zni kiriting (inglizcha, ruscha, o‘zbekcha)...",
-                    onSearch = { viewModel.recordCurrentSearch() }
+                    placeholder = "${direction.source.displayNameUzLatn} so‘zni kiriting...",
+                    onSearch = { viewModel.recordCurrentSearch() },
+                    modifier = Modifier.weight(1f)
                 )
-
-                // Filter Chips Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Reverse search toggle
-                    FilterChip(
-                        selected = isReverseSearch,
-                        onClick = onReverseToggle,
-                        label = { Text("Tarjima bo‘yicha", style = MaterialTheme.typography.labelMedium) },
-                        colors = chipColors,
-                        border = chipBorder,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.testTag("filter_reverse_search")
-                    )
-
-                    // Language Filter
-                    Language.entries.forEach { lang ->
-                        FilterChip(
-                            selected = selectedLanguage == lang,
-                            onClick = { onLanguageSelect(lang) },
-                            label = { Text("${lang.flagEmoji} ${lang.displayNameUzLatn}", style = MaterialTheme.typography.labelMedium) },
-                            colors = chipColors,
-                            border = chipBorder,
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                    }
-
-                    // Part of Speech Filter
-                    listOf("noun", "verb", "adjective", "adverb", "idiom").forEach { pos ->
-                        FilterChip(
-                            selected = selectedPartOfSpeech == pos,
-                            onClick = { onPartOfSpeechSelect(pos) },
-                            label = { Text(pos, style = MaterialTheme.typography.labelMedium) },
-                            colors = chipColors,
-                            border = chipBorder,
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                    }
-                }
             }
+
+            LanguageDirectionSelector(
+                selectedSource = direction.source,
+                selectedTarget = direction.target,
+                onSourceSelect = { it?.let { language -> direction.withSource(language).let { pair -> viewModel.setDictionaryLanguages(pair.source, pair.target) } } },
+                onTargetSelect = { it?.let { language -> direction.withTarget(language).let { pair -> viewModel.setDictionaryLanguages(pair.source, pair.target) } } },
+                onSwap = { viewModel.setDictionaryLanguages(direction.target, direction.source) },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
 
             // Results List / Empty State / Loading
             Box(
@@ -263,7 +187,7 @@ fun DictionarySearchScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Imloni tekshirib ko‘ring yoki boshqa tilda yozib ko‘ring. Shuningdek, «Tarjima bo‘yicha» filtrini yoqishingiz mumkin.",
+                            text = "Imloni tekshiring yoki qidiruv tilini o‘zgartiring.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -288,14 +212,27 @@ fun DictionarySearchScreen(
                         )
                     }
                 } else {
+                    val listState = rememberLazyListState()
+                    // A new query starts at the top of the list again.
+                    LaunchedEffect(filters.query, filters.language, filters.targetLanguage) {
+                        listState.scrollToItem(0)
+                    }
+                    // Load the next page while a few cards are still below the screen.
+                    LaunchedEffect(listState) {
+                        snapshotFlow {
+                            val info = listState.layoutInfo
+                            (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 8
+                        }.collect { nearEnd -> if (nearEnd) viewModel.loadMoreSearchResults() }
+                    }
                     LazyColumn(
+                        state = listState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         item {
                             Text(
-                                text = "${results.size} ta natija topildi",
+                                text = "${results.size}${if (searchState.canLoadMore) "+" else ""} ta natija topildi",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -303,18 +240,21 @@ fun DictionarySearchScreen(
 
                         items(results, key = { it.id }) { entry ->
                             val playbackState by ttsManager.playbackState.collectAsState()
-                            val isEntryPlaying = playbackState.isPlaying && playbackState.currentText.equals(entry.headword, ignoreCase = true)
+                            val sourceText = entry.textIn(direction.source)
+                            val isEntryPlaying = playbackState.isPlaying && playbackState.currentText.equals(sourceText, ignoreCase = true)
                             val activeText = if (playbackState.isPlaying) playbackState.currentText else null
 
                             WordEntryCard(
                                 entry = entry,
                                 searchQuery = searchQuery,
+                                sourceLanguage = direction.source,
+                                targetLanguage = direction.target,
                                 onClick = { onNavigateToWordDetail(entry.id) },
                                 onAudioClick = { rate ->
                                     if (isEntryPlaying) {
                                         ttsManager.stop()
                                     } else {
-                                        ttsManager.speak(entry.headword, entry.language, rateMultiplier = rate)
+                                        ttsManager.speak(sourceText, direction.source.code, rateMultiplier = rate)
                                     }
                                 },
                                 isPlaying = isEntryPlaying,
@@ -336,6 +276,14 @@ fun DictionarySearchScreen(
                                 },
                                 activeSpeakingText = activeText
                             )
+                        }
+
+                        if (searchState.isLoadingMore) {
+                            item {
+                                Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                }
+                            }
                         }
                     }
                 }

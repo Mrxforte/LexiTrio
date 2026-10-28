@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +36,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.DictionaryEntryEntity
 import com.example.data.model.Language
+import com.example.data.model.textIn
+import com.example.data.model.dictionaryCode
 import com.example.ui.theme.EnBadgeColor
 import com.example.ui.theme.RuBadgeColor
 import com.example.ui.theme.UzBadgeColor
@@ -128,32 +136,7 @@ fun LanguageDirectionSelector(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Source Language Button
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        val next = when (selectedSource) {
-                            Language.ENGLISH -> Language.RUSSIAN
-                            Language.RUSSIAN -> Language.UZBEK_LATIN
-                            Language.UZBEK_LATIN -> Language.UZBEK_CYRILLIC
-                            else -> Language.ENGLISH
-                        }
-                        onSourceSelect(next)
-                    }
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(selectedSource?.flagEmoji ?: "🌐", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = selectedSource?.displayNameUzLatn ?: "Barcha tillar",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
+            DirectionLanguageMenu(selectedSource ?: Language.ENGLISH, onSourceSelect)
 
             // Swap Languages Button
             IconButton(
@@ -171,31 +154,28 @@ fun LanguageDirectionSelector(
                 )
             }
 
-            // Target Language Indicator
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        val next = when (selectedTarget) {
-                            Language.UZBEK_LATIN -> Language.RUSSIAN
-                            Language.RUSSIAN -> Language.ENGLISH
-                            Language.ENGLISH -> Language.UZBEK_CYRILLIC
-                            else -> Language.UZBEK_LATIN
-                        }
-                        onTargetSelect(next)
-                    }
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(selectedTarget?.flagEmoji ?: "🇺🇿", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = selectedTarget?.displayNameUzLatn ?: "O‘zbekcha",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+            DirectionLanguageMenu(selectedTarget ?: Language.UZBEK_LATIN, onTargetSelect)
+        }
+    }
+}
+
+@Composable
+private fun DirectionLanguageMenu(selected: Language, onSelect: (Language?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Text(
+            text = "${selected.flagEmoji} ${selected.dictionaryCode.uppercase()} ▾",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.clip(RoundedCornerShape(10.dp))
+                .clickable { expanded = true }.padding(10.dp)
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            listOf(Language.ENGLISH, Language.RUSSIAN, Language.UZBEK_LATIN).forEach { language ->
+                DropdownMenuItem(
+                    text = { Text("${language.flagEmoji} ${language.displayNameUzLatn}") },
+                    onClick = { expanded = false; onSelect(language) }
+                )
             }
         }
     }
@@ -248,8 +228,12 @@ fun WordEntryCard(
     onFavoriteToggle: () -> Unit = {},
     onSpeakText: ((text: String, language: String) -> Unit)? = null,
     activeSpeakingText: String? = null,
+    sourceLanguage: Language = Language.ENGLISH,
+    targetLanguage: Language = Language.UZBEK_LATIN,
     modifier: Modifier = Modifier
 ) {
+    val sourceText = entry.textIn(sourceLanguage)
+    val targetText = entry.textIn(targetLanguage)
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
@@ -273,7 +257,7 @@ fun WordEntryCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     HighlightedSearchText(
-                        text = entry.headword,
+                        text = sourceText,
                         query = searchQuery,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
@@ -282,6 +266,8 @@ fun WordEntryCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     PartOfSpeechChip(partOfSpeech = entry.partOfSpeech)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    LanguageBadge(lang = sourceLanguage.code, text = sourceLanguage.dictionaryCode.uppercase())
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -321,7 +307,7 @@ fun WordEntryCard(
                 }
             }
 
-            if (entry.phoneticIpa.isNotBlank()) {
+            if (entry.language.substringBefore('-') == sourceLanguage.dictionaryCode && entry.phoneticIpa.isNotBlank()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = entry.phoneticIpa,
@@ -333,17 +319,17 @@ fun WordEntryCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Primary translations preview
+            // Only the chosen target language is shown.
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (entry.primaryMeaningUz.isNotBlank()) {
+                if (targetText.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        LanguageBadge(lang = "uz", text = "UZ")
+                        LanguageBadge(lang = targetLanguage.code, text = targetLanguage.dictionaryCode.uppercase())
                         Spacer(modifier = Modifier.width(8.dp))
                         HighlightedSearchText(
-                            text = entry.primaryMeaningUz,
+                            text = targetText,
                             query = searchQuery,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
@@ -353,74 +339,18 @@ fun WordEntryCard(
                         )
                         if (onSpeakText != null) {
                             PronunciationButton(
-                                text = entry.primaryMeaningUz,
-                                language = "uz",
+                                text = targetText,
+                                language = targetLanguage.code,
                                 onSpeak = onSpeakText,
-                                isPlaying = activeSpeakingText == entry.primaryMeaningUz,
+                                isPlaying = activeSpeakingText == targetText,
                                 size = 28.dp,
                                 iconSize = 14.dp,
-                                contentId = "card_uz_${entry.id}"
+                                contentId = "card_target_${entry.id}"
                             )
                         }
                     }
                 }
 
-                if (entry.primaryMeaningRu.isNotBlank()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        LanguageBadge(lang = "ru", text = "RU")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        HighlightedSearchText(
-                            text = entry.primaryMeaningRu,
-                            query = searchQuery,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Normal,
-                            textColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            highlightColor = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (onSpeakText != null) {
-                            PronunciationButton(
-                                text = entry.primaryMeaningRu,
-                                language = "ru",
-                                onSpeak = onSpeakText,
-                                isPlaying = activeSpeakingText == entry.primaryMeaningRu,
-                                size = 28.dp,
-                                iconSize = 14.dp,
-                                contentId = "card_ru_${entry.id}"
-                            )
-                        }
-                    }
-                }
-
-                if (entry.language != "en" && entry.primaryMeaningEn.isNotBlank()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        LanguageBadge(lang = "en", text = "EN")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = entry.primaryMeaningEn,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (onSpeakText != null) {
-                            PronunciationButton(
-                                text = entry.primaryMeaningEn,
-                                language = "en",
-                                onSpeak = onSpeakText,
-                                isPlaying = activeSpeakingText == entry.primaryMeaningEn,
-                                size = 28.dp,
-                                iconSize = 14.dp,
-                                contentId = "card_en_${entry.id}"
-                            )
-                        }
-                    }
-                }
             }
         }
     }

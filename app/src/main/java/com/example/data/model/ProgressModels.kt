@@ -18,7 +18,7 @@ data class UserProgressEntity(
     @PrimaryKey
     val id: Int = 1,
     val xp: Int = 120,
-    val streakDays: Int = 3,
+    val streakDays: Int = 0,
     val lastStudyDateTimestamp: Long = System.currentTimeMillis(),
     val dailyGoalWords: Int = 10,
     val todayWordsReviewed: Int = 4,

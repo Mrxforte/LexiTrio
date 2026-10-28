@@ -7,7 +7,7 @@ This document outlines the prioritized action items to transform LexiTrio into a
 ## Phase 1 — Database & Backend Optimizations
 
 1. **PostgreSQL Trigram & FTS Integration**:
-   - Ensure PostgreSQL queries in `learning/search.py` utilize gin/trgm indexes (`gin_trgm_ops`) on `headword_normalized` and `translation_text`.
+   - Ensure PostgreSQL queries in `apps/dictionary/search/engine.py` utilize gin/trgm indexes (`gin_trgm_ops`) on `headword_normalized` and `translation_text`.
    - Prevent N+1 queries using `select_related()` and `prefetch_related()`.
 2. **Redis Caching Strategy**:
    - Cache popular dictionary searches and language metadata in Redis.
