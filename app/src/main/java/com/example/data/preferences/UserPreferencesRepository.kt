@@ -29,7 +29,7 @@ data class AppPreferences(
     val dailyGoalWords: Int = 10,
     val isDarkMode: Boolean? = null,
     val lastUpdatedTimestamp: Long = 0L,
-    val isOnboardingCompleted: Boolean = false,
+    val isOnboardingCompleted: Boolean = true,
     val searchTargetLanguage: Language = Language.UZBEK_LATIN
 )
 
@@ -74,7 +74,7 @@ class UserPreferencesRepository(private val context: Context) : PreferenceReposi
                 else -> null
             },
             lastUpdatedTimestamp = prefs[Keys.LAST_UPDATED_TIMESTAMP] ?: 0L,
-            isOnboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: false
+            isOnboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: true
         )
     }
 
