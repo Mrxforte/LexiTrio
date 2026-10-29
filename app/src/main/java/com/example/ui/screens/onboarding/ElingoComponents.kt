@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -148,7 +149,7 @@ fun SpeechBubble(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    val shape = SpeechBubbleShape(tail = tail)
+    val shape = remember(tail) { SpeechBubbleShape(tail = tail) }
     val paddingModifier = when (tail) {
         SpeechBubbleTail.Bottom -> Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 21.dp)
         SpeechBubbleTail.Left -> Modifier.padding(start = 22.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)

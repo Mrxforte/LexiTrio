@@ -41,19 +41,16 @@ internal class DictionaryDownloader(
         val resuming = state.pendingPassStartedAt != null
         val since = if (resuming) state.pendingPassSince else state.lastSyncAt
         var afterId = if (resuming || since == null) state.dictionaryCursor else 0L
-        // A long download must not skip rows edited while it ran, so the
-        // watermark is the time the pass started, not ended. It is stored
-        // together with the pass's `since`, so a resumed pass keeps both.
         var passStartedAt: String? = state.pendingPassStartedAt
         val dao = database.dictionaryDao()
-        // Search consults the server only while a large pass is running; a
-        // small routine refresh must not change how search behaves.
         if (resuming || since == null) state.isPassRunning = true
+
+        val dynamicPageSize = if (state.isDictionaryComplete) PAGE_SIZE else 5000
 
         while (true) {
             val page = api.syncDictionary(
                 afterId = afterId,
-                limit = PAGE_SIZE,
+                limit = dynamicPageSize,
                 since = since,
                 lite = true
             )
@@ -141,7 +138,7 @@ object DictionaryDownloadScheduler {
             ExistingWorkPolicy.KEEP,
             OneTimeWorkRequestBuilder<DictionaryDownloadWorker>()
                 .setConstraints(constraints)
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 .build()
         )
         workManager.enqueueUniquePeriodicWork(
@@ -169,6 +166,7 @@ class AdaptivePrefetchWorker(
                 LexiTrioDatabase.getInstance(context),
                 CloudApiFactory.create(context)
             )
+            manager.evictExpiredDetails()
             manager.prefetch()
             manager.evictIfNeeded()
             Result.success()

@@ -22,6 +22,7 @@ interface DictionaryRepository {
     /** Revalidates lazily loaded detail content; returns the updated detail, or null if nothing changed. */
     suspend fun refreshDetail(id: Long): FullDictionaryDetail? = null
     suspend fun getWordOfDay(source: Language, target: Language, dayKey: Int): DictionaryEntryEntity?
+    suspend fun warmUpAlphabetIndex(langCodes: List<String> = listOf("en", "ru", "uz")) {}
     fun getRecentSearches(): Flow<List<SearchHistoryEntity>>
     suspend fun recordSearch(query: String, language: String)
     suspend fun clearSearchHistory()

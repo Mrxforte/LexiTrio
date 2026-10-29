@@ -10,9 +10,13 @@ import com.example.data.model.Language
 import com.example.data.model.textIn
 import com.example.data.model.SearchHistoryEntity
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 import com.example.domain.repository.DictionaryRepository as DictionaryRepositoryContract
@@ -27,9 +31,67 @@ class DictionaryRepository internal constructor(
 
     constructor(dictionaryDao: DictionaryDao) : this(dictionaryDao, null)
 
-    // Bounded LRU of recent result lists; keys embed SearchCacheVersion so
-    // background writes invalidate everything at once.
-    private val searchCache = LruCache<String, List<DictionaryEntryEntity>>(200)
+    // Bounded LRU of recent result lists (expanded to 500 for Tier-1 instant RAM search);
+    // keys embed SearchCacheVersion so background writes invalidate everything at once.
+    private val searchCache = LruCache<String, List<DictionaryEntryEntity>>(500)
+
+    // Alphabetical First-Letter Memory Index (1,000 words per language: EN, RU, UZ; 3,000 total core words).
+    // Maps "$langCode|$firstChar" -> List<DictionaryEntryEntity> for 0ms instant first-letter autocomplete.
+    private val alphabetIndex = ConcurrentHashMap<String, List<DictionaryEntryEntity>>()
+
+    private fun getInstantAlphabetHits(
+        normalized: String,
+        langCode: String?,
+        limit: Int
+    ): List<DictionaryEntryEntity>? {
+        if (normalized.length > 3 || langCode == null || normalized.isEmpty()) return null
+        val firstChar = normalized.first()
+        val key = "$langCode|$firstChar"
+        val bucket = alphabetIndex[key] ?: return null
+        val matches = bucket.filter { it.headwordNormalized.startsWith(normalized) }
+        return if (matches.isNotEmpty()) matches.take(limit) else null
+    }
+
+    private fun populateAlphabetBucket(langCode: String, words: List<DictionaryEntryEntity>) {
+        if (words.isEmpty()) return
+        val firstChar = words.first().headwordNormalized.firstOrNull() ?: return
+        val key = "$langCode|$firstChar"
+        alphabetIndex.putIfAbsent(key, words)
+    }
+
+    override suspend fun warmUpAlphabetIndex(langCodes: List<String>) {
+        withContext(Dispatchers.IO) {
+            try {
+                val commonFirstChars = mapOf(
+                    "en" to ('a'..'z').toList(),
+                    "ru" to ('а'..'я').toList(),
+                    "uz" to ('a'..'z').toList()
+                )
+                for (lang in langCodes) {
+                    val chars = commonFirstChars[lang] ?: continue
+                    for (ch in chars) {
+                        val key = "$lang|$ch"
+                        if (alphabetIndex.containsKey(key)) continue
+                        val query = ch.toString()
+                        val upper = "$query\uFFFF"
+                        val topWords = dictionaryDao.searchHeadwordPrefix(
+                            query = query,
+                            upperBound = upper,
+                            lang = lang,
+                            pos = null,
+                            limit = 50,
+                            offset = 0
+                        )
+                        if (topWords.isNotEmpty()) {
+                            alphabetIndex[key] = topWords
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // Ignore DB closed exceptions during test tearDown or process cancellation
+            }
+        }
+    }
 
     override fun getEntryCountFlow(): Flow<Int> = dictionaryDao.getEntryCountFlow()
 
@@ -44,6 +106,12 @@ class DictionaryRepository internal constructor(
         require(sourceCode != targetCode)
         val tokens = normalized.split(NON_WORD).filter { it.isNotEmpty() }
         if (tokens.isEmpty()) return emptyList()
+
+        val cacheKey = "dir|${SearchCacheVersion.current}|$normalized|$sourceCode|$targetCode|$limit|$offset"
+        searchCache.get(cacheKey)?.let { return it }
+
+        val instantHits = getInstantAlphabetHits(normalized, sourceCode, limit)
+        if (instantHits != null) return instantHits
 
         suspend fun find(text: String): List<DictionaryEntryEntity> {
             val words = text.split(NON_WORD).filter { it.isNotEmpty() }
@@ -61,6 +129,7 @@ class DictionaryRepository internal constructor(
                 text, text + PREFIX_UPPER_SUFFIX, limit, offset
             )
         }
+        var serverAnswered = true
         val results = coroutineScope {
             val remote = if (offset == 0 && shouldAskServer(normalized)) {
                 async { searchRemote(query.trim(), sourceCode, null, limit) }
@@ -71,14 +140,18 @@ class DictionaryRepository internal constructor(
                 val alternative = Language.normalizeText(Language.transliterateUzbek(normalized, !cyrillic))
                 if (alternative != normalized) local = find(alternative)
             }
+            if (local.isNotEmpty()) populateAlphabetBucket(sourceCode, local)
             val remoteHits = remote?.await().orEmpty().filter { entry ->
                 val sourceWords = Language.normalizeText(entry.textIn(source)).split(NON_WORD)
                 entry.textIn(target).isNotBlank() && tokens.all { token ->
                     sourceWords.any { it.startsWith(token) }
                 }
             }
+            serverAnswered = remote == null || remoteHits.isNotEmpty()
             mergeRanked(remoteHits, local, limit)
         }
+
+        if (serverAnswered) searchCache.put(cacheKey, results)
         return results
     }
 
@@ -99,6 +172,9 @@ class DictionaryRepository internal constructor(
 
         searchCache.get(cacheKey)?.let { return it }
 
+        val instantHits = getInstantAlphabetHits(normalized, langCode, limit)
+        if (instantHits != null) return instantHits
+
         // Uzbek can be typed in Latin or Cyrillic; fall back to the other script.
         val altQuery = if (langCode == "uz" || langCode == null) {
             val isCyrillic = normalized.any { it in 'а'..'я' || it == 'ў' || it == 'ғ' || it == 'қ' || it == 'ҳ' }
@@ -110,19 +186,18 @@ class DictionaryRepository internal constructor(
 
         var serverAnswered = true
         val results = coroutineScope {
-            // The server only helps with the first page; later pages are local.
             val remote = if (offset == 0 && shouldAskServer(normalized)) {
                 async { searchRemote(trimmed, langCode, partOfSpeech, limit) }
             } else {
                 null
             }
             val local = searchLocal(normalized, altQuery, langCode, partOfSpeech, limit, offset)
+            if (langCode != null && local.isNotEmpty()) populateAlphabetBucket(langCode, local)
             val remoteHits = remote?.await().orEmpty()
             serverAnswered = remote == null || remoteHits.isNotEmpty()
             mergeRanked(remoteHits, local, limit)
         }
 
-        // A failed or timed-out server call must not pin local-only results.
         if (serverAnswered) searchCache.put(cacheKey, results)
         return results
     }
@@ -237,6 +312,8 @@ class DictionaryRepository internal constructor(
         }
     }
 
+    private val inFlightDetails = ConcurrentHashMap<Long, Deferred<FullDictionaryDetail?>>()
+
     override suspend fun getFullDetail(id: Long): FullDictionaryDetail? {
         // Local first; the access is recorded for the adaptive cache score.
         val detail = dictionaryDao.getFullDictionaryDetail(id)
@@ -244,8 +321,25 @@ class DictionaryRepository internal constructor(
         return detail
     }
 
-    override suspend fun refreshDetail(id: Long): FullDictionaryDetail? =
-        if (detailCache?.refreshDetail(id) == true) dictionaryDao.getFullDictionaryDetail(id) else null
+    override suspend fun refreshDetail(id: Long): FullDictionaryDetail? = coroutineScope {
+        val existing = inFlightDetails[id]
+        if (existing != null) {
+            return@coroutineScope existing.await()
+        }
+        val deferred = async {
+            try {
+                if (detailCache?.refreshDetail(id) == true) {
+                    dictionaryDao.getFullDictionaryDetail(id)
+                } else {
+                    null
+                }
+            } finally {
+                inFlightDetails.remove(id)
+            }
+        }
+        inFlightDetails[id] = deferred
+        deferred.await()
+    }
 
     override suspend fun getWordOfDay(source: Language, target: Language, dayKey: Int): DictionaryEntryEntity? {
         val sourceCode = source.code.substringBefore('-')

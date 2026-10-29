@@ -15,6 +15,9 @@ interface CacheDao {
     @Query("UPDATE cache_metadata SET lastAccessedAt = :now, accessCount = accessCount + 1 WHERE entryId = :entryId")
     suspend fun touch(entryId: Long, now: Long)
 
+    @Query("UPDATE cache_metadata SET lastAccessedAt = :now, accessCount = accessCount + :countDelta WHERE entryId = :entryId")
+    suspend fun touchBatch(entryId: Long, now: Long, countDelta: Int)
+
     @Query("SELECT * FROM cache_metadata WHERE entryId = :entryId")
     suspend fun get(entryId: Long): CacheMetadataEntity?
 

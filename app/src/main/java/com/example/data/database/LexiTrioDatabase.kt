@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.withTransaction
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.dao.CacheDao
@@ -408,51 +409,53 @@ abstract class LexiTrioDatabase : RoomDatabase() {
             }
 
             private suspend fun populateInitialCorpus(database: LexiTrioDatabase) {
-                val dictDao = database.dictionaryDao()
-                val bundle = PreloadDictionaryData.getInitialData()
-                dictDao.insertEntries(bundle.entries)
-                dictDao.insertMeanings(bundle.meanings)
-                dictDao.insertTranslations(bundle.translations)
-                dictDao.insertExamples(bundle.examples)
-                dictDao.insertSynonyms(bundle.synonyms)
-                dictDao.insertForms(bundle.forms)
-                dictDao.insertCollocations(bundle.collocations)
+                database.withTransaction {
+                    val dictDao = database.dictionaryDao()
+                    val bundle = PreloadDictionaryData.getInitialData()
+                    dictDao.insertEntries(bundle.entries)
+                    dictDao.insertMeanings(bundle.meanings)
+                    dictDao.insertTranslations(bundle.translations)
+                    dictDao.insertExamples(bundle.examples)
+                    dictDao.insertSynonyms(bundle.synonyms)
+                    dictDao.insertForms(bundle.forms)
+                    dictDao.insertCollocations(bundle.collocations)
 
-                // Populate learning entities
-                val vocabDao = database.vocabularyDao()
-                PreloadLearningData.getInitialCollections().forEach {
-                    vocabDao.insertCollection(it)
-                }
-                vocabDao.insertSavedWords(PreloadLearningData.getInitialSavedWords())
-
-                val learnDao = database.learningDao()
-                learnDao.insertTopics(PreloadLearningData.getInitialTopics())
-                learnDao.insertTopicWordCrossRefs(PreloadLearningData.getInitialTopicCrossRefs())
-
-                val convDao = database.conversationGrammarDao()
-                PreloadLearningData.getInitialConversations().forEach { (conv, turns) ->
-                    convDao.insertConversations(listOf(conv))
-                    convDao.insertConversationTurns(turns)
-                }
-                convDao.insertGrammarLessons(PreloadLearningData.getInitialGrammarLessons())
-
-                val quizDao = database.quizDao()
-                quizDao.insertQuestions(PreloadLearningData.getInitialQuizQuestions())
-                quizDao.insertOrUpdateProgress(UserProgressEntity())
-
-                // Populate Enterprise Curriculum entities
-                val currDao = database.curriculumDao()
-                if (currDao.getTopicCount("en") == 0) {
-                    currDao.insertCourses(PreloadCurriculumData.getInitialCourses())
-                    currDao.insertLevels(PreloadCurriculumData.getInitialLevels())
-                    currDao.insertTopics(PreloadCurriculumData.getInitialTopics())
-                    PreloadCurriculumData.getInitialLessons().forEach { (lesson, tables) ->
-                        val lessonId = currDao.insertLessonContent(lesson)
-                        val tablesWithLessonId = tables.map { it.copy(lessonId = lessonId) }
-                        currDao.insertGrammarTables(tablesWithLessonId)
+                    // Populate learning entities
+                    val vocabDao = database.vocabularyDao()
+                    PreloadLearningData.getInitialCollections().forEach {
+                        vocabDao.insertCollection(it)
                     }
-                    currDao.insertExercises(PreloadCurriculumData.getInitialExercises())
-                    currDao.insertTestQuestions(PreloadCurriculumData.getInitialTestQuestions())
+                    vocabDao.insertSavedWords(PreloadLearningData.getInitialSavedWords())
+
+                    val learnDao = database.learningDao()
+                    learnDao.insertTopics(PreloadLearningData.getInitialTopics())
+                    learnDao.insertTopicWordCrossRefs(PreloadLearningData.getInitialTopicCrossRefs())
+
+                    val convDao = database.conversationGrammarDao()
+                    PreloadLearningData.getInitialConversations().forEach { (conv, turns) ->
+                        convDao.insertConversations(listOf(conv))
+                        convDao.insertConversationTurns(turns)
+                    }
+                    convDao.insertGrammarLessons(PreloadLearningData.getInitialGrammarLessons())
+
+                    val quizDao = database.quizDao()
+                    quizDao.insertQuestions(PreloadLearningData.getInitialQuizQuestions())
+                    quizDao.insertOrUpdateProgress(UserProgressEntity())
+
+                    // Populate Enterprise Curriculum entities
+                    val currDao = database.curriculumDao()
+                    if (currDao.getTopicCount("en") == 0) {
+                        currDao.insertCourses(PreloadCurriculumData.getInitialCourses())
+                        currDao.insertLevels(PreloadCurriculumData.getInitialLevels())
+                        currDao.insertTopics(PreloadCurriculumData.getInitialTopics())
+                        PreloadCurriculumData.getInitialLessons().forEach { (lesson, tables) ->
+                            val lessonId = currDao.insertLessonContent(lesson)
+                            val tablesWithLessonId = tables.map { it.copy(lessonId = lessonId) }
+                            currDao.insertGrammarTables(tablesWithLessonId)
+                        }
+                        currDao.insertExercises(PreloadCurriculumData.getInitialExercises())
+                        currDao.insertTestQuestions(PreloadCurriculumData.getInitialTestQuestions())
+                    }
                 }
             }
         }

@@ -79,10 +79,8 @@ fun DictionarySearchScreen(
         viewModel.setSearchQuery(searchQuery)
     }
 
-    val matchesDirection = filters.language == direction.source && filters.targetLanguage == direction.target &&
-        filters.query == searchQuery
-    val results = if (matchesDirection) searchState.results else emptyList()
-    val isLoading = searchState.isLoading || (!matchesDirection && searchQuery.isNotBlank())
+    val results = searchState.results
+    val isLoading = searchState.isLoading && results.isEmpty()
     val onQueryChange: (String) -> Unit = { searchQuery = it }
 
     val savedWords by viewModel.savedWords.collectAsState()
@@ -224,6 +222,7 @@ fun DictionarySearchScreen(
                             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 8
                         }.collect { nearEnd -> if (nearEnd) viewModel.loadMoreSearchResults() }
                     }
+                    val playbackState by ttsManager.playbackState.collectAsState()
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
@@ -239,7 +238,6 @@ fun DictionarySearchScreen(
                         }
 
                         items(results, key = { it.id }) { entry ->
-                            val playbackState by ttsManager.playbackState.collectAsState()
                             val sourceText = entry.textIn(direction.source)
                             val isEntryPlaying = playbackState.isPlaying && playbackState.currentText.equals(sourceText, ignoreCase = true)
                             val activeText = if (playbackState.isPlaying) playbackState.currentText else null

@@ -112,12 +112,15 @@ class AppViewModel(
     val searchState: StateFlow<DictionarySearchUiState> = _searchState.asStateFlow()
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            dictionary.warmUpAlphabetIndex()
+        }
         viewModelScope.launch {
             searchFilters.collect { filters ->
-                _searchState.update {
-                    if (it.filters == filters) it else it.copy(
-                        filters = filters, results = emptyList(), isLoading = filters.isActive,
-                        hasSearched = false, errorMessage = null, canLoadMore = false, isLoadingMore = false
+                _searchState.update { current ->
+                    if (current.filters == filters) current else current.copy(
+                        filters = filters,
+                        errorMessage = null
                     )
                 }
             }
@@ -193,9 +196,8 @@ class AppViewModel(
             emit(SearchOutcome(filters))
             return@flow
         }
-        emit(SearchOutcome(filters, isLoading = true))
         val rows = searchPage(filters, 0)
-        emit(SearchOutcome(filters, hasSearched = true, results = rows))
+        emit(SearchOutcome(filters, hasSearched = true, results = rows, isLoading = false))
     }.flowOn(Dispatchers.IO)
 
     private suspend fun searchPage(filters: DictionarySearchFilters, offset: Int): List<DictionaryEntryEntity> {
@@ -266,19 +268,24 @@ class AppViewModel(
         searchDictionary(query, language, partOfSpeech)
 
     fun recordSearch(query: String, language: String) =
-        viewModelScope.launch { dictionary.recordSearch(query, language) }
-    fun clearSearchHistory() = viewModelScope.launch { dictionary.clearSearchHistory() }
+        viewModelScope.launch(Dispatchers.IO) { dictionary.recordSearch(query, language) }
+    fun clearSearchHistory() = viewModelScope.launch(Dispatchers.IO) { dictionary.clearSearchHistory() }
     suspend fun getWordOfDay(source: Language, target: Language, dayKey: Int): DictionaryEntryEntity? =
         withContext(Dispatchers.IO) { dictionary.getWordOfDay(source, target, dayKey) }
-    suspend fun getFullDetail(id: Long) = dictionary.getFullDetail(id)
-    suspend fun refreshFullDetail(id: Long) = dictionary.refreshDetail(id)
-    suspend fun getTopicById(id: Long) = learning.getTopicById(id)
+    suspend fun getFullDetail(id: Long) =
+        withContext(Dispatchers.IO) { dictionary.getFullDetail(id) }
+    suspend fun refreshFullDetail(id: Long) =
+        withContext(Dispatchers.IO) { dictionary.refreshDetail(id) }
+    suspend fun getTopicById(id: Long) =
+        withContext(Dispatchers.IO) { learning.getTopicById(id) }
     fun getWordsForTopic(id: Long) = learning.getWordsForTopic(id)
-    suspend fun getConversationById(id: Long) = learning.getConversationById(id)
+    suspend fun getConversationById(id: Long) =
+        withContext(Dispatchers.IO) { learning.getConversationById(id) }
     fun getConversationTurns(id: Long) = learning.getConversationTurns(id)
-    suspend fun getGrammarLessonById(id: Long) = learning.getGrammarLessonById(id)
+    suspend fun getGrammarLessonById(id: Long) =
+        withContext(Dispatchers.IO) { learning.getGrammarLessonById(id) }
     suspend fun getRandomQuiz(count: Int, type: QuizType?, category: String?) =
-        getQuizQuestions(count, type, category)
+        withContext(Dispatchers.IO) { getQuizQuestions(count, type, category) }
 
     fun getSavedWords() = vocabulary.getAllSavedWords()
     fun getWordsByStatus(status: LearningStatus) = vocabulary.getWordsByStatus(status)
@@ -290,25 +297,26 @@ class AppViewModel(
         collectionId: Long = 1,
         notes: String = "",
         isFavorite: Boolean = false
-    ) = saveWordUseCase(entry, collectionId, notes, isFavorite)
+    ) = withContext(Dispatchers.IO) { saveWordUseCase(entry, collectionId, notes, isFavorite) }
 
-    suspend fun toggleFavorite(word: SavedWordEntity) = vocabulary.toggleFavorite(word)
+    suspend fun toggleFavorite(word: SavedWordEntity) =
+        withContext(Dispatchers.IO) { vocabulary.toggleFavorite(word) }
     suspend fun processReview(word: SavedWordEntity, quality: ReviewQuality) =
-        processWordReview(word, quality)
+        withContext(Dispatchers.IO) { processWordReview(word, quality) }
     suspend fun createCollection(title: String, description: String) =
-        vocabulary.createCollection(title, description)
+        withContext(Dispatchers.IO) { vocabulary.createCollection(title, description) }
     suspend fun addProgress(
         xpGain: Int,
         isQuiz: Boolean = false,
         wordsReviewedDelta: Int = 0
-    ) = updateProgress(xpGain, isQuiz, wordsReviewedDelta)
+    ) = withContext(Dispatchers.IO) { updateProgress(xpGain, isQuiz, wordsReviewedDelta) }
     suspend fun saveQuizAttempt(
         category: String,
         total: Int,
         correct: Int,
         timeSec: Int,
         xp: Int
-    ) = recordQuizAttempt(category, total, correct, timeSec, xp)
+    ) = withContext(Dispatchers.IO) { recordQuizAttempt(category, total, correct, timeSec, xp) }
 
     fun setAppLanguage(language: Language) =
         viewModelScope.launch { preferencesRepository.setAppLanguage(language) }

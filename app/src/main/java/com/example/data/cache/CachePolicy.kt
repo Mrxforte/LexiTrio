@@ -15,7 +15,7 @@ import kotlin.math.pow
  */
 data class CachePolicy(
     val detailTtlMs: Long = 7L * DAY_MS,
-    val maxDetailedEntries: Int = 3_000,
+    val maxDetailedEntries: Int = 25_000, // ~30 MB dedicated detail cache (~1.2 KB per word detail)
     val prefetchBatchSize: Int = 50,
     val prefetchMaxRequestsPerRun: Int = 2,
     val candidatePool: Int = 500,

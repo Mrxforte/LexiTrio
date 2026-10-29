@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.HorizontalDivider
@@ -324,19 +323,7 @@ fun MainAppContent(
                     },
                     onNavigateToWordDetail = { wordId ->
                         navController.navigate(Screen.WordDetail.createRoute(wordId))
-                    },
-                    onNavigateToTopics = { navController.navigate(Screen.Topics.route) },
-                    onNavigateToTopicDetail = { topicId ->
-                        navController.navigate(Screen.TopicDetail.createRoute(topicId))
-                    },
-                    onNavigateToConversations = { navController.navigate(Screen.Conversations.route) },
-                    onNavigateToGrammar = { navController.navigate(Screen.Grammar.route) },
-                    onNavigateToQuiz = { navController.navigate(Screen.QuizSetup.route) },
-                    onNavigateToFlashcards = { mode ->
-                        navController.navigate(Screen.FlashcardStudy.createRoute(mode))
-                    },
-                    onNavigateToCurriculum = { navController.navigate(Screen.Curriculum.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    }
                 )
             }
 

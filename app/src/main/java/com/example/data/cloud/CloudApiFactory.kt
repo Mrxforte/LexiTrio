@@ -13,7 +13,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 internal object CloudApiFactory {
-    private const val HTTP_CACHE_BYTES = 20L * 1024 * 1024
+    private const val HTTP_CACHE_BYTES = 50L * 1024 * 1024
 
     @Volatile
     private var client: OkHttpClient? = null
@@ -26,7 +26,23 @@ internal object CloudApiFactory {
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
-                .connectionPool(ConnectionPool(5, 5, TimeUnit.MINUTES))
+                .connectionPool(ConnectionPool(10, 10, TimeUnit.MINUTES))
+                .addInterceptor { chain ->
+                    var request = chain.request()
+                    if (request.header("Cache-Control") == null) {
+                        request = request.newBuilder()
+                            .header("Cache-Control", "public, max-age=86400, max-stale=604800")
+                            .build()
+                    }
+                    try {
+                        chain.proceed(request)
+                    } catch (_: Exception) {
+                        val offlineRequest = request.newBuilder()
+                            .header("Cache-Control", "public, only-if-cached, max-stale=604800")
+                            .build()
+                        chain.proceed(offlineRequest)
+                    }
+                }
                 .apply {
                     context?.let {
                         cache(Cache(File(it.applicationContext.cacheDir, "http"), HTTP_CACHE_BYTES))

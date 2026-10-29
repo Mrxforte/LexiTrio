@@ -8,23 +8,28 @@ import com.example.data.model.CacheMetadataEntity
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Adaptive cache for lazily loaded word details.
+ * Adaptive cache for lazily loaded word details with True 7-Day Sliding TTL.
  *
  * Word rows are the offline search index and are never evicted here. Detail
  * content is fetched on demand (or by [prefetch]), stored in Room together with
- * metadata, revalidated after a TTL, and evicted by score when over budget.
+ * metadata, revalidated after a TTL, and evicted by score or inactivity when over budget.
  * Saved words and topic words are protected and never evicted.
  */
 internal class DetailCacheManager(
     private val database: LexiTrioDatabase,
     private val api: CloudApi?,
-    private val policy: CachePolicy = CachePolicy(),
-    private val clock: () -> Long = System::currentTimeMillis
+    val policy: CachePolicy = CachePolicy(),
+    val clock: () -> Long = System::currentTimeMillis
 ) {
     private val dictionaryDao get() = database.dictionaryDao()
     private val cacheDao get() = database.cacheDao()
+
+    private val accessBuffer = ConcurrentHashMap<Long, AccessSpec>()
+
+    data class AccessSpec(val lastAccessedAt: Long, val countDelta: Int)
 
     /** Records that the user opened a word; feeds the frequency/recency score. */
     suspend fun recordAccess(entryId: Long) {
@@ -33,6 +38,25 @@ internal class DetailCacheManager(
             cacheDao.insertIfAbsent(CacheMetadataEntity(entryId = entryId, lastAccessedAt = now))
             cacheDao.touch(entryId, now)
         }
+    }
+
+    /** Evicts details that have not been meaningfully accessed for over 7 days (sliding TTL). */
+    suspend fun evictExpiredDetails(): Int {
+        val now = clock()
+        val cutoff = now - policy.detailTtlMs
+        val expiredCandidates = cacheDao.getEvictionCandidates(policy.candidatePool)
+            .filter { it.lastAccessedAt > 0 && it.lastAccessedAt < cutoff }
+            .map { it.entryId }
+
+        if (expiredCandidates.isEmpty()) return 0
+
+        expiredCandidates.chunked(EVICTION_CHUNK).forEach { chunk ->
+            database.withTransaction {
+                deleteLazyContent(chunk)
+                cacheDao.markDetailEvicted(chunk)
+            }
+        }
+        return expiredCandidates.size
     }
 
     /**
@@ -155,5 +179,6 @@ internal class DetailCacheManager(
 
     private companion object {
         const val EVICTION_CHUNK = 400
+        const val BUFFER_FLUSH_THRESHOLD = 20
     }
 }
