@@ -16,6 +16,8 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 if not SECRET_KEY and not DEBUG:
     raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DEBUG is false.")
+if not DEBUG and len(SECRET_KEY or "") < 50:
+    raise ImproperlyConfigured("Production DJANGO_SECRET_KEY must contain at least 50 characters.")
 SECRET_KEY = SECRET_KEY or "local-development-only-key-do-not-deploy"
 ALLOWED_HOSTS = [
     host.strip()
@@ -113,7 +115,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": Path(os.environ.get("SQLITE_PATH", BASE_DIR / "db.sqlite3")),
             "OPTIONS": {
                 # Wait instead of failing once a writer holds the lock.
                 "timeout": float(os.environ.get("SQLITE_BUSY_TIMEOUT", "20")),
@@ -290,3 +292,6 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+
+# Each test gets a fresh cache; production throttling stays enabled.
+TEST_RUNNER = "config.test_runner.BackendTestRunner"
