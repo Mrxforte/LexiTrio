@@ -320,13 +320,13 @@ class ProviderRotationTests(SimpleTestCase):
         self.assertEqual(providers[1].model, "deepseek-chat")
 
     def test_deepseek_is_skipped_without_a_key(self):
-        with override_settings(OPENAI_API_KEY="g-key", DEEPSEEK_API_KEY=""):
+        with override_settings(OPENAI_API_KEY="g-key", OPENAI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai", DEEPSEEK_API_KEY=""):
             providers = configured_providers()
 
         self.assertEqual([provider.name for provider in providers], ["gemini"])
 
     def test_provider_can_be_disabled_with_sentinel_value(self):
-        with override_settings(OPENAI_API_KEY="g-key", DEEPSEEK_API_KEY="disabled"):
+        with override_settings(OPENAI_API_KEY="g-key", OPENAI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai", DEEPSEEK_API_KEY="disabled"):
             providers = configured_providers()
 
         self.assertEqual([provider.name for provider in providers], ["gemini"])
